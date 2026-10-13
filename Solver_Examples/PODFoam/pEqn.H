@@ -48,7 +48,8 @@ while (pimple.correctNonOrthogonal())
 
     pEqn.setReference(pRefCell, pRefValue);
 
-    pEqn.solve();
+    // Honour pFinal on the final corrector, as in v2106 pimpleFoam.
+    pEqn.solve(mesh.solver(p.select(pimple.finalInnerIter())));
 
     if (pimple.finalNonOrthogonalIter())
     {

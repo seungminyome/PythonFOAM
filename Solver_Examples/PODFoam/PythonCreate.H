@@ -1,73 +1,215 @@
 // Copyright (C) 2021 UChicago Argonne, LLC
 // SPDX-License-Identifier: (other)
-//
-// Python-OpenFOAM integration
-//
-// Initialize python, load module and create some scratch space etc.
-
-Info<< "initialize python" << endl;
+// Initialize the embedded interpreter and validate the bridge API.
+// NumPy's machine-limit probes deliberately overflow during import. Keep
+// OpenFOAM traps enabled for PDE work, but use Python's FP semantics here.
+Foam::sigFpe::ignore pythonInitFpe;
 Py_Initialize();
-Info<< "python initialize successful" << endl;
-
-// initialize numpy array library
-init_numpy();
-Info<< "numpy initialize successful" << endl;
-
-PyRun_SimpleString("import sys");
-PyRun_SimpleString("sys.path.append(\".\")");
-
-
-
-// if (PyErr_Occurred()) {
-//     Info<< "Failed to import numpy Python module(s)." << endl;
-//     return NULL; // Or some suitable return value to indicate failure.
-// }
-// assert(PyArray_API);
-
-
-
-PyObject* pName = PyUnicode_DecodeFSDefault("python_module"); // Python filename
-PyObject* pModule = PyImport_Import(pName);
-Py_DECREF(pName);
-
-if (!pModule)
+if (init_numpy() < 0)
 {
-    FatalErrorInFunction
-        << "Errors loading python_module (missing imports?)" << nl
-        << exit(FatalError);
+    PyErr_Print();
+    FatalErrorInFunction << "NumPy initialization failed" << exit(FatalError);
 }
 
-Info<< "    get snapshot_func" << endl;
+// Resolve python_module.py from the case even when invoked with -case.
+PyObject* casePath = PyUnicode_FromString(runTime.path().c_str());
+if (!casePath || PyList_Insert(PySys_GetObject("path"), 0, casePath) < 0)
+{
+    PyErr_Print();
+    FatalErrorInFunction << "Cannot add case to Python path" << exit(FatalError);
+}
+Py_DECREF(casePath);
+PyObject* pModule = PyImport_ImportModule("python_module");
+if (!pModule)
+{
+    PyErr_Print();
+    FatalErrorInFunction << "Cannot import python_module" << exit(FatalError);
+}
 PyObject* snapshot_func = PyObject_GetAttrString(pModule, "snapshot_func");
-PyObject* snapshot_args = PyTuple_New(2);
-
-Info<< "    get svd_func" << endl;
-PyObject *svd_func = PyObject_GetAttrString(pModule, "svd_func");
-PyObject *svd_args = PyTuple_New(1);
-
+PyObject* svd_func = PyObject_GetAttrString(pModule, "svd_func");
+// Optional observation callback. Existing snapshot/SVD-only modules still work.
+PyObject* analysis_func = PyObject_GetAttrString(pModule, "analysis_func");
+if (!analysis_func)
+{
+    if (!PyErr_ExceptionMatches(PyExc_AttributeError))
+    {
+        PyErr_Print();
+    }
+    PyErr_Clear();
+}
+else if (!PyCallable_Check(analysis_func))
+{
+    WarningInFunction << "Ignoring non-callable analysis_func" << endl;
+    Py_CLEAR(analysis_func);
+}
+if (analysis_func && Pstream::parRun())
+{
+    WarningInFunction << "analysis_func is only supported in serial runs; disabled"
+        << endl;
+    Py_CLEAR(analysis_func);
+}
+// Optional one-time geometry for Python-side rendering of the same-step
+// fields (cell centres, volumes, solution directions). Owning copies only;
+// Python never aliases mesh storage. Absence or failure only disables images.
+if (analysis_func)
+{
+    PyObject* mesh_func = PyObject_GetAttrString(pModule, "mesh_func");
+    if (!mesh_func)
+    {
+        PyErr_Clear();
+    }
+    else if (!PyCallable_Check(mesh_func))
+    {
+        WarningInFunction << "Ignoring non-callable mesh_func" << endl;
+        Py_CLEAR(mesh_func);
+    }
+    if (mesh_func)
+    {
+        npy_intp centreDims[] = {mesh.nCells(), 3};
+        npy_intp volumeDims[] = {mesh.nCells()};
+        PyObject* centres = PyArray_SimpleNew(2, centreDims, NPY_DOUBLE);
+        PyObject* volumes = PyArray_SimpleNew(1, volumeDims, NPY_DOUBLE);
+        PyObject* solutionD = Py_BuildValue
+        (
+            "(iii)",
+            int(mesh.solutionD()[0]), int(mesh.solutionD()[1]), int(mesh.solutionD()[2])
+        );
+        // 2D cases: every face of the first 'empty' patch outlines exactly one
+        // cell, so Python can paint true cell polygons (no interpolation).
+        // 3D cases pass empty arrays and Python falls back to a raster.
+        label emptyPatch = -1;
+        forAll(mesh.boundaryMesh(), patchi)
+        {
+            if (isA<emptyPolyPatch>(mesh.boundaryMesh()[patchi]))
+            {
+                emptyPatch = patchi;
+                break;
+            }
+        }
+        label nPolyFaces = 0, nPolyPoints = 0;
+        if (emptyPatch >= 0)
+        {
+            const polyPatch& pp = mesh.boundaryMesh()[emptyPatch];
+            nPolyFaces = pp.size();
+            forAll(pp, facei) nPolyPoints += pp[facei].size();
+        }
+        npy_intp polyPointDims[] = {nPolyPoints, 3};
+        npy_intp polyOffsetDims[] = {nPolyFaces + 1};
+        npy_intp polyCellDims[] = {nPolyFaces};
+        PyObject* polyPoints = PyArray_SimpleNew(2, polyPointDims, NPY_DOUBLE);
+        PyObject* polyOffsets = PyArray_SimpleNew(1, polyOffsetDims, NPY_INT64);
+        PyObject* polyCells = PyArray_SimpleNew(1, polyCellDims, NPY_INT64);
+        if (polyPoints && polyOffsets && polyCells)
+        {
+            double* pts = static_cast<double*>
+            (
+                PyArray_DATA(reinterpret_cast<PyArrayObject*>(polyPoints))
+            );
+            npy_int64* off = static_cast<npy_int64*>
+            (
+                PyArray_DATA(reinterpret_cast<PyArrayObject*>(polyOffsets))
+            );
+            npy_int64* cells = static_cast<npy_int64*>
+            (
+                PyArray_DATA(reinterpret_cast<PyArrayObject*>(polyCells))
+            );
+            off[0] = 0;
+            label k = 0;
+            if (emptyPatch >= 0)
+            {
+                const polyPatch& pp = mesh.boundaryMesh()[emptyPatch];
+                const labelUList& faceCells = pp.faceCells();
+                forAll(pp, facei)
+                {
+                    const face& f = pp[facei];
+                    forAll(f, pointi)
+                    {
+                        const point& P = mesh.points()[f[pointi]];
+                        pts[3*k] = P.x();
+                        pts[3*k + 1] = P.y();
+                        pts[3*k + 2] = P.z();
+                        ++k;
+                    }
+                    off[facei + 1] = k;
+                    cells[facei] = faceCells[facei];
+                }
+            }
+        }
+        PyObject* meshResult = nullptr;
+        if (centres && volumes && solutionD && polyPoints && polyOffsets && polyCells)
+        {
+            double* c = static_cast<double*>
+            (
+                PyArray_DATA(reinterpret_cast<PyArrayObject*>(centres))
+            );
+            double* v = static_cast<double*>
+            (
+                PyArray_DATA(reinterpret_cast<PyArrayObject*>(volumes))
+            );
+            const volVectorField& C = mesh.C();
+            forAll(C, celli)
+            {
+                for (direction cmpt = 0; cmpt < 3; ++cmpt)
+                {
+                    c[3*celli + cmpt] = C[celli][cmpt];
+                }
+                v[celli] = mesh.V()[celli];
+            }
+            meshResult = PyObject_CallFunction
+            (
+                mesh_func, "OOOiOOO", centres, volumes, solutionD, Pstream::myProcNo(),
+                polyPoints, polyOffsets, polyCells
+            );
+        }
+        Py_XDECREF(centres);
+        Py_XDECREF(volumes);
+        Py_XDECREF(solutionD);
+        Py_XDECREF(polyPoints);
+        Py_XDECREF(polyOffsets);
+        Py_XDECREF(polyCells);
+        if (!meshResult)
+        {
+            PyObject *errorType = nullptr, *errorValue = nullptr, *errorTrace = nullptr;
+            PyErr_Fetch(&errorType, &errorValue, &errorTrace);
+            PyErr_NormalizeException(&errorType, &errorValue, &errorTrace);
+            if (errorType) PyErr_Display(errorType, errorValue, errorTrace);
+            Py_XDECREF(errorType);
+            Py_XDECREF(errorValue);
+            Py_XDECREF(errorTrace);
+            PyErr_Clear();
+            WarningInFunction << "mesh_func failed; Python image input unavailable"
+                << endl;
+        }
+        else
+        {
+            Info<< "POD mesh geometry passed to Python: cells=" << mesh.nCells()
+                << " solutionD=" << mesh.solutionD()
+                << " cellPolygons=" << nPolyFaces << endl;
+        }
+        Py_XDECREF(meshResult);
+        Py_DECREF(mesh_func);
+    }
+}
 Py_DECREF(pModule);
-Info<< "..." << endl;
-
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-// Datastructures - will be overwritten
-volScalarField upod_(U.component(vector::X));
-volScalarField vpod_(U.component(vector::Y));
-volScalarField wpod_(U.component(vector::Z));
-
-// To pass rank to Python interpreter
-int rank = Pstream::myProcNo();
-PyObject *rank_val = PyLong_FromLong(rank);
-PyObject *array_2d(nullptr);
-
-///int encode_mode = 0;
-
-// Number of POD modes
-int truncation = 5;
-
-// Placeholder to grab data before sending to Python
-int num_cells = mesh.cells().size();
-auto input_vals = new double[num_cells][3];
-
-// ************************************************************************* //
+if (!snapshot_func || !svd_func
+ || !PyCallable_Check(snapshot_func) || !PyCallable_Check(svd_func))
+{
+    PyErr_Print();
+    FatalErrorInFunction << "snapshot_func and svd_func must be callable"
+        << exit(FatalError);
+}
+const int rank = Pstream::myProcNo();
+const label num_cells = mesh.nCells();
+const label truncation = 5;
+// Zero retains the original write-time SVD scheduling.
+const label podSvdInterval =
+    runTime.controlDict().lookupOrDefault<label>("podSvdInterval", 0);
+if (podSvdInterval < 0)
+{
+    FatalErrorInFunction << "podSvdInterval must be non-negative"
+        << exit(FatalError);
+}
+label podSnapshotCount = 0;
+std::feclearexcept(FE_ALL_EXCEPT);
+pythonInitFpe.restore();
+Info<< "Python and NumPy initialized successfully" << endl;

@@ -20,7 +20,7 @@ You can find an extensive hands-on tutorial, courtesy of the ALCF PythonFOAM wor
 
 ## Contents
 1. `Solver_Examples/`
-	1. `PODFoam/`: A `pimpleFoam` solver with in-situ collection of snapshot data for a streaming singular value decomposition. Python bindings are used to utilize a Python Streaming-SVD class object from OpenFOAM.
+	1. `PODFoam/`: A `pimpleFoam` solver with in-situ collection of snapshot data for a streaming singular value decomposition. Python bindings are used to utilize a Python Streaming-SVD class object from OpenFOAM. `PODFoam/validation/` checks the bridge on OpenFOAM v2106, and `PODFoam/llm_demo/` adds an optional per-step callback that sends the step's numbers and a field image to a local vision-language model (see [its README](Solver_Examples/PODFoam/llm_demo/README.md)).
 
 	2. `APMOSFoam/`: A `pimpleFoam` solver with in-situ collection of snapshot data for a parallelized singular value decomposition. While the previous example performs the SVD on data only on one rank - this solver performs a global, but distributed, SVD. However, SVD updates are not streaming.
 

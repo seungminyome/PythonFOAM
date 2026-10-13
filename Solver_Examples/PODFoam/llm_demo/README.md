@@ -110,38 +110,42 @@ Callback times are what the C++ side measured around `analysis_func`.
 
 | case | status | callback | HTTP | request | prompt tokens |
 |---|---|---:|---:|---:|---:|
-| no request | disabled | 0.5 s | - | - | - |
-| numbers + image | ok | 64.5 s | 64.1 s | 51.6 KB | 1545 |
-| numbers only | ok | 38.3 s | 38.2 s | 3.8 KB | 1080 |
-| connection refused | error | 0.5 s | - | - | - |
+| no request | disabled | 0.8 s | - | - | - |
+| numbers + image | ok | 70.6 s | 70.1 s | 50.5 KB | 1516 |
+| numbers only | ok | 41.4 s | 41.4 s | 3.7 KB | 1062 |
+| connection refused | error | 0.4 s | - | - | - |
 | trickling server | timeout | 4.0 s | - | - | - |
 
 All five runs completed ten steps and wrote identical fields (max difference
 of final U and p against the no-request run: 0). Rendering took 0.4 s inside
-the worker. The server used about 3.5 GiB PSS.
+the worker. Of the 70 s for the image request, 58 s went into prompt
+processing and 11 s into generating 92 tokens. The server used about 2.3 GiB
+PSS.
 
 Answers at step 5 (t = 5e-7 s), as returned:
 
 numbers + image
 
-> observations: The velocity magnitude $|U|$ is concentrated near the right edge of the domain, with a maximum value of 82.5 m/s.
-> possible_interpretation: The flow appears to be accelerating or developing a high-speed region near the positive x-axis.
+> observations: The velocity magnitude |U| shows a high value near x=0.25 m, with a maximum of 82.5 m/s.
+> possible_interpretation: The flow exhibits a localized high-speed region in the central x-domain.
 > checks: The pressure field shows a significant pressure gradient near the high-velocity region.
 
 numbers only
 
-> observations: Residuals show small values, e.g., p final last is 9.19188e-07.
-> possible_interpretation: The simulation appears to be progressing with small residuals.
-> checks: Check for missing evidence like force equilibrium.
+> observations: Residuals show small values, e.g., p final last is 9.19188e-07. Courant mean is 0.000337189.
+> possible_interpretation: The simulation appears to be progressing with small residuals. Velocity SVD shows high leading energy fractions.
+> checks: Check if linear-solver residuals are physical force balance. Verify velocity SVD centering.
 
-Checked against the stored fields: the maximum speed is right (it is in the
-ranges in the JSON), the location is not. The maximum sits at the step corner
-near x = 0, y = 0.013 m, at the left end of the channel, not at the right
-edge. The remark about a strong pressure gradient next to the fast region
-does match the fields (minimum p is in the same cell as maximum |U|). The
-answer uses LaTeX although it was told not to. In an earlier run with the
-same code the model put the maximum at x = 0.25 m, so where it says things
-are changes from run to run.
+Checked against the stored fields: every number the model quotes is in the
+JSON it was given and is quoted correctly (82.5 m/s, 9.19e-07, Courant mean
+3.4e-4, leading energy fractions above 0.9999). The spatial part is weaker.
+The maximum |U| sits at the step corner, x = 0.0005 m, y = 0.013 m; the
+picture spans x from -1.55 m to 0.60 m, so the corner is about three
+quarters of the way along, not "central", and 0.25 m is off by 0.25 m. The
+remark about a strong pressure gradient next to the fast region does match
+the fields (minimum p is in the same cell as maximum |U|). In an earlier run
+with the same code the model put the maximum "near the right edge", so the
+spatial wording changes from run to run while the region is roughly right.
 
 What this shows is that numbers and a picture can be sent from inside the
 solver, a structured answer comes back, and a dead or slow server does not

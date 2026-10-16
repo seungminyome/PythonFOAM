@@ -1,0 +1,66 @@
+{
+  "parent_pid": 2926334,
+  "run_id": "pod-llm-demo.SwwR2e/fixed-pod-text-only",
+  "step": 5,
+  "time_s": 5e-07,
+  "image_requested": false,
+  "deadline_s": 120.0,
+  "cleanup_budget_s": 0.2,
+  "connect_timeout_s": 2.0,
+  "read_timeout_s": 90.0,
+  "kill_join_allowance_s": 0.02,
+  "scheduling_tolerance_s": 0.05,
+  "callback_started_at": "2026-10-13T18:00:27.064906+00:00",
+  "summary_wall_s": 0.006286634015850723,
+  "image_input": false,
+  "text_input_only": true,
+  "image_skipped": {
+    "reason": "LLM_IMAGE_INPUT=0; numeric summary only"
+  },
+  "request_before_at": "2026-10-13T18:00:27.088482+00:00",
+  "inference_wall_s": 41.37113554601092,
+  "api_response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"observations\": \"Residuals show small values, e.g., p final last is 9.19188e-07. Courant mean is 0.000337189.\",\n  \"possible_interpretation\": \"The simulation appears to be progressing with small residuals. Velocity SVD shows high leading energy fractions.\",\n  \"checks\": \"Check if linear-solver residuals are physical force balance. Verify velocity SVD centering.\"\n}"
+        }
+      }
+    ],
+    "created": 1791914468,
+    "model": "gemma-4-E2B-it-Q4_0-vision",
+    "system_fingerprint": "b11429-d81235049",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 109,
+      "prompt_tokens": 1062,
+      "total_tokens": 1171,
+      "prompt_tokens_details": {
+        "cached_tokens": 1
+      }
+    },
+    "id": "chatcmpl-o3dLe6tI7VBUkNxAFd4lN6SefAZYz8IK",
+    "timings": {
+      "cache_n": 1,
+      "prompt_n": 1061,
+      "prompt_ms": 29720.268,
+      "prompt_per_token_ms": 28.011562676720075,
+      "prompt_per_second": 35.69954348998468,
+      "predicted_n": 109,
+      "predicted_ms": 11518.004,
+      "predicted_per_token_ms": 106.6481851851852,
+      "predicted_per_second": 9.376624630448124
+    }
+  },
+  "worker_reaped": true,
+  "ipc_select_calls": 4,
+  "response_after_at": "2026-10-13T18:01:08.466209+00:00",
+  "callback_elapsed_s": 41.40143761195941,
+  "elapsed_since_request_s": 41.37772006099112,
+  "worker_wait_elapsed_s": 41.39738096797373,
+  "raw_response_file": "llm_http_response.raw",
+  "raw_response_bytes": 1037
+}

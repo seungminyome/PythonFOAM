@@ -1,0 +1,5 @@
+# Keep documentation out of the source-language summary.
+docs/** linguist-documentation
+
+# Evidence files are byte-preserved records, including their line endings.
+docs/evidence/** -text -whitespace

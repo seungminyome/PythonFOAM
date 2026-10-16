@@ -1,11 +1,11 @@
-# PODFoam with a local vision-language model looking over its shoulder
+# PODFoam local-model observation demo
 
 At one time step PODFoam hands a small open-source vision-language model
 (Gemma 4 E2B, Q4_0, served by llama.cpp on localhost, CPU only) a numeric
 summary of the step and a picture of that step's |U| and p fields, gets a
-short structured answer back, and carries on. The model only looks: nothing
-it returns reaches U, p or any solver setting, and if the server is dead or
-slow the solver gets control back within a fixed deadline.
+short structured answer back, and carries on. Model output is recorded without changing U, p or solver settings.
+The saved connection-refusal and delayed-response tests returned control
+to the solver within the tested deadline and cleanup allowance.
 
 This is the stock PODFoam example plus an optional callback. Modules that only
 define `snapshot_func` and `svd_func` keep working as before.
@@ -119,8 +119,8 @@ Callback times are what the C++ side measured around `analysis_func`.
 All five runs completed ten steps and wrote identical fields (max difference
 of final U and p against the no-request run: 0). Rendering took 0.4 s inside
 the worker. Of the 70 s for the image request, 58 s went into prompt
-processing and 11 s into generating 92 tokens. The server used about 2.3 GiB
-PSS.
+processing and 11 s into generating 92 tokens. The recorded image-run server peak PSS was about 2.22 GiB.
+These are measurements from one run, not repeated performance statistics.
 
 Answers at step 5 (t = 5e-7 s), as returned:
 
@@ -141,18 +141,36 @@ JSON it was given and is quoted correctly (82.5 m/s, 9.19e-07, Courant mean
 3.4e-4, leading energy fractions above 0.9999). The spatial part is weaker.
 The maximum |U| sits at the step corner, x = 0.0005 m, y = 0.013 m; the
 picture spans x from -1.55 m to 0.60 m, so the corner is about three
-quarters of the way along, not "central", and 0.25 m is off by 0.25 m. The
-remark about a strong pressure gradient next to the fast region does match
-the fields (minimum p is in the same cell as maximum |U|). In an earlier run
-with the same code the model put the maximum "near the right edge", so the
-spatial wording changes from run to run while the region is roughly right.
+quarters of the way along, not "central", and 0.25 m is off by 0.25 m. The minimum-p and maximum-|U| cells are close but distinct: zero-based
+cell indices 10409 and 12090, respectively. Their proximity does not by
+itself validate the model's claim of a strong pressure gradient. No
+quantitative gradient evaluation was performed for that claim. An earlier
+answer used different spatial wording; this is not evidence of reliable
+localization.
 
 What this shows is that numbers and a picture can be sent from inside the
-solver, a structured answer comes back, and a dead or slow server does not
-stall the run. Whether a 2B-class model reads the picture well enough to be
+solver, a structured answer comes back, and the tested connection-refusal and delayed-response cases
+returned to the solver. Whether this E2B model reads the picture well enough to be
 useful is an open question; one answer per run is not enough to say. The
 minute or so per image request on CPU, mostly prompt processing, is a real
 cost of this setup.
+
+The image and numeric-only requests used different instructions and extra
+numeric metadata, so this comparison does not isolate the effect of the image.
+The maximum-speed value was supplied in text as well as being represented in
+the image. Correctly quoting it is not proof of visual reasoning. The
+numeric-only answer also asked to check force balance and SVD centering,
+although the input already stated that residuals are not force balance and
+that the SVD was uncentered.
+
+The callback is synchronous: the solver waits for the response or timeout.
+The normal worker deadline was 120 s; the deliberate timeout test used 4 s
+with a 4.27 s overall acceptance limit. The latter is a recovery test, not
+a four-second successful model response or a universal real-time guarantee.
+
+See the [run report](../../../docs/results.md),
+[saved evidence](../../../docs/evidence/README.md), and
+[Korean illustrated guide](https://seungminyome.github.io/PythonFOAM/guide.ko.html).
 
 ## Not covered
 

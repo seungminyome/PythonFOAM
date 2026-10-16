@@ -1,0 +1,81 @@
+{
+  "parent_pid": 2920630,
+  "run_id": "pod-llm-demo.SwwR2e/fixed-pod",
+  "step": 5,
+  "time_s": 5e-07,
+  "image_requested": true,
+  "deadline_s": 120.0,
+  "cleanup_budget_s": 0.2,
+  "connect_timeout_s": 2.0,
+  "read_timeout_s": 90.0,
+  "kill_join_allowance_s": 0.02,
+  "scheduling_tolerance_s": 0.05,
+  "callback_started_at": "2026-10-13T17:59:14.301705+00:00",
+  "summary_wall_s": 0.008198335999622941,
+  "image_input": true,
+  "text_input_only": false,
+  "image_render_wall_s": 0.41865777800558135,
+  "image": {
+    "path": "/home/syome/pythonfoam-llm/pod-llm-demo.SwwR2e/fixed-pod/llm_observation/state.png",
+    "sha256": "05a876ff878efd6ba4249dc7c82572f9e472a7524dbb9eb37cb1d539c7e16c70",
+    "bytes": 34437,
+    "fields_npz": "/home/syome/pythonfoam-llm/pod-llm-demo.SwwR2e/fixed-pod/llm_observation/fields.npz",
+    "fields_sha256": "14b64e399c39de9b2a6ccd8de7cc631e3b56814827bf642a7b15eed8008b12e5",
+    "time_s": 5e-07,
+    "step": 5,
+    "cells": 20540,
+    "width": 640,
+    "height": 360,
+    "projection_axes": [
+      "x",
+      "y"
+    ],
+    "render_wall_s": 0.41865777800558135
+  },
+  "request_before_at": "2026-10-13T17:59:14.738510+00:00",
+  "inference_wall_s": 70.14854807098163,
+  "api_response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"observations\": \"The velocity magnitude |U| shows a high value near x=0.25 m, with a maximum of 82.5 m/s.\",\n  \"possible_interpretation\": \"The flow exhibits a localized high-speed region in the central x-domain.\",\n  \"checks\": \"The pressure field shows a significant pressure gradient near the high-velocity region.\"\n}"
+        }
+      }
+    ],
+    "created": 1791914424,
+    "model": "gemma-4-E2B-it-Q4_0-vision",
+    "system_fingerprint": "b11429-d81235049",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 92,
+      "prompt_tokens": 1516,
+      "total_tokens": 1608,
+      "prompt_tokens_details": {
+        "cached_tokens": 1
+      }
+    },
+    "id": "chatcmpl-uQuDsMGN5brInO5jTfTMvPcFUd82Cgwc",
+    "timings": {
+      "cache_n": 1,
+      "prompt_n": 1515,
+      "prompt_ms": 57613.01,
+      "prompt_per_token_ms": 38.0283894389439,
+      "prompt_per_second": 26.2961438744478,
+      "predicted_n": 92,
+      "predicted_ms": 10751.989,
+      "predicted_per_token_ms": 118.15372527472528,
+      "predicted_per_second": 8.463550325432811
+    }
+  },
+  "worker_reaped": true,
+  "ipc_select_calls": 4,
+  "response_after_at": "2026-10-13T18:00:24.898756+00:00",
+  "callback_elapsed_s": 70.5971947349608,
+  "elapsed_since_request_s": 70.160272773006,
+  "worker_wait_elapsed_s": 70.58855334896361,
+  "raw_response_file": "llm_http_response.raw",
+  "raw_response_bytes": 984
+}

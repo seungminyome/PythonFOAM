@@ -1,0 +1,56 @@
+{
+  "status": "PASS",
+  "date": "2026-10-15",
+  "source_run": "pod-llm-demo.SwwR2e",
+  "new_cfd_or_ai_run": false,
+  "max_speed_m_per_s": 82.52751611538334,
+  "max_speed_cell_index_zero_based": 12090,
+  "max_speed_position_m": [
+    0.0005381680929193357,
+    0.01271448422486468,
+    0.006349999999999999
+  ],
+  "min_pressure_m2_per_s2": -9362.826066967049,
+  "min_pressure_cell_index_zero_based": 10409,
+  "min_pressure_position_m": [
+    0.0005390477231126857,
+    0.012684804454070836,
+    0.006349999999999999
+  ],
+  "same_cell": false,
+  "ai_x_error_m": 0.24946183190708066,
+  "svd_from_first_five_snapshots": {
+    "Ux": {
+      "singular_values_all5": [
+        9362.869078763313,
+        50.43242723864206,
+        10.316968002644392,
+        0.8215753602381779,
+        0.40279410163745705
+      ],
+      "leading_squared_fraction": 0.9999697635601046
+    },
+    "Uy": {
+      "singular_values_all5": [
+        1072.5047141962389,
+        9.475025762742405,
+        3.151473228350887,
+        0.6394958692526147,
+        0.1636729682608337
+      ],
+      "leading_squared_fraction": 0.999912946317515
+    },
+    "Uz": {
+      "singular_values_all5": [
+        1.2547283070924076e-13,
+        2.637811517272009e-16,
+        3.611773355154296e-17,
+        2.916664556385364e-18,
+        3.705980796179023e-19
+      ],
+      "leading_squared_fraction": 0.9999954969592961
+    }
+  },
+  "snapshot5_equals_image_velocity": true,
+  "original_verifier_status": "PASS"
+}

@@ -1,6 +1,6 @@
-# PythonFOAM: in-situ model observations
+# PythonFOAM: in-situ observer/logger
 
-This fork adds a local multimodal-model observation callback to the PODFoam example. During a run, the solver passes a numerical summary and a same-step velocity/pressure image to Gemma, records the response, and resumes calculation. Model output does not change solver fields or settings.
+This fork adds a PythonFOAM callback-based in-situ **observer/logger** to the PODFoam example. During a run, the solver passes a numerical summary and a same-step velocity/pressure image to a local multimodal model, records the response, and resumes calculation. Model output does not change solver fields, settings or control algorithms. The recorded run used Gemma.
 
 **[Project overview and illustrated guides](https://seungminyome.github.io/PythonFOAM/)** · **[Run report](docs/results.md)** · **[Saved data](docs/evidence/README.md)** · **[Code and execution instructions](Solver_Examples/PODFoam/llm_demo/README.md)**
 
@@ -16,7 +16,7 @@ The 2026-10-13 run (`pod-llm-demo.SwwR2e`) used a serial, 20,540-cell case. It q
 | Connection refused | Returned to calculation | 0.411 s |
 | Deliberately delayed response | Timed out; returned to calculation | 4.017 s |
 
-The callback is synchronous: the solver waits. These are single-run measurements, not averages.
+The callback is synchronous: the solver waits. These are single-run measurements, not averages. Identical output files show that the observer did not alter the saved results in these tests; they do not prove numerical stability for other cases or physical accuracy.
 
 The model quoted the supplied maximum speed correctly but misplaced the high-speed location. The actual maximum is at x ≈ 0.000538 m; the answer referred to x = 0.25 m. The minimum-pressure cell is nearby but is **not the same cell**. A large pressure gradient was not independently established by this comparison.
 
@@ -51,6 +51,8 @@ python3 Solver_Examples/PODFoam/llm_demo/verify_demo.py /path/to/pod-llm-demo.Sw
 ```
 
 This check requires NumPy. Details of the request, response, field comparisons and read-only recheck are in the [run report](docs/results.md).
+
+A local [controlled replay benchmark](Solver_Examples/PODFoam/llm_demo/README.md#controlled-replay-benchmark) prepares numeric-only and numeric-plus-image requests with identical questions, summaries and generation settings. Its default mode sends no requests. It is a benchmark setup, not a new model-quality result or a new solver run.
 
 ## Upstream project
 

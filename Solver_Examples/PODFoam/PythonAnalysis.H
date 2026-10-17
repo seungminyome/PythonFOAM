@@ -1,4 +1,5 @@
-// Optional, read-only telemetry callback after the completed PDE step.
+// Optional PythonFOAM in-situ observer/logger after the completed PDE step.
+// Model responses are recorded in Python; they never control the solver.
 // Residuals come from this timestep's OpenFOAM solverPerformance, not log parsing.
 if (analysis_func && rank == 0)
 {
@@ -135,5 +136,6 @@ if (analysis_func && rank == 0)
         WarningInFunction << "analysis_func raised; continuing without it"
             << endl;
     }
+    // Ignore the callback's return value: no model-driven field/settings update.
     Py_XDECREF(response);
 }

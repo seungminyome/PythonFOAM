@@ -1,9 +1,11 @@
-# PODFoam local-model observation demo
+# PODFoam in-situ observer/logger
 
 At one time step PODFoam hands a small open-source vision-language model
 (Gemma 4 E2B, Q4_0, served by llama.cpp on localhost, CPU only) a numeric
 summary of the step and a picture of that step's |U| and p fields, gets a
-short structured answer back, and carries on. Model output is recorded without changing U, p or solver settings.
+short structured answer back, and carries on. This is a PythonFOAM callback-based
+in-situ observer/logger: model output is recorded without changing U, p, solver
+settings or control algorithms.
 The saved connection-refusal and delayed-response tests returned control
 to the solver within the tested deadline and cleanup allowance.
 
@@ -100,8 +102,77 @@ Unit tests (no model needed):
 
 ```bash
 cd Solver_Examples/PODFoam/llm_demo
-python3 -m unittest test_llm_client test_callback -v
+python3 -m unittest test_llm_client test_callback test_ablation_runner -v
 ```
+
+## Controlled replay benchmark
+
+`ablation_runner.py` prepares a controlled comparison from one saved step:
+
+| Condition | Question and numeric summary | PNG |
+|---|---|---|
+| `numeric_only` | Same frozen text | Omitted |
+| `numeric_plus_image` | Same frozen text | Included |
+
+Both requests use the same system instructions, model, seed and generation
+settings. The request bodies differ only by the image content part. Image
+ranges and domain extents present in the summary remain available to both
+conditions; quoting the supplied maximum speed is not a visual-reasoning score.
+The saved arrays provide reference coordinates for scoring, not extra answers
+for the model. The runner verifies that the PNG, metadata, arrays and summary
+belong to the same saved state before preparing requests.
+
+From this directory, prepare requests without contacting a server:
+
+```bash
+python3 ablation_runner.py \
+  --case ../../../docs/evidence \
+  --output /tmp/pod-ablation-preview
+```
+
+Use a new output directory for each run. The complete saved run's `fixed-pod`
+case directory can also be used as `--case`. To execute three paired repeats
+against an already running local model server:
+
+```bash
+python3 ablation_runner.py \
+  --case ../../../docs/evidence \
+  --output /tmp/pod-ablation-measured \
+  --repeats 3 --seed 20261016 --timeout-s 120 --execute
+```
+
+The paired order alternates to reduce a fixed first-request advantage. A seed
+is a recorded request setting, not a promise of identical server behavior.
+Keep the server build, weights, projector, thread count and context size fixed
+and record them alongside a real benchmark. Repeats of one state do not replace
+testing multiple states. Cold start, prompt caching and other work on the
+machine can still affect timings.
+
+The output keeps the exact requests, responses, hashes, status and per-trial
+metrics. Review these distinctions when interpreting the results:
+
+- **Localization:** explicitly stated coordinates are compared with the
+  maximum-speed cell center in `fields.npz`. An x-only answer produces an
+  x-axis error. Two axes give a projected error; all three are needed for a
+  3D distance. Missing, ambiguous or unparseable coordinates remain unavailable,
+  never zero. Check how many responses could be scored before comparing errors.
+- **Grounding:** automatic rules flag contradictions and claims lacking the
+  available evidence. They do not settle whether every sentence is true or
+  whether the model used the image. Unflagged responses still need human review.
+- **Latency:** replay callback time and HTTP/client wait time are logged
+  separately. Replay uses an already computed summary and image; it does not
+  measure the live C++ callback, SVD, rendering or solver execution. Failed and
+  timed-out requests retain their status and must not be counted as successful
+  responses when summarizing latency or localization. When a matching saved
+  solver log is available, the manifest also includes
+  `original_cpp_callback_wall_s` with its source. This is historical context,
+  not a new A/B measurement.
+
+No new CFD or model-quality result is implied by this script. To check a
+backport in the actual solver, separately run the existing five-case demo and
+`verify_demo.py`, including the 45-file baseline comparison. Unit tests cover
+Python failure paths and fixture responses; they do not replace that solver
+integration check.
 
 ## One run on this machine
 
@@ -117,7 +188,8 @@ Callback times are what the C++ side measured around `analysis_func`.
 | trickling server | timeout | 4.0 s | - | - | - |
 
 All five runs completed ten steps and wrote identical fields (max difference
-of final U and p against the no-request run: 0). Rendering took 0.4 s inside
+of final U and p against the no-request run: 0). This establishes unchanged saved
+outputs in these runs, not a general numerical-stability result. Rendering took 0.4 s inside
 the worker. Of the 70 s for the image request, 58 s went into prompt
 processing and 11 s into generating 92 tokens. The recorded image-run server peak PSS was about 2.22 GiB.
 These are measurements from one run, not repeated performance statistics.
@@ -162,6 +234,14 @@ the image. Correctly quoting it is not proof of visual reasoning. The
 numeric-only answer also asked to check force balance and SVD centering,
 although the input already stated that residuals are not force balance and
 that the SVD was uncentered.
+
+SVD means **Singular Value Decomposition**. The legacy JSON key
+`leading_energy_fraction` is retained for compatibility. Its value is
+sigma_1 squared divided by the sum of squared singular values: a dominant
+pattern's share of the numeric snapshot table. For Ux in this saved run it is
+about 99.997%. It is not AI accuracy, a physical-stability test, or a measured
+kinetic-energy fraction. The component matrices are uncentered and have no
+cell-volume or density weighting.
 
 The callback is synchronous: the solver waits for the response or timeout.
 The normal worker deadline was 120 s; the deliberate timeout test used 4 s

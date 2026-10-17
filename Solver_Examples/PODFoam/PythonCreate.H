@@ -27,7 +27,7 @@ if (!pModule)
 }
 PyObject* snapshot_func = PyObject_GetAttrString(pModule, "snapshot_func");
 PyObject* svd_func = PyObject_GetAttrString(pModule, "svd_func");
-// Optional observation callback. Existing snapshot/SVD-only modules still work.
+// Optional in-situ observer/logger. Existing snapshot/SVD-only modules still work.
 PyObject* analysis_func = PyObject_GetAttrString(pModule, "analysis_func");
 if (!analysis_func)
 {

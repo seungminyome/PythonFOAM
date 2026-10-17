@@ -1,6 +1,6 @@
 """Callback tests without a solver or model."""
 import importlib.util
-from contextlib import nullcontext
+from contextlib import contextmanager, nullcontext
 import json
 import os
 from pathlib import Path
@@ -83,6 +83,9 @@ class CallbackTests(unittest.TestCase):
                         state["p_cells"] = pressure
                     callback_start = time.monotonic()
                     self.assertIsNone(callback.analysis_func(state))
+                    if with_mesh:
+                        self.assertIs(state["p_cells"], pressure)
+                        self.assertNotIn("p_cells", callback._history[-1])
                     actual_wall = time.monotonic() - callback_start
                     limit = deadline + 0.2 + 0.02 + 0.05 if step == 5 else 0.27
                     self.assertLess(actual_wall, limit)
@@ -280,6 +283,150 @@ class CallbackTests(unittest.TestCase):
         self.assertEqual(outcome["status"], "callback_error")
         self.assertIn("nonfinite p", outcome["error"])
         self.assertTrue(outcome["worker_reaped"])
+
+    @contextmanager
+    def fault_case(self):
+        """A ready step-5 observer; inject faults without a solver or model."""
+        with tempfile.TemporaryDirectory() as directory:
+            case = Path(directory)
+            shutil.copyfile(SOURCE / "python_module.py", case / "python_module.py")
+            shutil.copyfile(SOURCE.parent / "validation/python_module.py", case / "pod_svd.py")
+            load_module("pod_svd", case / "pod_svd.py")
+            callback = load_module("test_case_fault", case / "python_module.py")
+            callback._snapshots = [np.ones((20, 3)) for _ in range(5)]
+            state = {"step": 5, "time_s": 5e-7, "delta_t_s": 1e-7, "cells": 20,
+                     "residuals": {name: {"initial_first": 0.1, "initial_last": 0.1,
+                                           "final_last": 1e-6, "linear_solves": 1,
+                                           "iterations_total": 1}
+                                   for name in ("Ux", "Uy", "p")}}
+            callback._history = [{**state, "step": step, "time_s": step * 1e-7}
+                                 for step in range(1, 5)]
+            with patch.dict(os.environ, {"LLM_ENABLED": "0", "LLM_ANALYSIS_STEP": "5",
+                                         "LLM_IMAGE_INPUT": "0", "LLM_FINAL_STEP": "10",
+                                         "LLM_CALLBACK_DEADLINE_S": "0.25",
+                                         "LLM_CONNECT_TIMEOUT_S": "0.1",
+                                         "LLM_READ_TIMEOUT_S": "0.1"}):
+                yield callback, state
+
+    def assert_continues(self, callback, state):
+        self.assertIsNone(callback.analysis_func({**state, "step": 6, "time_s": 6e-7}))
+        self.assertEqual(callback._history[-1]["step"], 6)
+
+    def test_second_pipe_failure_closes_first_pipe(self):
+        with self.fault_case() as (callback, state):
+            real_pipe = os.pipe
+            opened = []
+
+            def failing_second_pipe():
+                if opened:
+                    raise OSError("pipe capacity exhausted")
+                pair = real_pipe()
+                opened.extend(pair)
+                return pair
+
+            with patch.object(callback.os, "pipe", side_effect=failing_second_pipe):
+                self.assertIsNone(callback.analysis_func(state))
+            for fd in opened:
+                with self.assertRaises(OSError):
+                    os.fstat(fd)
+            outcome = callback._last_callback_outcome
+            self.assertEqual(outcome["status"], "callback_error")
+            self.assertIn("pipe capacity", outcome["error"])
+            self.assertTrue(outcome["worker_reaped"])
+            self.assert_continues(callback, state)
+
+    def test_worker_and_reporter_fork_failure_fail_open(self):
+        with self.fault_case() as (callback, state):
+            with patch.object(callback.os, "fork", side_effect=OSError("fork unavailable")):
+                self.assertIsNone(callback.analysis_func(state))
+            outcome = callback._last_callback_outcome
+            self.assertEqual(outcome["status"], "callback_error")
+            self.assertIn("fork unavailable", outcome["error"])
+            self.assertIn("fork unavailable", outcome["writer_error"])
+            self.assertTrue(outcome["worker_reaped"])
+            self.assertTrue(outcome["writer_reaped"])
+            self.assert_continues(callback, state)
+
+    def test_fallback_error_reporter_cannot_rethrow_fork_failure(self):
+        with self.fault_case() as (callback, state):
+            with patch.dict(os.environ, {"LLM_CALLBACK_DEADLINE_S": "invalid"}), \
+                    patch.object(callback.os, "fork", side_effect=OSError("fork unavailable")):
+                self.assertIsNone(callback.analysis_func(state))
+            outcome = callback._last_callback_outcome
+            self.assertEqual(outcome["status"], "callback_error")
+            self.assertIn("ValueError", outcome["error"])
+            self.assertFalse(outcome["writer_completed"])
+            self.assertIn("fork unavailable", outcome["writer_error"])
+            self.assert_continues(callback, state)
+
+    def test_invalid_socket_timeout_is_reported_without_nonfinite_context(self):
+        for variable in ("LLM_CONNECT_TIMEOUT_S", "LLM_READ_TIMEOUT_S"):
+            for invalid in ("nan", "inf", "0"):
+                with self.subTest(variable=variable, invalid=invalid), \
+                        self.fault_case() as (callback, state), \
+                        patch.dict(os.environ, {variable: invalid}):
+                    self.assertIsNone(callback.analysis_func(state))
+                    outcome = callback._last_callback_outcome
+                    self.assertEqual(outcome["status"], "callback_error")
+                    self.assertIn("HTTP timeouts", outcome["error"])
+                    self.assertTrue(outcome["writer_completed"])
+
+    def test_reader_setup_failure_reaps_started_worker(self):
+        with self.fault_case() as (callback, state):
+            with patch.object(callback, "FrameReader", side_effect=OSError("reader setup")):
+                self.assertIsNone(callback.analysis_func(state))
+            outcome = callback._last_callback_outcome
+            self.assertEqual(outcome["status"], "callback_error")
+            self.assertIn("reader setup", outcome["error"])
+            self.assertTrue(outcome["worker_reaped"])
+            self.assert_continues(callback, state)
+
+    def test_acknowledgment_failure_reaps_waiting_worker(self):
+        with self.fault_case() as (callback, state):
+            parent_pid = os.getpid()
+            real_write = os.write
+
+            def fail_parent_write(fd, data):
+                if os.getpid() == parent_pid:
+                    raise BrokenPipeError("acknowledgment failed")
+                return real_write(fd, data)
+
+            with patch.object(callback.os, "write", side_effect=fail_parent_write):
+                self.assertIsNone(callback.analysis_func(state))
+            outcome = callback._last_callback_outcome
+            self.assertEqual(outcome["status"], "callback_error")
+            self.assertIn("acknowledgment failed", outcome["error"])
+            self.assertTrue(outcome["worker_reaped"])
+            self.assert_continues(callback, state)
+
+    def test_failed_result_files_still_report_error_over_pipe(self):
+        with self.fault_case() as (callback, state):
+            with patch.object(callback, "write_json", side_effect=PermissionError("read-only case")):
+                self.assertIsNone(callback.analysis_func(state))
+            outcome = callback._last_callback_outcome
+            self.assertEqual(outcome["status"], "callback_error")
+            self.assertIn("read-only case", outcome["error"])
+            self.assertIn("read-only case", outcome["response_write_error"])
+            self.assertFalse(outcome["writer_completed"])
+            self.assertTrue(outcome["worker_reaped"])
+            self.assert_continues(callback, state)
+
+    def test_failed_marker_stdout_does_not_stop_caller(self):
+        with self.fault_case() as (callback, state):
+            with patch.object(callback, "_marker", side_effect=BrokenPipeError("stdout closed")):
+                self.assertIsNone(callback.analysis_func(state))
+            outcome = callback._last_callback_outcome
+            self.assertEqual(outcome["status"], "callback_error")
+            self.assertIn("stdout closed", outcome["error"])
+            self.assertFalse(outcome["writer_completed"])
+            self.assertTrue(outcome["worker_reaped"])
+            self.assert_continues(callback, state)
+
+    def test_explicit_process_interrupt_is_not_swallowed(self):
+        with self.fault_case() as (callback, state):
+            with patch.object(callback, "_observe", side_effect=KeyboardInterrupt):
+                with self.assertRaises(KeyboardInterrupt):
+                    callback.analysis_func(state)
 
 
 if __name__ == "__main__":

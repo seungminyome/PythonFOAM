@@ -1,9 +1,9 @@
-"""HTTP client for the local llama-server.
+"""HTTP client for the local llama-server in-situ observer/logger.
 
 The request runs in a helper process (or inline, when the caller already is
 one) so a slow or trickling response cannot hold the caller past its deadline.
 Standard library only. A request may carry one PNG as an OpenAI-style
-image_url content part.
+image_url content part. Model replies are records; they never control the solver.
 """
 import base64
 import hashlib
@@ -21,6 +21,7 @@ import urllib.parse
 MAX_TEXT_BYTES = 24_576          # numeric summary alone
 MAX_REQUEST_BYTES = 2_097_152    # whole body incl. one base64 PNG
 MAX_RESPONSE_BYTES = 262_144
+HTTP_CLEANUP_ALLOWANCE_S = 0.02
 DEFAULT_ENDPOINT = "http://127.0.0.1:8088/v1/chat/completions"
 DEFAULT_MODEL = "gemma-4-E2B-it-Q4_0-vision"
 RESPONSE_FIELDS = ("observations", "possible_interpretation", "checks")
@@ -32,8 +33,9 @@ TEXT_SYSTEM_PROMPT = (
     "string fields: observations, possible_interpretation, checks. "
     "Use at most 45 English words total, one short sentence per field, plain text without LaTeX. Each field must be under 160 characters. Cite at most two actual values. The checks field should name missing evidence. "
     "Linear-solver residuals are not physical force balance or proof "
-    "of time convergence. Velocity SVD is uncentered and componentwise; "
-    "dominant energy can reflect mean flow. Low Courant does not imply low speed. Do not claim accuracy, "
+    "of time convergence. Velocity SVD (Singular Value Decomposition) is uncentered "
+    "and componentwise; its leading fraction is a numeric-table pattern share, "
+    "not AI accuracy or physical energy/stability. Low Courant does not imply low speed. Do not claim accuracy, "
     "physical convergence, stability, or anything about measurements that were "
     "not supplied. Give read-only checks; never change or propose automatic solver control."
 )
@@ -49,7 +51,9 @@ IMAGE_SYSTEM_PROMPT = (
     "In observations, name one spatial feature you can actually see in the image "
     "(where in the domain it is) and cite one numerical value from the JSON. "
     "Linear-solver residuals are not force balance or proof of convergence. "
-    "Velocity SVD is uncentered and componentwise. Low Courant does not imply low speed. "
+    "Velocity SVD (Singular Value Decomposition) is uncentered and componentwise; "
+    "its leading fraction is a numeric-table pattern share, not AI accuracy or "
+    "physical energy/stability. Low Courant does not imply low speed. "
     "Do not claim accuracy, convergence, stability, or unavailable measurements. "
     "If something is not visible or not supplied, say so. Observations only; never "
     "propose automatic solver control."
@@ -148,7 +152,12 @@ def redact_request(request):
 def request_local(payload, endpoint=DEFAULT_ENDPOINT, timeout_s=120.0,
                   connect_timeout_s=2.0, read_timeout_s=90.0,
                   isolated=True, raw_response_path=None):
-    """Return (result, parsed API response). Transport problems end up in result, not raised."""
+    """Return (result, parsed API response); ordinary transport errors do not raise.
+
+    isolated=True bounds the whole HTTP worker, with a small cleanup allowance.
+    isolated=False requires the caller's process deadline (as in the callback);
+    socket timeouts alone cannot bound a response that keeps trickling bytes.
+    """
     start = time.perf_counter()
     response = None
     result = {"status": "error", "output_text": None}
@@ -180,8 +189,6 @@ def request_local(payload, endpoint=DEFAULT_ENDPOINT, timeout_s=120.0,
                 remaining = max(0.001, timeout_s - (time.perf_counter() - start))
                 stdout, stderr = process.communicate(encode_json(config), timeout=remaining)
             except subprocess.TimeoutExpired:
-                process.kill()
-                process.communicate(timeout=5)
                 result.update(status="timeout", timeout_kind="http_deadline",
                               error="Local HTTP worker wall deadline exceeded")
             else:
@@ -189,6 +196,10 @@ def request_local(payload, endpoint=DEFAULT_ENDPOINT, timeout_s=120.0,
                     raise RuntimeError("HTTP worker failed: " +
                                        stderr.decode("utf-8", "replace")[:1000])
                 packet = json.loads(stdout)
+            finally:
+                # Also runs after unexpected communicate/decode errors. Cleanup
+                # cannot replace the original timeout/error or add a 5 s wait.
+                result.update(_cleanup_http_worker(process))
         else:
             # the caller is already a worker process
             packet = _perform_http(config)
@@ -208,6 +219,35 @@ def request_local(payload, endpoint=DEFAULT_ENDPOINT, timeout_s=120.0,
     result["connect_timeout_s"] = connect_timeout_s
     result["read_timeout_s"] = read_timeout_s
     return result, response
+
+
+def _cleanup_http_worker(process):
+    """Kill if needed, reap within the allowance, and close every pipe."""
+    details = {"http_worker_reaped": False,
+               "http_cleanup_allowance_s": HTTP_CLEANUP_ALLOWANCE_S}
+    errors = []
+    try:
+        if process.poll() is None:
+            try:
+                process.kill()
+            except ProcessLookupError:
+                pass
+        process.wait(timeout=HTTP_CLEANUP_ALLOWANCE_S)
+        details["http_worker_reaped"] = True
+    except subprocess.TimeoutExpired:
+        errors.append("HTTP worker not reaped within cleanup allowance")
+    except OSError as error:
+        errors.append(f"{type(error).__name__}: {error}")
+    finally:
+        for stream in (process.stdin, process.stdout, process.stderr):
+            if stream is not None:
+                try:
+                    stream.close()
+                except OSError as error:
+                    errors.append(f"{type(error).__name__}: {error}")
+    if errors:
+        details["http_cleanup_errors"] = errors
+    return details
 
 
 def validate_structured(content):
@@ -287,10 +327,12 @@ def _perform_http(config):
     except Exception as error:
         packet["error"] = f"{type(error).__name__}: {error}"
     finally:
-        if raw_file is not None:
-            raw_file.close()
-        if connection is not None:
-            connection.close()
+        for resource in (raw_file, connection):
+            if resource is not None:
+                try:
+                    resource.close()
+                except OSError as error:
+                    packet.setdefault("error", f"{type(error).__name__}: {error}")
     packet["raw_response_bytes"] = len(raw)
     return packet
 

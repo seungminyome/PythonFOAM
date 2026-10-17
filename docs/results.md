@@ -8,7 +8,7 @@ Solver source revision: `9ae54d0440bff8cbd0e65a5fc9f5ab7e06c3b2ee`
 
 ## Purpose and scope
 
-The prototype reads a running OpenFOAM solver's state through PythonFOAM and asks a local multimodal model for an observation. The model response is stored for the user; it is not used to change fields, time steps or solver settings.
+The prototype is a PythonFOAM callback-based in-situ observer/logger. It reads a running OpenFOAM solver's state and asks a local multimodal model for an observation. The model response is stored for the user; it is not used to change fields, time steps, solver settings or control algorithms.
 
 The test used a serial PODFoam fluid case with 20,540 cells and ten time steps of 10⁻⁷ s. The observation was requested after step 5, at t = 5 × 10⁻⁷ s. The run continued through step 10. This is a short initial-transient connection test, not a validated long-duration flow study.
 
@@ -48,7 +48,7 @@ The saved verifier compares telemetry with the solver log, checks step/time cons
 | Connection refused | Error recorded | 10 | 45 / 45 | 0.411067 s |
 | Delayed-response fixture | Timeout recorded | 10 | 45 / 45 | 4.016922 s |
 
-The 45 compared files are the ten steps' U, p and phi files plus 15 POD-mode files at the final step. They are file comparisons, not 45 independent physical experiments. The no-request case still performs observation preparation and renders an image, so it is not a measurement with all observation overhead removed.
+The 45 compared files are the ten steps' U, p and phi files plus 15 POD-mode files at the final step. They are file comparisons, not 45 independent physical experiments. Their equality establishes unchanged saved outputs for these cases, not numerical stability in general. The no-request case still performs observation preparation and renders an image, so it is not a measurement with all observation overhead removed.
 
 The ordinary worker deadline was 120 s. The refusal and delayed-response tests used 4 s, with a 4.27 s acceptance limit including cleanup and scheduling allowances. These tests cover the recorded conditions, not all operating-system stalls or failure modes. A previous timeout failure in a separate solid-unloading path is not resolved by this POD result.
 
@@ -118,7 +118,9 @@ Sources: [timing/resource records](evidence/timings.json), [runtime settings](ev
 
 The image and numeric-only requests differ in their system instructions and additional numerical metadata. Their different answers therefore do not establish the benefit of the image alone.
 
-The next comparison should hold the model, prompt, numerical information and settings fixed while varying image inclusion. Across multiple states and repetitions, useful measures include localization error, unsupported claims, appropriate handling of missing information, user task accuracy, and runtime cost. The maximum value should not count as evidence of image understanding when it has already been supplied numerically.
+The local [controlled replay runner](../Solver_Examples/PODFoam/llm_demo/README.md#controlled-replay-benchmark) holds the model, prompt, numerical information and settings fixed while varying image inclusion. Across multiple states and repetitions, useful measures include localization error, unsupported claims, appropriate handling of missing information, user task accuracy, and runtime cost. The maximum value should not count as evidence of image understanding when it has already been supplied numerically. An x-only answer supports an x-axis error, not a full spatial distance. Automated claim checks are review flags, not a complete hallucination verdict.
+
+The runner replays a saved state. Its request/wait timings do not replace the C++ callback times above, which include live summary and image preparation. Preparing the runner or passing its fixture tests supplies no new evidence that an image improves the model's answers.
 
 MPI execution, a real 3D-case image fallback, other solver families, larger models, long runs, engineering analysis quality and early failure prediction remain outside the demonstrated scope.
 

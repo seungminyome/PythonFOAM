@@ -1,4 +1,4 @@
-"""PODFoam callback module for the llm_demo cases.
+"""PythonFOAM callback based in-situ observer/logger for the llm_demo cases.
 
 validation/python_module.py is staged next to this file as pod_svd.py and
 still does the snapshot/SVD work. On top of that, at one chosen step,
@@ -55,9 +55,16 @@ class _ForkProcess:
             os._exit(0)
 
     def is_alive(self):
+        if self.pid is None:
+            return False
         if self.exitcode is not None:
             return False
-        finished, status = os.waitpid(self.pid, os.WNOHANG)
+        try:
+            finished, status = os.waitpid(self.pid, os.WNOHANG)
+        except ChildProcessError:
+            # Another SIGCHLD handler may already have reaped this child.
+            self.exitcode = -1  # exit status unavailable, not a successful writer
+            return False
         if finished:
             self.exitcode = os.waitstatus_to_exitcode(status)
             return False
@@ -65,7 +72,10 @@ class _ForkProcess:
 
     def kill(self):
         if self.is_alive():
-            os.kill(self.pid, signal.SIGKILL)
+            try:
+                os.kill(self.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass  # child exited between waitpid and kill
 
     def join(self, timeout):
         deadline = time.monotonic() + timeout
@@ -161,6 +171,12 @@ def _summarize(state):
     for index, name in enumerate(("Ux", "Uy", "Uz")):
         values = np.linalg.svd(window[:, index, :], compute_uv=False)
         energy = float(np.sum(values * values))
+        # SVD = Singular Value Decomposition. Keep the legacy field name:
+        # leading_energy_fraction = sigma_1**2 / sum(sigma_i**2).
+        # This is a dominant numeric-table pattern share (e.g. 99.997%),
+        # not AI accuracy or evidence of physical stability. The component
+        # matrices are uncentered and have no cell-volume/density weights,
+        # so this is not a fraction of the flow's physical kinetic energy.
         components[name] = {
             "singular_values_top3": values[:3].tolist(),
             "leading_energy_fraction": (float(values[0] ** 2 / energy)
@@ -355,6 +371,12 @@ def _analysis_worker(state, context, events, ack_fd, parent_only_fds):
             **context, "inference_wall_s": result["inference_wall_s"],
             "api_response": response,
         })
+    except Exception as error:
+        # Report through the pipe even if the case directory cannot be written.
+        result["response_write_error"] = f"{type(error).__name__}: {error}"
+        if result["status"] in ("ok", "disabled"):
+            result.update(status="callback_error", error=result["response_write_error"])
+    try:
         events.send({"event": "complete", "result": result, "context": context})
     finally:
         events.close()
@@ -362,22 +384,44 @@ def _analysis_worker(state, context, events, ack_fd, parent_only_fds):
 
 
 def _stop_process(process, join_budget_s=_KILL_JOIN_ALLOWANCE_S):
-    if process.is_alive():
-        process.kill()
-    process.join(timeout=max(0.0, join_budget_s))
-    return not process.is_alive()
+    """Best-effort bounded cleanup; a failed cleanup must not stop the solver."""
+    if process is None:
+        return True
+    try:
+        if process.is_alive():
+            process.kill()
+        process.join(timeout=max(0.0, join_budget_s))
+        return not process.is_alive()
+    except (OSError, ChildProcessError):
+        return False
+
+
+def _close_fd(fd):
+    if fd is not None:
+        try:
+            os.close(fd)
+        except OSError:
+            pass
 
 
 def _bounded_writer(target, args, deadline_at):
-    """Run target in a child that is killed at deadline_at; the parent writes nothing itself."""
+    """Best-effort child reporting, including when fork or cleanup fails.
+
+    The parent never falls back to direct file/stdout I/O: those can block.
+    """
+    outcome = {"writer_completed": False, "writer_reaped": True}
     if time.monotonic() >= deadline_at:
-        return {"writer_completed": False, "writer_reaped": True}
+        return outcome
     writer = _ForkProcess(target=target, args=args)
-    writer.start()
-    writer.join(timeout=max(0.0, deadline_at - time.monotonic()))
-    completed = not writer.is_alive() and writer.exitcode == 0
-    reaped = _stop_process(writer)
-    return {"writer_completed": completed, "writer_reaped": reaped}
+    try:
+        writer.start()
+        writer.join(timeout=max(0.0, deadline_at - time.monotonic()))
+        outcome["writer_completed"] = not writer.is_alive() and writer.exitcode == 0
+    except Exception as error:
+        outcome["writer_error"] = f"{type(error).__name__}: {error}"
+    finally:
+        outcome["writer_reaped"] = _stop_process(writer)
+    return outcome
 
 
 def _write_final_report(context, result, cleanup_start):
@@ -417,22 +461,30 @@ def _observe(state, start):
         "kill_join_allowance_s": _KILL_JOIN_ALLOWANCE_S,
         "scheduling_tolerance_s": _SCHEDULING_TOLERANCE_S,
     }
+    if not all(0 < context[name] <= 300 for name in
+               ("connect_timeout_s", "read_timeout_s")):
+        raise ValueError("HTTP timeouts must be in (0, 300]")
     context["callback_started_at"] = _stamp()
-    events_read, events_write = os.pipe()
-    ack_read, ack_write = os.pipe()
-    worker = _ForkProcess(target=_analysis_worker,
-                          args=(state, dict(context), FrameWriter(events_write), ack_read,
-                                (events_read, ack_write)))
     result = {"status": "timeout", "timeout_kind": "callback_deadline",
               "error": "Whole analysis worker exceeded callback deadline",
               "inference_wall_s": None, "output_text": None}
     request_started = None
-    worker.start()
-    os.close(events_write)
-    os.close(ack_read)
-    reader = FrameReader(events_read)
+    worker = reader = None
+    owned_fds = set()
     deadline_at = start + deadline_s
     try:
+        events_read, events_write = os.pipe()
+        owned_fds.update((events_read, events_write))
+        ack_read, ack_write = os.pipe()
+        owned_fds.update((ack_read, ack_write))
+        worker = _ForkProcess(target=_analysis_worker,
+                              args=(state, dict(context), FrameWriter(events_write), ack_read,
+                                    (events_read, ack_write)))
+        worker.start()
+        for fd in (events_write, ack_read):
+            os.close(fd)
+            owned_fds.remove(fd)
+        reader = FrameReader(events_read)
         while True:
             try:
                 message = reader.receive(deadline_at)
@@ -462,12 +514,16 @@ def _observe(state, start):
                 result.update(status="callback_error", timeout_kind=None,
                               error="Unexpected worker IPC event")
                 break
+    except Exception as error:
+        result.update(status="callback_error", timeout_kind=None,
+                      error=f"{type(error).__name__}: {error}")
     finally:
         cleanup_start = time.monotonic()
         context["worker_reaped"] = _stop_process(worker)
-        reader.close()
-        os.close(ack_write)
-    context["ipc_select_calls"] = reader.select_calls
+        # Includes partial setup: second pipe, fork and reader setup can fail.
+        for fd in owned_fds:
+            _close_fd(fd)
+    context["ipc_select_calls"] = reader.select_calls if reader is not None else 0
     context["response_after_at"] = _stamp()
     context["callback_elapsed_s"] = time.monotonic() - start
     context["elapsed_since_request_s"] = (
@@ -480,11 +536,17 @@ def _observe(state, start):
 
 
 def analysis_func(state):
-    """Called from PythonAnalysis.H after every completed step."""
+    """Observe/log after a step; ordinary observer errors fail open.
+
+    KeyboardInterrupt and SystemExit are intentional process-level interrupts
+    and are not swallowed. Snapshot/SVD callbacks retain their existing API.
+    """
     global _attempted, _last_callback_outcome, _latest_pressure
     start = time.monotonic()
     try:
         # p_cells is the one big array; keep it out of the history
+        if isinstance(state, dict):
+            state = dict(state)  # never remove fields from the solver's dictionary
         pressure = state.pop("p_cells", None) if isinstance(state, dict) else None
         if pressure is not None:
             _latest_pressure = np.array(pressure, dtype=float, copy=True)
@@ -501,7 +563,8 @@ def analysis_func(state):
     except Exception as error:
         _last_callback_outcome = {
             "status": "callback_error", "error": f"{type(error).__name__}: {error}"}
-        _bounded_writer(_record_callback_error,
-                        (state if isinstance(state, dict) else {}, error),
-                        time.monotonic() + 0.2)
+        reporting = _bounded_writer(_record_callback_error,
+                                    (state if isinstance(state, dict) else {}, error),
+                                    time.monotonic() + 0.2)
+        _last_callback_outcome.update(reporting)
     return None

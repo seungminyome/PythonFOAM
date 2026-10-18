@@ -45,7 +45,7 @@
 <h2 id="integration-flow">작동 순서</h2>
 <ol class="flow"><li>자료 준비<strong>같은 시점의 수치와 그림</strong></li><li>모델 호출<strong>PythonFOAM에서 Gemma로 전달</strong></li><li>파일 저장<strong>답변 또는 실패 사유 기록</strong></li><li>계산 재개<strong>남은 단계 진행</strong></li></ol>
 <p>모델의 답변은 사용자가 읽도록 저장하며, 계산값이나 솔버 설정을 바꾸는 데 쓰지 않습니다. 다음에는 여러 계산 상태에서 답변이 얼마나 정확한지 확인하고, 모델을 기다리는 동안 계산을 계속할 수 있도록 바꿀 계획입니다.</p>
-<figure><img src="evidence/2026-10-17/pod-llm-demo.LRfJBN/fixed-pod/llm_observation/state.png" width="640" height="360" alt="10월 17일 실행의 5단계에서 모델에 전달한 속도 크기와 운동학적 압력 지도"><figcaption>10월 17일 시험에서 모델에 보낸 그림입니다. 위는 빠르기 |U|, 아래는 운동학적 압력 p입니다. 세로를 늘려 표시했으므로 실제 길이 비율과 다릅니다.</figcaption></figure>
+<figure><img src="evidence/2026-10-17/pod-llm-demo.LRfJBN/fixed-pod/llm_observation/state.png" width="640" height="360" alt="10월 17일 실행의 5단계에서 모델에 전달한 속도 크기와 운동학적 압력 지도"><figcaption>10월 17일 시험에서 모델에 보낸 그림입니다. 위는 속력 |U|, 아래는 운동학적 압력 p입니다. 세로를 늘려 표시했으므로 실제 길이 비율과 다릅니다.</figcaption></figure>
 <a href="https://github.com/seungminyome/PythonFOAM/tree/pod-insitu-llm/Solver_Examples/PODFoam/llm_demo">코드와 실행 방법 →</a>
 </section>
 

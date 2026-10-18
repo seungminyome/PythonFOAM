@@ -1,23 +1,17 @@
 # PODFoam in-situ observer/logger
 
-**Latest actual tests:** [October 17 report](../../../docs/results.md), executed
-revision `23089bb`. Five solver conditions completed all ten steps with 45 saved
-files matching the no-request baseline. Three controlled pairs on one snapshot
-returned incorrect maximum-speed locations in both conditions (60.92 cm planar
-error for numbers only; 50.97 cm with the PNG). The image callback took 78.256 s.
-This remains synchronous; concurrent solver/inference execution is not implemented.
+At a chosen time step, PODFoam sends a numerical summary and an image of its
+velocity and pressure fields to Gemma 4 E2B. PythonFOAM provides the callback;
+llama.cpp serves the model locally on the CPU. The callback saves a structured
+reply, then returns control to the solver. Model output does not change U, p,
+solver settings or control algorithms.
 
-At one time step PODFoam hands a small open-source vision-language model
-(Gemma 4 E2B, Q4_0, served by llama.cpp on localhost, CPU only) a numeric
-summary of the step and a picture of that step's |U| and p fields, gets a
-short structured answer back, and carries on. This is a PythonFOAM callback-based
-in-situ observer/logger: model output is recorded without changing U, p, solver
-settings or control algorithms.
-The saved connection-refusal and delayed-response tests returned control
-to the solver within the tested deadline and cleanup allowance.
+The callback is synchronous: the solver waits for a reply or timeout.
+The [October 17 report](../../../docs/results.md) covers the latest five-case
+solver test and the separate comparison with and without an image.
 
-This is the stock PODFoam example plus an optional callback. Modules that only
-define `snapshot_func` and `svd_func` keep working as before.
+This extends the stock PODFoam example with an optional callback. Modules that
+only define `snapshot_func` and `svd_func` keep working as before.
 
 ## How it fits into the solver
 
@@ -36,25 +30,25 @@ never sees solver storage directly. The callback runs on rank 0 and is
 disabled for MPI runs.
 
 `llm_demo/python_module.py` is the callback. At one chosen step (default 5)
-it forks a worker that
+it forks a worker that:
 
-1. writes the telemetry so far and computes a componentwise SVD summary of
-   the snapshots so far,
-2. renders `llm_observation/state.png` (640x360, |U| on top, p below). For 2D
-   cases the C++ side passes the faces of the `empty` patch, so every cell is
-   painted as its own polygon, no interpolation. The arrays behind the
-   picture go to `fields.npz` and their SHA-256 into the PNG metadata,
-3. POSTs the summary and the PNG (data URL) to `/v1/chat/completions` with a
-   JSON schema that forces three string fields: `observations`,
-   `possible_interpretation`, `checks`,
-4. records the request, the exact HTTP body, the raw response and timings.
+1. Writes the telemetry and computes a componentwise SVD summary of the
+   snapshots collected so far.
+2. Renders `llm_observation/state.png` (640×360, |U| on top, p below). For 2D
+   cases, the C++ side passes faces of the `empty` patch, so each cell is
+   drawn as a polygon without interpolation. The underlying arrays go to
+   `fields.npz`, and their SHA-256 goes into the PNG metadata.
+3. POSTs the summary and PNG data URL to `/v1/chat/completions`. The response
+   schema requires three string fields: `observations`,
+   `possible_interpretation`, and `checks`.
+4. Records the request, exact HTTP body, raw response and timings.
 
 The parent waits on a length-framed pipe with an absolute deadline
 (`LLM_CALLBACK_DEADLINE_S`, default 120 s), kills the worker if it is late,
-and does no I/O of its own; the final result files are written by another
-short-lived child with a 0.2 s budget. The HTTP client only talks to
-`http://127.0.0.1`, caps request and response sizes, and has separate
-connect, read-inactivity and whole-call timeouts.
+and does no I/O of its own. Another short-lived child writes the final result
+files with a 0.2 s budget. The HTTP client accepts local loopback endpoints,
+limits request and response sizes, and has separate connect,
+read-inactivity and whole-call timeouts.
 
 Rendering needs matplotlib; the 3D fallback (nearest-cell raster) also needs
 scipy. matplotlib is imported once at startup inside `mesh_func`, not in the
@@ -84,26 +78,28 @@ validation run by default), `LLM_ANALYSIS_STEP`, `LLM_IMAGE_INPUT` (1/0),
 `LLM_MAX_TOKENS` (up to 192).
 
 `run_demo.sh` builds the solver into `llm-demo-work/bin/` in the workspace,
-creates `pod-llm-demo.XXXXXX` and runs five cases, each the full ten steps:
+creates `pod-llm-demo.XXXXXX` and runs five cases, each for ten steps:
 
-| case | model request | image | expected |
+| Case | Model request | Image | Expected result |
 |---|---|---|---|
-| `fixed-pod-no-llm` | off | rendered, not sent | baseline fields |
-| `fixed-pod` | on | sent | `ok` |
-| `fixed-pod-text-only` | on | not sent | `ok` |
-| `fixed-pod-server-error` | to a closed port | sent | `error`, 4 s deadline |
-| `fixed-pod-timeout` | to a trickling fixture | sent | `timeout`, 4 s deadline |
+| `fixed-pod-no-llm` | Off | Rendered, not sent | Baseline fields |
+| `fixed-pod` | On | Sent | `ok` |
+| `fixed-pod-text-only` | On | Not sent | `ok` |
+| `fixed-pod-server-error` | To a closed port | Sent | `error`, 4 s deadline |
+| `fixed-pod-timeout` | To a trickling fixture | Sent | `timeout`, 4 s deadline |
 
-`verify_demo.py` then checks, for every case, that the residuals in the
-telemetry equal the solver log, Courant/continuity equal the log, the
-callback returned before step 6, the C++-measured callback time is within
-deadline plus cleanup budget, and all 45 written field files are
-byte-identical to the baseline. For the image cases it also checks that
-`fields.npz` equals the stored `5e-07/U` and `p`, that the PNG's hash matches
-the base64 payload in the sent body, and that the JSON text in the body
-equals the recorded summary. It prints `PASS` only if everything holds.
-`pack_run.py` then packs sources, run records, the exact request and the raw
-response into `run-archive.tar.gz` (no weights).
+`verify_demo.py` checks that residuals, Courant numbers and continuity values
+in the telemetry match the solver log; that the callback returned before
+step 6 and within its deadline plus cleanup allowance; and that all 45 saved
+field files match the baseline byte for byte.
+
+For image cases, it also checks that `fields.npz` matches `5e-07/U` and `p`,
+that the PNG matches the image encoded in the request, and that the request
+text matches the saved summary. It prints `PASS` when all checks pass.
+`pack_run.py` then saves sources, run records, requests and responses in
+`run-archive.tar.gz`. This archive omits intermediate time steps; the
+[October 17 download guide](../../../docs/evidence/2026-10-17/README.md#download-the-complete-run)
+links to that test's complete solver archive.
 
 Unit tests (no model needed):
 
@@ -114,97 +110,88 @@ python3 -m unittest test_llm_client test_callback test_ablation_runner -v
 
 ## Controlled replay benchmark
 
-`ablation_runner.py` prepares a controlled comparison from one saved step:
+`ablation_runner.py` compares two requests made from one saved step:
 
-| Condition | Question and numeric summary | PNG |
+| Condition | Question and numerical summary | PNG |
 |---|---|---|
 | `numeric_only` | Same frozen text | Omitted |
 | `numeric_plus_image` | Same frozen text | Included |
 
-Both requests use the same system instructions, model, seed and generation
-settings. The request bodies differ only by the image content part. Image
-ranges and domain extents present in the summary remain available to both
-conditions; quoting the supplied maximum speed is not a visual-reasoning score.
-The saved arrays provide reference coordinates for scoring, not extra answers
-for the model. The runner verifies that the PNG, metadata, arrays and summary
-belong to the same saved state before preparing requests.
+Within each pair, the requests have the same instructions, model, seed and
+generation settings. Only the image content part differs. Both receive the
+image ranges and domain extents recorded in the numerical summary. Reference
+coordinates come from the saved arrays and are used only for scoring.
+The runner checks the PNG, metadata, arrays and summary before preparing
+requests.
 
-From this directory, prepare requests without contacting a server:
+From `llm_demo`, this example prepares requests from the published October 17
+snapshot without contacting a server:
 
 ```bash
 python3 ablation_runner.py \
-  --case ../../../docs/evidence \
-  --output /tmp/pod-ablation-preview
+  --case ../../../docs/evidence/2026-10-17/pod-llm-demo.LRfJBN/fixed-pod \
+  --output /tmp/pod-ablation-preview \
+  --repeats 3 --seed 20261017
 ```
 
-Use a new output directory for each run. The complete saved run's `fixed-pod`
-case directory can also be used as `--case`. To execute three paired repeats
-against an already running local model server:
+Use a new output directory each time. You can also pass a saved run's
+`fixed-pod` directory as `--case`. With the local server running, this example
+sends the three pairs:
 
 ```bash
 python3 ablation_runner.py \
-  --case ../../../docs/evidence \
+  --case ../../../docs/evidence/2026-10-17/pod-llm-demo.LRfJBN/fixed-pod \
   --output /tmp/pod-ablation-measured \
-  --repeats 3 --seed 20261016 --timeout-s 120 --execute
+  --repeats 3 --seed 20261017 --timeout-s 120 --execute
 ```
 
-The paired order alternates to reduce a fixed first-request advantage. A seed
-is a recorded request setting, not a promise of identical server behavior.
-Keep the server build, weights, projector, thread count and context size fixed
-and record them alongside a real benchmark. Repeats of one state do not replace
-testing multiple states. Cold start, prompt caching and other work on the
-machine can still affect timings.
+These are rerun examples. The [recorded manifest](../../../docs/evidence/2026-10-17/ablation/manifest.json)
+lists the original requests and their execution order: pair 1 used seed
+`20261017`, followed by `20261018` and `20261019`. The runner alternates
+which condition goes first. Keep the server build, model weights, projector,
+thread count and context size fixed, and record them with `--server-note`.
 
-The output keeps the exact requests, responses, hashes, status and per-trial
-metrics. Review these distinctions when interpreting the results:
+Each trial saves requests, responses, hashes, status and metrics:
 
-- **Localization:** explicitly stated coordinates are compared with the
-  maximum-speed cell center in `fields.npz`. An x-only answer produces an
-  x-axis error. Two axes give a projected error; all three are needed for a
-  3D distance. Missing, ambiguous or unparseable coordinates remain unavailable,
-  never zero. Check how many responses could be scored before comparing errors.
-- **Grounding:** automatic rules flag contradictions and claims lacking the
-  available evidence. They do not settle whether every sentence is true or
-  whether the model used the image. Unflagged responses still need human review.
-- **Latency:** replay callback time and HTTP/client wait time are logged
-  separately. Replay uses an already computed summary and image; it does not
-  measure the live C++ callback, SVD, rendering or solver execution. Failed and
-  timed-out requests retain their status and must not be counted as successful
-  responses when summarizing latency or localization. When a matching saved
-  solver log is available, the manifest also includes
-  `original_cpp_callback_wall_s` with its source. This is historical context,
-  not a new A/B measurement.
+- **Location:** an x-only answer gets an x-axis error; two axes give a
+  projected distance; all three give a 3D distance. Missing or ambiguous
+  coordinates remain unscored. The summary includes scoring coverage.
+- **Grounding:** automatic rules check selected numerical claims and
+  unsupported assertions. Keep their output alongside a review of the
+  answers; the October 17 [response review](../../../docs/evidence/2026-10-17/independent-ablation-review.json)
+  records claims these rules missed.
+- **Time:** `replay_callback_wall_s` covers sending a prepared request,
+  waiting, evaluating and saving the result. HTTP/client wait is also logged
+  separately. The replay does not rerun the solver, SVD or image rendering.
+  If a matching solver log is present, `original_cpp_callback_wall_s` records
+  that earlier callback time separately.
 
-Preparing requests alone supplies no CFD or model-quality result. The
-[October 17 records](../../../docs/evidence/2026-10-17/README.md) include an actual
-six-request execution of this runner. To check a
-backport in the actual solver, separately run the existing five-case demo and
-`verify_demo.py`, including the 45-file baseline comparison. Unit tests cover
-Python failure paths and fixture responses; they do not replace that solver
-integration check.
+See the report's [limitations](../../../docs/results.md#limitations) when
+comparing errors, repeated answers and timings. To check the callback in
+OpenFOAM itself, run the five-case demo and `verify_demo.py`; replay and unit
+tests exercise different parts of the system.
 
 ## Earlier run on this machine — October 13
 
-The measurements below are retained from `pod-llm-demo.SwwR2e`; use the
-[latest report](../../../docs/results.md) for the October 17 execution.
+The measurements below are from `pod-llm-demo.SwwR2e`. The
+[latest report](../../../docs/results.md) covers the October 17 execution.
 
 8 vCPU, 7.7 GiB RAM, no GPU, llama.cpp b11429 with 4 threads, context 2048.
-Callback times are what the C++ side measured around `analysis_func`.
+Callback times were measured by C++ around `analysis_func`.
 
-| case | status | callback | HTTP | request | prompt tokens |
+| Case | Status | Callback | HTTP | Request | Prompt tokens |
 |---|---|---:|---:|---:|---:|
-| no request | disabled | 0.8 s | - | - | - |
-| numbers + image | ok | 70.6 s | 70.1 s | 50.5 KB | 1516 |
-| numbers only | ok | 41.4 s | 41.4 s | 3.7 KB | 1062 |
-| connection refused | error | 0.4 s | - | - | - |
-| trickling server | timeout | 4.0 s | - | - | - |
+| No request | disabled | 0.8 s | - | - | - |
+| Numbers + image | ok | 70.6 s | 70.1 s | 50.5 KB | 1516 |
+| Numbers only | ok | 41.4 s | 41.4 s | 3.7 KB | 1062 |
+| Connection refused | error | 0.4 s | - | - | - |
+| Trickling server | timeout | 4.0 s | - | - | - |
 
-All five runs completed ten steps and wrote identical fields (max difference
-of final U and p against the no-request run: 0). This establishes unchanged saved
-outputs in these runs, not a general numerical-stability result. Rendering took 0.4 s inside
-the worker. Of the 70 s for the image request, 58 s went into prompt
-processing and 11 s into generating 92 tokens. The recorded image-run server peak PSS was about 2.22 GiB.
-These are measurements from one run, not repeated performance statistics.
+All five runs completed ten steps and wrote identical fields. The maximum
+difference in final U and p against the no-request run was zero. Rendering
+took 0.4 s inside the worker. Of the image request's 70 s, about 58 s went
+into prompt processing and 11 s into generating 92 tokens. The recorded
+image-run server peak PSS was about 2.22 GiB.
 
 Answers at step 5 (t = 5e-7 s), as returned:
 
@@ -220,52 +207,35 @@ numbers only
 > possible_interpretation: The simulation appears to be progressing with small residuals. Velocity SVD shows high leading energy fractions.
 > checks: Check if linear-solver residuals are physical force balance. Verify velocity SVD centering.
 
-Checked against the stored fields: every number the model quotes is in the
-JSON it was given and is quoted correctly (82.5 m/s, 9.19e-07, Courant mean
-3.4e-4, leading energy fractions above 0.9999). The spatial part is weaker.
-The maximum |U| sits at the step corner, x = 0.0005 m, y = 0.013 m; the
-picture spans x from -1.55 m to 0.60 m, so the corner is about three
-quarters of the way along, not "central", and 0.25 m is off by 0.25 m. The minimum-p and maximum-|U| cells are close but distinct: zero-based
-cell indices 10409 and 12090, respectively. Their proximity does not by
-itself validate the model's claim of a strong pressure gradient. No
-quantitative gradient evaluation was performed for that claim. An earlier
-answer used different spatial wording; this is not evidence of reliable
-localization.
+The quoted values match the supplied JSON: maximum speed about 82.5 m/s,
+pressure residual 9.19e-07, mean Courant number 3.4e-4, and leading fractions
+above 0.9999. The spatial part is weaker. The maximum-speed cell is near
+the step corner at x ≈ 0.0005 m, y ≈ 0.013 m. The answer's x = 0.25 m gives
+an **x-axis error of about 25 cm**. The October 17 comparison reports XY
+distances, so the two error measures are not directly comparable.
 
-What this shows is that numbers and a picture can be sent from inside the
-solver, a structured answer comes back, and the tested connection-refusal and delayed-response cases
-returned to the solver. Whether this E2B model reads the picture well enough to be
-useful is an open question; one answer per run is not enough to say. The
-minute or so per image request on CPU, mostly prompt processing, is a real
-cost of this setup.
+The minimum-pressure and maximum-speed cells are close but distinct:
+zero-based indices 10409 and 12090. Their proximity does not establish the
+claimed pressure gradient; no quantitative gradient check was made.
 
-The image and numeric-only requests used different instructions and extra
-numeric metadata, so this comparison does not isolate the effect of the image.
-The maximum-speed value was supplied in text as well as being represented in
-the image. Correctly quoting it is not proof of visual reasoning. The
-numeric-only answer also asked to check force balance and SVD centering,
-although the input already stated that residuals are not force balance and
-that the SVD was uncentered.
+This October 13 comparison used different instructions and additional
+numerical metadata for the image request. It therefore does not isolate
+the effect of adding an image. The numeric-only reply also asked about force
+balance and SVD centering, although the input already stated that residuals
+are not force balance and that the SVD was uncentered.
 
-SVD means **Singular Value Decomposition**. The legacy JSON key
-`leading_energy_fraction` is retained for compatibility. Its value is
-sigma_1 squared divided by the sum of squared singular values: a dominant
-pattern's share of the numeric snapshot table. For Ux in this saved run it is
-about 99.997%. It is not AI accuracy, a physical-stability test, or a measured
-kinetic-energy fraction. The component matrices are uncentered and have no
-cell-volume or density weighting.
+SVD means **Singular Value Decomposition**. The legacy key
+`leading_energy_fraction` is retained for compatibility. It is sigma_1
+squared divided by the sum of squared singular values: the leading pattern's
+share of the numerical snapshot table. For Ux in this run it is about
+99.997%. That is a data-summary ratio, not an AI accuracy or physical-energy
+measurement. The component matrices are uncentered, without cell-volume or
+density weighting.
 
-The callback is synchronous: the solver waits for the response or timeout.
-The normal worker deadline was 120 s; the deliberate timeout test used 4 s
-with a 4.27 s overall acceptance limit. The latter is a recovery test, not
-a four-second successful model response or a universal real-time guarantee.
+The normal worker deadline was 120 s. The deliberate timeout test used a
+4 s deadline and a 4.27 s overall acceptance limit; it tested recovery from
+a delayed response.
 
-See the [run report](../../../docs/results.md),
-[saved evidence](../../../docs/evidence/README.md), and
-[Korean illustrated guide](https://seungminyome.github.io/PythonFOAM/guide.ko.html).
-
-## Not covered
-
-MPI runs (callback disabled), the 3D raster fallback on a real 3D case,
-larger models (the 12B QAT variant has not been tried on this 7.7 GiB
-machine), long runs, and anything about the quality of the analysis.
+See the [October 13 evidence](../../../docs/evidence/README.md), its
+[Korean illustrated guide](https://seungminyome.github.io/PythonFOAM/guide.ko.html),
+and the current report's [limitations](../../../docs/results.md#limitations).

@@ -1,51 +1,54 @@
-# October 17 integration and controlled replay evidence
+# October 17 evidence
 
-Executed source: **23089bbf3447731852fa960d7d25ea18767a3f51**.
-Live solver run: **pod-llm-demo.LRfJBN**.
+These files accompany the [October 17 report](../../results.md). The solver
+run was `pod-llm-demo.LRfJBN`, using revision
+`23089bbf3447731852fa960d7d25ea18767a3f51`.
 
-[English report](../../results.md) · [Korean results page](https://seungminyome.github.io/PythonFOAM/results-20261017.html) · [Downloads](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-tests-2026-10-17)
+[Korean results](https://seungminyome.github.io/PythonFOAM/results-20261017.html) ·
+[Downloads](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-tests-2026-10-17)
 
-Five live solver conditions completed ten steps. Each comparison run matched all
-45 saved field files against the no-request baseline. A separate replay used
-three pairs on one snapshot, with the same question, numerical input and settings
-and only the PNG inclusion varied. All six location answers were incorrect.
+## Find a record
 
-| Record | Contents |
+| File | What it contains |
 |---|---|
-| [test-results.json](test-results.json) | Combined result and interpretation recorded after the actual tests |
-| [independent-integration-check.json](independent-integration-check.json) | Source identity, explicit 45-file inventory and live solver chronology |
-| [runtime-summary.json](runtime-summary.json) | Derived public summary of model/projector hashes and active server settings |
-| [unit-tests-56.txt](unit-tests-56.txt) | Saved pre-commit Python unit and loopback test record |
-| [manifest.json](manifest.json) | Origins, sizes, hashes and original/derived labels for these selected files |
-| [Live-run verification](pod-llm-demo.LRfJBN/demo-verification.json) | Five-case verifier result |
-| [Image request](pod-llm-demo.LRfJBN/fixed-pod/llm_request_body.json) | Exact live request, including the PNG |
-| [Image response](pod-llm-demo.LRfJBN/fixed-pod/llm_response.json) | Live model response; distinct from the controlled replay |
-| [Actual PNG](pod-llm-demo.LRfJBN/fixed-pod/llm_observation/state.png) | Step-5 input image |
-| [Image arrays](pod-llm-demo.LRfJBN/fixed-pod/llm_observation/fields.npz) | Cell coordinates, velocity and pressure used to draw and score the image |
-| [Replay manifest](ablation/manifest.json) | Question, settings, request hashes and execution order |
-| [Replay summary](ablation/summary.json) | Original automatic metrics, including their limitations |
-| [Independent response review](independent-ablation-review.json) | Incorrect/unsupported claims missed by the automatic grounding flags |
-| [Evaluator coordinates](ablation/ground_truth.private.json) | Ground truth withheld from the model; “private” means evaluator-only |
+| [test-results.json](test-results.json) | Summary of the solver tests and controlled comparison |
+| [independent-integration-check.json](independent-integration-check.json) | Source checks, the 45 compared files, and the order of solver events |
+| [runtime-summary.json](runtime-summary.json) | Model and projector hashes, plus server settings |
+| [unit-tests-56.txt](unit-tests-56.txt) | Output from the 56 Python and local HTTP tests |
+| [manifest.json](manifest.json) | File origins, sizes, hashes, and labels identifying originals and derived records |
+| [Solver verification](pod-llm-demo.LRfJBN/demo-verification.json) | Results of checking the five solver cases |
+| [Image request](pod-llm-demo.LRfJBN/fixed-pod/llm_request_body.json) | Request sent from the solver, including the PNG |
+| [Image response](pod-llm-demo.LRfJBN/fixed-pod/llm_response.json) | Model reply during that solver run |
+| [state.png](pod-llm-demo.LRfJBN/fixed-pod/llm_observation/state.png) | Image sent at step 5 |
+| [fields.npz](pod-llm-demo.LRfJBN/fixed-pod/llm_observation/fields.npz) | Cell coordinates, velocity and pressure behind the image |
+| [Replay manifest](ablation/manifest.json) | Shared question, settings, seeds, request hashes and execution order |
+| [Replay summary](ablation/summary.json) | Scores produced by the automatic evaluator |
+| [Response review](independent-ablation-review.json) | Separate review of the answers and claims the automatic checks missed |
+| [Reference coordinates](ablation/ground_truth.private.json) | Maximum-speed coordinates used for scoring; they were withheld from the model |
 
-The `ablation/pair-*` folders contain all six exact requests, raw replies,
-parsed replies, result records and metrics. The planar errors were 60.92 cm for
-numeric-only and 50.97 cm with the image. Repeats of this one snapshot are not
-independent flow cases. Prompt caching affects timings. Zero automatic grounding
-flags is not a finding that the replies are correct.
+The [ablation](ablation/) folder holds the three paired comparisons. Each
+`pair-*` subfolder contains the request, raw response, parsed response, result
+and metrics. These are separate from the requests made during the solver run.
+For the meaning and limits of the scores and timings, see the report's
+[limitations](../../results.md#limitations).
 
-The selected records are byte-preserved except `runtime-summary.json`, which is
-explicitly derived and omits process/memory addresses and absolute runtime paths.
-Original records can retain local paths as provenance; use the relative links in
-this index to access published files. Historical `remote_writes` fields describe
-the testing session before publication. No model weights or credentials are included.
+## Download the complete run
 
-This directory is a **selection**, not the full set of solver fields. The release
-archive `solver-evidence-LRfJBN.tar.gz` includes all ten time directories for each
-of the five solver cases, the materialized pimpleFoam reference, and the executed
-verification sources. The original automatically generated `run-archive.tar.gz`
-excluded intermediate steps and is not used as the full verification archive.
+This directory contains selected records. The release file
+`solver-evidence-LRfJBN.tar.gz` also contains all ten saved time directories
+for each of the five solver cases, the pimpleFoam reference case, and the
+verification code. Its `README.txt` explains how to check the saved files
+without rerunning the solver or model.
 
-After unpacking the solver archive, its `README.txt` explains how to verify the
-saved records without running OpenFOAM or making a model request. The release's
-`SHA256SUMS.txt` covers both downloadable archives. The evidence ZIP includes the
-Korean results HTML with these linked files for offline reading.
+The evidence ZIP includes the Korean results page and its linked files for
+offline reading. `SHA256SUMS.txt` lists checksums for both archives. The older
+automatically generated `run-archive.tar.gz` omits intermediate time steps;
+use `solver-evidence-LRfJBN.tar.gz` for the complete solver record.
+
+## About the saved files
+
+Requests, replies, arrays and logs retain their recorded bytes.
+`runtime-summary.json` is a shortened version of the runtime information;
+the manifest identifies it as derived. Original records may contain local
+paths, so use the relative links above to open the published files.
+Any `remote_writes` entries describe the test session before publication.

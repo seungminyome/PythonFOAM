@@ -23,7 +23,8 @@ is recorded without changing solver fields, settings or control.
 | Connection refused | Error recorded | 10 | 45 / 45 | 0.509 s |
 | Deliberately delayed response | Timeout recorded | 10 | 45 / 45 | 4.013 s |
 
-These files are U, p and phi across ten steps, plus 15 final POD-mode fields.
+Each comparison matched all 45 saved files byte for byte: U, p and phi across
+ten steps, plus 15 final POD-mode fields.
 The no-request baseline still prepares the observation and image.
 
 The timer surrounds the Python analysis call; preceding C++ field-copy and
@@ -69,7 +70,7 @@ prediction need separate tests.
 
 The solver waited about 78 seconds for the image call. Asynchronous operation is
 still to be implemented. The two normal live calls used different instructions
-and metadata; only the paired replay isolates image inclusion.
+and metadata. In the paired replay, each pair's inputs differed only by the PNG.
 
 Accuracy needs checking across more states. The maximum speed was supplied in
 both inputs, so the location question is the useful check here. October 13's

@@ -1,0 +1,42 @@
+{
+  "status": "PASS",
+  "model": "gemma-4-E2B-it-Q4_0-vision",
+  "server_pid": 4177294,
+  "mmproj_loaded": true,
+  "steps": 10,
+  "analysis_step": 5,
+  "analysis_time_s": 5e-07,
+  "timings": {
+    "without_request_seconds": 4.9490622110897675,
+    "with_image_request_seconds": 83.03404678404331,
+    "with_text_request_seconds": 43.4227727400139,
+    "added_wall_seconds_image": 78.08498457295354,
+    "added_wall_seconds_text": 38.47371052892413,
+    "inference_wall_seconds_image": 77.56014180998318,
+    "inference_wall_seconds_text": 39.63716281298548,
+    "cpp_full_callback_seconds_image": 78.255546163,
+    "cpp_full_callback_seconds_text": 39.671958236
+  },
+  "structured_output": {
+    "image": {
+      "observations": "The velocity magnitude |U| shows a high value near x=0.0, with a maximum of 82.5 m/s.",
+      "possible_interpretation": "The flow exhibits a localized high-speed region near the center of the domain.",
+      "checks": "The pressure field shows a significant pressure gradient near the high-velocity region."
+    },
+    "text_only": {
+      "observations": "Residuals show small values, e.g., p final last is 9.19188e-07.",
+      "possible_interpretation": "The simulation appears to be progressing with small residuals.",
+      "checks": "Check for missing force equilibrium data."
+    }
+  },
+  "source_HEAD": "23089bbf3447731852fa960d7d25ea18767a3f51",
+  "files": {
+    "request": "fixed-pod/llm_request.json",
+    "request_body": "fixed-pod/llm_request_body.json",
+    "image": "fixed-pod/llm_observation/state.png",
+    "response": "fixed-pod/llm_response.json",
+    "raw_http_body": "fixed-pod/llm_http_response.raw",
+    "text_only_request": "fixed-pod-text-only/llm_request.json",
+    "text_only_response": "fixed-pod-text-only/llm_response.json"
+  }
+}

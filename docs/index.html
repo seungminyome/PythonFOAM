@@ -1,10 +1,63 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PythonFOAM — in-situ model observations</title><style>
-*{box-sizing:border-box}body{margin:0;background:#f6f5ef;color:#183431;font:18px/1.75 system-ui,"Noto Sans CJK KR",sans-serif}main{max-width:1050px;margin:auto;padding:50px 25px}h1{font-size:clamp(32px,4vw,48px);line-height:1.25;letter-spacing:-1px}h2{font-size:25px;margin-top:0}p{margin:0 0 18px}a{color:#24568b;text-underline-offset:4px}.eyebrow{font-size:14px;color:#526f61;letter-spacing:1px}header{padding:12px 0 28px}.links{display:flex;gap:12px;flex-wrap:wrap}.links a{border:1px solid #b8cec0;padding:8px 16px;border-radius:9px;background:white;text-decoration:none}.cards{display:grid;grid-template-columns:1fr 1fr;gap:20px}article,section{background:white;border:1px solid #d6e2d8;border-radius:18px;padding:26px;margin-bottom:22px}article p{font-size:17px}.tag{font-size:14px;color:#496d58}section img{width:100%;max-width:800px;height:auto;display:block;margin:auto}.small{font-size:15px;color:#52675e}.note{border-left:4px solid #aa5b31;padding:12px 18px;background:#fff0e6}.table{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:16px}td,th{text-align:left;padding:12px;border-bottom:1px solid #d5e0d6}th{background:#f1f6ee}code{font-size:.88em;overflow-wrap:anywhere}footer{font-size:14px;color:#52675e}@media(max-width:650px){main{padding:25px 15px}.cards{grid-template-columns:1fr}article,section{padding:22px}table{min-width:450px}}
-</style></head><body><main>
-<header><p class="eyebrow">PYTHONFOAM · PODFOAM OBSERVATION DEMO</p><h1>In-situ model observations</h1><p>A local multimodal model receives a numerical summary and a same-step field image during a PODFoam run. Its response is recorded for the user, and the solver continues.</p><div class="links"><a href="https://github.com/seungminyome/PythonFOAM">Repository</a><a href="https://github.com/seungminyome/PythonFOAM/blob/pod-insitu-llm/docs/results.md">Run report</a><a href="https://github.com/seungminyome/PythonFOAM/tree/pod-insitu-llm/Solver_Examples/PODFoam/llm_demo">Code / run instructions</a></div></header>
-<div class="cards"><article lang="ko"><p class="tag">한국어 · 개요</p><h2>계산과 AI의 연결</h2><p>자료를 보내고 답을 받은 뒤 계산을 이어가는 과정을 그림으로 설명합니다. 확인된 결과와 남은 한계를 함께 정리했습니다.</p><a href="overview.ko.html">개요 읽기 →</a></article><article lang="ko"><p class="tag">한국어 · 상세 해설</p><h2>입력 자료와 결과 검토</h2><p>SVD·POD의 전체 이름과 예시, 실제 입력·응답, 위치 오류, 시간 비용, 검토 질문을 다룹니다. 원본 자료도 문서 안에서 확인할 수 있습니다.</p><a href="guide.ko.html">상세 해설 읽기 →</a></article></div>
-<section><h2>Recorded result</h2><p>The October 13, 2026 run used a serial 20,540-cell case. It requested an observation at step 5 and completed all 10 steps. Each of the four comparison cases produced 45 files byte-identical to the no-request baseline.</p><div class="table"><table><thead><tr><th>Case</th><th>Outcome</th><th>Full callback</th></tr></thead><tbody><tr><td>Numbers + image</td><td>Actual response</td><td>70.604 s</td></tr><tr><td>Numbers only</td><td>Actual response</td><td>41.412 s</td></tr><tr><td>Connection refused</td><td>Continued</td><td>0.411 s</td></tr><tr><td>Delayed-response test</td><td>Timed out; continued</td><td>4.017 s</td></tr></tbody></table></div><p class="small">Single-run measurements. The callback is synchronous; the solver waits for a response or timeout.</p><p class="note">The model repeated the supplied maximum speed but misplaced its location by approximately 0.25 m relative to the actual maximum. These results establish the tested integration, not reliable engineering interpretation.</p></section>
-<section><h2>Actual image input</h2><img src="evidence/state.png" width="640" height="360" alt="Velocity magnitude and kinematic pressure at step five"><p class="small">Same-step cell fields. The vertical axis is stretched; the displayed geometry is not to scale.</p><a href="guide.ko.html#image">Read the field comparison</a></section>
-<section><h2>Evidence and downloads</h2><p><a href="guide.ko.html#raw-library">Open the in-page evidence reader</a> to inspect requests, responses, logs, arrays and rechecks. The reader can download individual originals.</p><ul><li><a href="https://github.com/seungminyome/PythonFOAM/releases/download/pod-insitu-demo-2026-10-13/explanations-ko.zip">Offline illustrated guides</a></li><li><a href="https://github.com/seungminyome/PythonFOAM/releases/download/pod-insitu-demo-2026-10-13/evidence-swwr2e.zip">Selected evidence ZIP</a></li><li><a href="https://github.com/seungminyome/PythonFOAM/releases/download/pod-insitu-demo-2026-10-13/run-archive-SwwR2e.tar.gz">Complete saved run: all five cases</a></li><li><a href="https://github.com/seungminyome/PythonFOAM/releases/download/pod-insitu-demo-2026-10-13/SHA256SUMS.txt">Download checksums</a></li></ul><p class="small">Run: <code>pod-llm-demo.SwwR2e</code>, 2026-10-13. Read-only evidence checks and documentation: 2026-10-15. Model weights are not included.</p></section>
-<footer>This fork extends <a href="https://github.com/argonne-lcf/PythonFOAM">argonne-lcf/PythonFOAM</a>. <a href="https://github.com/seungminyome/PythonFOAM/blob/pod-insitu-llm/LICENSE">License</a></footer>
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="PythonFOAM 계산 중 수치와 이미지를 로컬 멀티모달 AI에 전달하는 관찰·기록 시스템. 2026년 10월 17일 실제 통합 시험과 통제 비교 결과.">
+<title>PythonFOAM–AI — 계산 중 수치·이미지 관찰</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f6f5ef;color:#183431;font:18px/1.75 system-ui,"Noto Sans CJK KR",sans-serif;word-break:keep-all;overflow-wrap:anywhere}main{max-width:1050px;margin:auto;padding:44px 25px}h1{font-size:clamp(31px,4vw,47px);line-height:1.35;letter-spacing:-1px}h2{font-size:25px;line-height:1.5;margin-top:0}h3{font-size:20px;margin:0 0 10px}p{margin:0 0 18px}a{color:#24568b;text-underline-offset:4px}a:focus-visible{outline:3px solid #bf891f;outline-offset:4px}.eyebrow{font-size:14px;color:#526f61;letter-spacing:.6px}header{padding:12px 0 24px}.links{display:flex;gap:12px;flex-wrap:wrap}.links a{border:1px solid #b8cec0;padding:8px 16px;border-radius:9px;background:white;text-decoration:none}.links a.primary{background:#176e59;border-color:#176e59;color:white;font-weight:700}.cards{display:grid;grid-template-columns:1fr 1fr;gap:20px}article,section{background:white;border:1px solid #d6e2d8;border-radius:18px;padding:26px;margin-bottom:22px}article p{font-size:17px}.tag{font-size:14px;color:#496d58}.latest{border:2px solid #176e59}.small{font-size:15px;color:#52675e}.note{border-left:4px solid #aa5b31;padding:12px 18px;background:#fff0e6}.table{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:16px}caption{text-align:left;font-weight:700;padding:0 0 12px}td,th{text-align:left;padding:12px;border-bottom:1px solid #d5e0d6}th{background:#f1f6ee}code{font-size:.88em}.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;list-style-position:inside;padding:0;margin:22px 0}.flow li{padding:15px;background:#edf5ef;border-radius:12px;font-size:16px}.flow strong{display:block;margin-top:6px}figure{margin:18px 0}figure img{width:100%;max-width:800px;height:auto;display:block;margin:auto}figcaption{font-size:15px;color:#52675e;margin-top:12px}footer{font-size:14px;color:#52675e}@media(max-width:650px){main{padding:23px 15px}.cards{grid-template-columns:1fr}.flow{grid-template-columns:1fr 1fr}article,section{padding:21px}table{min-width:510px}}
+</style>
+</head>
+<body><main>
+<header>
+<p class="eyebrow">PYTHONFOAM–AI · 최신 실제 시험 2026-10-17</p>
+<h1>계산 중 수치와 그림을 AI에 보내고,<br>관찰 답변을 기록합니다.</h1>
+<p>OpenFOAM 계산 중간 상태를 PythonFOAM 콜백으로 꺼내 로컬 멀티모달 AI에 전달합니다. 사용자가 읽을 답변을 저장하고 남은 계산을 이어가는 <strong>관찰·기록(Observer/Logger) 시스템</strong>입니다.</p>
+<div class="links"><a class="primary" href="results-20261017.html">최신 시험 결과 읽기</a><a href="https://github.com/seungminyome/PythonFOAM">GitHub 저장소</a><a href="https://github.com/seungminyome/PythonFOAM/blob/pod-insitu-llm/docs/results.md">기술 보고서</a></div>
+</header>
+
+<section class="latest" aria-labelledby="latest-result">
+<p class="tag">2026-10-17 · 실제 OpenFOAM + Gemma · 검증 코드 <a href="https://github.com/seungminyome/PythonFOAM/commit/23089bb"><code>23089bb</code></a></p>
+<h2 id="latest-result">연결과 실패 후 계산 복귀를 확인했습니다.</h2>
+<p><strong>5개 조건 모두 10단계 계산을 마쳤습니다.</strong> 5단계에서 AI 관찰을 호출한 뒤 6~10단계까지 진행했고, AI 요청이 없는 기준 실행과 비교한 <strong>각 조건의 저장 파일 45개가 모두 바이트 단위로 같았습니다.</strong></p>
+<div class="table"><table><caption>실제 솔버에서 측정한 전체 콜백 시간</caption><thead><tr><th scope="col">조건</th><th scope="col">관찰 요청 결과</th><th scope="col">전체 콜백</th></tr></thead><tbody>
+<tr><td>AI 요청 없음 · 기준</td><td>준비 작업 후 계산 계속</td><td>0.493초</td></tr>
+<tr><td>수치 + 이미지</td><td>실제 AI 응답 저장</td><td>78.256초</td></tr>
+<tr><td>수치만</td><td>실제 AI 응답 저장</td><td>39.672초</td></tr>
+<tr><td>연결 거부</td><td>실패 기록 후 계산 계속</td><td>0.509초</td></tr>
+<tr><td>일부러 늦춘 응답</td><td>시간 초과 처리 후 계산 계속</td><td>4.013초</td></tr>
+</tbody></table></div>
+<p class="small">한 번씩 측정한 실행 결과입니다. 이 표의 두 정상 AI 호출은 질문과 입력 정보가 달라, 이미지의 효과를 판단하는 통제 비교로 사용하지 않습니다. 45개는 파일 개수입니다.</p>
+<p class="note"><strong>현재는 동기식입니다.</strong> 솔버는 AI 응답이나 시간 초과 처리가 끝날 때까지 기다립니다. 기다리는 동안 솔버를 계속 돌리는 비동기 방식은 아직 구현하지 않았습니다. 파일 일치는 이번 실행의 계산 결과가 유지됐다는 근거이며, 물리적 안정성이나 AI 해석의 정확성을 증명하지 않습니다.</p>
+</section>
+
+<section aria-labelledby="controlled-result">
+<h2 id="controlled-result">이미지만 바꾼 비교에서도 위치 답변은 틀렸습니다.</h2>
+<p>별도 시험에서는 <strong>같은 질문·같은 수치·같은 모델 설정</strong>을 유지하고 PNG 첨부만 바꿨습니다. 한 시점의 자료를 사용해 3쌍, 총 6회 요청했습니다. 정답 좌표는 채점에만 사용했습니다.</p>
+<div class="table"><table><caption>실제 최대속도 셀과 AI가 말한 위치의 XY 평면 거리</caption><thead><tr><th scope="col">조건</th><th scope="col">위치 오차 · 각 3회</th><th scope="col">확인 결과</th></tr></thead><tbody><tr><td>수치만</td><td>60.92cm</td><td>3회 모두 잘못된 위치</td></tr><tr><td>같은 수치 + 이미지</td><td>50.97cm</td><td>3회 모두 잘못된 위치</td></tr></tbody></table></div>
+<p>두 조건 모두 입력에 있던 최대속도 약 82.53m/s는 정확히 인용했습니다. <strong>숫자 인용과 위치 판단은 따로 평가해야 합니다.</strong> 자동 근거 검사에 표시가 없었던 답변에서도 독립 검수가 잘못된 위치 주장을 확인했습니다.</p>
+<p class="note">한 시점의 반복 결과이므로 일반적인 정확도 향상을 입증하지 않습니다. 응답 시간에는 이전 입력을 재사용하는 <strong>캐시</strong> 영향이 커서, 이미지를 넣으면 더 빠르다고 말할 수 없습니다. 이전 문서의 약 25cm는 x축만의 오차이므로 이번 XY 거리와 직접 비교하지 않습니다.</p>
+<a href="results-20261017.html">6개 실제 답변과 개별 측정값 보기 →</a>
+</section>
+
+<section aria-labelledby="integration-flow">
+<h2 id="integration-flow">구현한 연결 흐름</h2>
+<ol class="flow"><li>계산 중간<strong>같은 시점의 수치와 이미지 준비</strong></li><li>PythonFOAM 콜백<strong>기존 멀티모달 AI에 전달</strong></li><li>관찰·기록<strong>답변 또는 실패 사유 저장</strong></li><li>계산 복귀<strong>원래 계산법으로 나머지 단계 진행</strong></li></ol>
+<p>AI 답변으로 계산값이나 솔버 설정을 바꾸지 않습니다. 다음 과제는 여러 상태에서 설명의 정확성과 유용성을 검증하고, 대기 시간을 줄이는 구조를 시험하는 것입니다.</p>
+<figure><img src="evidence/2026-10-17/pod-llm-demo.LRfJBN/fixed-pod/llm_observation/state.png" width="640" height="360" alt="10월 17일 실행의 5단계에서 AI에 전달한 실제 속도 크기와 운동학적 압력 지도"><figcaption>최신 실행에서 보낸 그림입니다. 위는 빠르기 |U|, 아래는 운동학적 압력 p입니다. 세로를 늘려 표시했으므로 실제 길이 비율과 다릅니다.</figcaption></figure>
+<a href="https://github.com/seungminyome/PythonFOAM/tree/pod-insitu-llm/Solver_Examples/PODFoam/llm_demo">코드와 실행 방법 →</a>
+</section>
+
+<section aria-labelledby="latest-evidence">
+<h2 id="latest-evidence">최신 원본과 검증 기록</h2>
+<p>2026-10-17 실제 실행 로그, 통제 비교 요청·응답, 자동 평가와 독립 검수를 함께 공개합니다.</p>
+<div class="links"><a href="results-20261017.html">최신 결과와 원문 링크</a><a href="https://github.com/seungminyome/PythonFOAM/tree/pod-insitu-llm/docs/evidence/2026-10-17">10월 17일 원본 폴더</a></div>
+</section>
+
+<h2>연결 원리를 이해하는 이전 실행 해설</h2>
+<p class="small">아래 두 문서는 2026-10-13 실행 <code>SwwR2e</code>를 설명합니다. 본문의 시간·답변·오차는 그 실행의 기록이며, 최신 결과는 위 보고서에서 확인할 수 있습니다.</p>
+<div class="cards"><article><p class="tag">2026-10-13 기록 · 쉬운 개요</p><h3>계산과 AI의 연결</h3><p>누가 계산하고, 어떤 자료를 전달하며, 답을 받은 뒤 어떻게 계산을 이어가는지 그림으로 설명합니다.</p><a href="overview.ko.html">이전 실행의 쉬운 설명 →</a></article><article><p class="tag">2026-10-13 기록 · 상세 해설</p><h3>입력 자료와 답변을 확인하는 방법</h3><p>연결 구조, 실제 입력·응답, 위치 오류와 비용을 설명합니다. 수치 요약의 용어 해설과 당시 원본 자료도 보존했습니다.</p><a href="guide.ko.html">이전 실행의 상세 해설 →</a></article></div>
+<section aria-labelledby="archive-downloads"><h2 id="archive-downloads">이전 실행 자료 내려받기 · 2026-10-13</h2><p><a href="guide.ko.html#raw-library">이전 원본을 문서 안에서 보기</a> 또는 아래 보관본을 내려받을 수 있습니다.</p><ul><li><a href="https://github.com/seungminyome/PythonFOAM/releases/download/pod-insitu-demo-2026-10-13/explanations-ko.zip">이전 설명 문서 ZIP</a></li><li><a href="https://github.com/seungminyome/PythonFOAM/releases/download/pod-insitu-demo-2026-10-13/evidence-swwr2e.zip">이전 주요 근거 ZIP</a></li><li><a href="https://github.com/seungminyome/PythonFOAM/releases/download/pod-insitu-demo-2026-10-13/run-archive-SwwR2e.tar.gz">이전 5조건 전체 실행 기록</a></li><li><a href="https://github.com/seungminyome/PythonFOAM/releases/download/pod-insitu-demo-2026-10-13/SHA256SUMS.txt">다운로드 파일 체크섬</a></li></ul><p class="small">실행 <code>pod-llm-demo.SwwR2e</code>: 2026-10-13. 설명 작성·재검사: 2026-10-15. 모델 가중치는 포함하지 않습니다.</p></section>
+<footer><a href="https://github.com/argonne-lcf/PythonFOAM">argonne-lcf/PythonFOAM</a>을 바탕으로 한 포크입니다. <a href="https://github.com/seungminyome/PythonFOAM/blob/pod-insitu-llm/LICENSE">라이선스</a></footer>
 </main></body></html>

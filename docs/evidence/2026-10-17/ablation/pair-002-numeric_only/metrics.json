@@ -1,0 +1,49 @@
+{
+  "status": "ok",
+  "successful_response": true,
+  "request_sha256": "094703639941bc46b9ba394ad713c1d7b8d58108c5802e5f1d2be02b01b6260f",
+  "raw_response_sha256": "6600ca622b066d5cf3963e21539613a15b4c5c5e8f8f8520a5f0152d80d02b31",
+  "raw_response_bytes": 971,
+  "replay_callback_wall_s": 14.700595346977934,
+  "transport_wait_wall_s": 14.699484925018623,
+  "client_inference_wall_s": 14.699472369044088,
+  "location": {
+    "status": "scored",
+    "reason": null,
+    "axes": [
+      "x",
+      "y"
+    ],
+    "coordinates_m": {
+      "x": 0.6012246511046805,
+      "y": 0.11429523559299273
+    },
+    "axis_errors_m": {
+      "x": 0.6006864830117612,
+      "y": 0.10158075136812805
+    },
+    "projected_error_m": 0.6092149866192987,
+    "euclidean_error_m": null,
+    "reference_candidate_count": 1,
+    "distance_policy": "nearest cell among exact tied maximum-speed cells"
+  },
+  "grounding": {
+    "rubric_version": 1,
+    "numeric_checks": [
+      {
+        "kind": "maximum_speed",
+        "quoted": 82.52751611538334,
+        "expected": 82.52751611538334,
+        "agrees_with_numeric_evidence": true,
+        "tolerance": "max(0.05 m/s, 0.1% of reference)",
+        "field": "observations"
+      }
+    ],
+    "numeric_contradiction_count": 0,
+    "unsupported_claim_flags": [],
+    "needs_human_review": true,
+    "hallucination_free": null,
+    "assessment": "no_automatic_flags",
+    "limitations": "English rules check a few explicit claims only; absence of flags is not proof of grounding. Numeric values occur in both prompts."
+  }
+}

@@ -1,0 +1,560 @@
+{
+  "created_utc": "2026-10-17T08:38:54.741795+00:00",
+  "source_commit": "23089bbf3447731852fa960d7d25ea18767a3f51",
+  "new_solver_cases_completed": 5,
+  "solver_steps_per_case": 10,
+  "identical_output_files_per_case": 45,
+  "integration_status": "PASS",
+  "independent_integration_status": "PASS",
+  "runtime_identity_status": "PASS",
+  "real_model_calls_completed": 8,
+  "controlled_pairs_completed": 3,
+  "single_snapshot_repeats": true,
+  "svd_input_retained": true,
+  "new_code_changes": false,
+  "remote_writes": false,
+  "ground_truth": {
+    "max_speed_m_per_s": 82.52751611538334,
+    "max_speed_cells": [
+      12090
+    ],
+    "max_speed_centres_m": [
+      [
+        0.0005381680929193357,
+        0.01271448422486468,
+        0.006349999999999999
+      ]
+    ],
+    "unique_maximum": true,
+    "minimum_pressure_m2_per_s2": -9362.826066967049,
+    "step": 5,
+    "time_s": 5e-07
+  },
+  "controlled_conditions": {
+    "numeric_only": {
+      "responses": 3,
+      "scored_xy_locations": 3,
+      "xy_errors_m": [
+        0.6092149866192987,
+        0.6092149866192987,
+        0.6092149866192987
+      ],
+      "mean_xy_error_m": 0.6092149866192987,
+      "http_wait_s": [
+        55.62550286506303,
+        14.699484925018623,
+        14.547562931897119
+      ],
+      "cached_prompt_tokens": [
+        1,
+        1456,
+        1461
+      ],
+      "automatic_grounding_flags": [
+        "no_automatic_flags",
+        "no_automatic_flags",
+        "no_automatic_flags"
+      ]
+    },
+    "numeric_plus_image": {
+      "responses": 3,
+      "scored_xy_locations": 3,
+      "xy_errors_m": [
+        0.5096869338922574,
+        0.5096869338922574,
+        0.5096869338922574
+      ],
+      "mean_xy_error_m": 0.5096869338922574,
+      "http_wait_s": [
+        20.811816658009775,
+        13.200933704036288,
+        20.71868628798984
+      ],
+      "cached_prompt_tokens": [
+        1457,
+        1567,
+        1456
+      ],
+      "automatic_grounding_flags": [
+        "no_automatic_flags",
+        "no_automatic_flags",
+        "no_automatic_flags"
+      ]
+    }
+  },
+  "trials": [
+    {
+      "status": "ok",
+      "successful_response": true,
+      "request_sha256": "d33ec7c62350f106e39bb99651b560e8401b5dedc157d3b0277e7ea6a6563417",
+      "raw_response_sha256": "5e4b01b56c02de39774e3878091a6a6c79a66795e8c55af5f4202d222d7ffe04",
+      "raw_response_bytes": 935,
+      "replay_callback_wall_s": 55.630365020013414,
+      "transport_wait_wall_s": 55.62550286506303,
+      "client_inference_wall_s": 55.62547631596681,
+      "location": {
+        "status": "scored",
+        "reason": null,
+        "axes": [
+          "x",
+          "y"
+        ],
+        "coordinates_m": {
+          "x": 0.6012246511046805,
+          "y": 0.11429523559299273
+        },
+        "axis_errors_m": {
+          "x": 0.6006864830117612,
+          "y": 0.10158075136812805
+        },
+        "projected_error_m": 0.6092149866192987,
+        "euclidean_error_m": null,
+        "reference_candidate_count": 1,
+        "distance_policy": "nearest cell among exact tied maximum-speed cells"
+      },
+      "grounding": {
+        "rubric_version": 1,
+        "numeric_checks": [
+          {
+            "kind": "maximum_speed",
+            "quoted": 82.52751611538334,
+            "expected": 82.52751611538334,
+            "agrees_with_numeric_evidence": true,
+            "tolerance": "max(0.05 m/s, 0.1% of reference)",
+            "field": "observations"
+          }
+        ],
+        "numeric_contradiction_count": 0,
+        "unsupported_claim_flags": [],
+        "needs_human_review": true,
+        "hallucination_free": null,
+        "assessment": "no_automatic_flags",
+        "limitations": "English rules check a few explicit claims only; absence of flags is not proof of grounding. Numeric values occur in both prompts."
+      },
+      "pair": 1,
+      "condition": "numeric_only",
+      "seed": 20261017,
+      "name": "pair-001-numeric_only",
+      "structured_output": {
+        "observations": "Max speed |U| is 82.52751611538334 m/s at x=0.6012246511046805 m, y=0.11429523559299273 m.",
+        "possible_interpretation": "The maximum velocity is found at the boundary of the domain.",
+        "checks": "Missing evidence for vertical axis scaling."
+      },
+      "usage": {
+        "completion_tokens": 121,
+        "prompt_tokens": 1462,
+        "total_tokens": 1583,
+        "prompt_tokens_details": {
+          "cached_tokens": 1
+        }
+      },
+      "server_timings": {
+        "cache_n": 1,
+        "prompt_n": 1461,
+        "prompt_ms": 41331.228,
+        "prompt_per_token_ms": 28.28968377823409,
+        "prompt_per_second": 35.34857469030438,
+        "predicted_n": 121,
+        "predicted_ms": 13629.917,
+        "predicted_per_token_ms": 113.58264166666666,
+        "predicted_per_second": 8.804162197025851
+      }
+    },
+    {
+      "status": "ok",
+      "successful_response": true,
+      "request_sha256": "515873cd3e28189d1278a08d6f3d778fe452549a94f718704ad6d1711a1ba605",
+      "raw_response_sha256": "30d061c3e3fdf86c2b0f900a40a12c32d61334514cbc622bb05065a2c1ec54f3",
+      "raw_response_bytes": 945,
+      "replay_callback_wall_s": 20.814006134984083,
+      "transport_wait_wall_s": 20.811816658009775,
+      "client_inference_wall_s": 20.811802221112885,
+      "location": {
+        "status": "scored",
+        "reason": null,
+        "axes": [
+          "x",
+          "y"
+        ],
+        "coordinates_m": {
+          "x": 0.5,
+          "y": 0.11429523559299273
+        },
+        "axis_errors_m": {
+          "x": 0.49946183190708066,
+          "y": 0.10158075136812805
+        },
+        "projected_error_m": 0.5096869338922574,
+        "euclidean_error_m": null,
+        "reference_candidate_count": 1,
+        "distance_policy": "nearest cell among exact tied maximum-speed cells"
+      },
+      "grounding": {
+        "rubric_version": 1,
+        "numeric_checks": [
+          {
+            "kind": "maximum_speed",
+            "quoted": 82.52751611538334,
+            "expected": 82.52751611538334,
+            "agrees_with_numeric_evidence": true,
+            "tolerance": "max(0.05 m/s, 0.1% of reference)",
+            "field": "observations"
+          }
+        ],
+        "numeric_contradiction_count": 0,
+        "unsupported_claim_flags": [],
+        "needs_human_review": true,
+        "hallucination_free": null,
+        "assessment": "no_automatic_flags",
+        "limitations": "English rules check a few explicit claims only; absence of flags is not proof of grounding. Numeric values occur in both prompts."
+      },
+      "pair": 1,
+      "condition": "numeric_plus_image",
+      "seed": 20261017,
+      "name": "pair-001-numeric_plus_image",
+      "structured_output": {
+        "observations": "Max speed |U| is 82.52751611538334 m/s at x=0.5 m, y=0.11429523559299273 m.",
+        "possible_interpretation": "The maximum velocity is localized near the center of the domain.",
+        "checks": "Missing evidence for explicit max speed location in the image."
+      },
+      "usage": {
+        "completion_tokens": 110,
+        "prompt_tokens": 1568,
+        "total_tokens": 1678,
+        "prompt_tokens_details": {
+          "cached_tokens": 1457
+        }
+      },
+      "server_timings": {
+        "cache_n": 1457,
+        "prompt_n": 111,
+        "prompt_ms": 7732.523,
+        "prompt_per_token_ms": 69.66236936936937,
+        "prompt_per_second": 14.35495245212979,
+        "predicted_n": 110,
+        "predicted_ms": 12880.03,
+        "predicted_per_token_ms": 118.16541284403671,
+        "predicted_per_second": 8.46271320796613
+      }
+    },
+    {
+      "status": "ok",
+      "successful_response": true,
+      "request_sha256": "a68849311bb7c7c93bea1bbfb45a7c8b08bc191f3955f7a0dc51479e1e4499ca",
+      "raw_response_sha256": "bbc5b13036941746e6fec06410157d78abb16eca752f12197122105319bad0e4",
+      "raw_response_bytes": 931,
+      "replay_callback_wall_s": 13.202361149014905,
+      "transport_wait_wall_s": 13.200933704036288,
+      "client_inference_wall_s": 13.200917747919448,
+      "location": {
+        "status": "scored",
+        "reason": null,
+        "axes": [
+          "x",
+          "y"
+        ],
+        "coordinates_m": {
+          "x": 0.5,
+          "y": 0.11429523559299273
+        },
+        "axis_errors_m": {
+          "x": 0.49946183190708066,
+          "y": 0.10158075136812805
+        },
+        "projected_error_m": 0.5096869338922574,
+        "euclidean_error_m": null,
+        "reference_candidate_count": 1,
+        "distance_policy": "nearest cell among exact tied maximum-speed cells"
+      },
+      "grounding": {
+        "rubric_version": 1,
+        "numeric_checks": [
+          {
+            "kind": "maximum_speed",
+            "quoted": 82.52751611538334,
+            "expected": 82.52751611538334,
+            "agrees_with_numeric_evidence": true,
+            "tolerance": "max(0.05 m/s, 0.1% of reference)",
+            "field": "observations"
+          }
+        ],
+        "numeric_contradiction_count": 0,
+        "unsupported_claim_flags": [],
+        "needs_human_review": true,
+        "hallucination_free": null,
+        "assessment": "no_automatic_flags",
+        "limitations": "English rules check a few explicit claims only; absence of flags is not proof of grounding. Numeric values occur in both prompts."
+      },
+      "pair": 2,
+      "condition": "numeric_plus_image",
+      "seed": 20261018,
+      "name": "pair-002-numeric_plus_image",
+      "structured_output": {
+        "observations": "Max speed |U| is 82.52751611538334 m/s at x=0.5 m, y=0.11429523559299273 m.",
+        "possible_interpretation": "The maximum velocity is observed near the center of the domain.",
+        "checks": "No evidence of force balance or low Courant number is provided."
+      },
+      "usage": {
+        "completion_tokens": 112,
+        "prompt_tokens": 1568,
+        "total_tokens": 1680,
+        "prompt_tokens_details": {
+          "cached_tokens": 1567
+        }
+      },
+      "server_timings": {
+        "cache_n": 1567,
+        "prompt_n": 1,
+        "prompt_ms": 117.949,
+        "prompt_per_token_ms": 117.949,
+        "prompt_per_second": 8.47824059551162,
+        "predicted_n": 112,
+        "predicted_ms": 12641.789,
+        "predicted_per_token_ms": 113.889990990991,
+        "predicted_per_second": 8.780402836971886
+      }
+    },
+    {
+      "status": "ok",
+      "successful_response": true,
+      "request_sha256": "094703639941bc46b9ba394ad713c1d7b8d58108c5802e5f1d2be02b01b6260f",
+      "raw_response_sha256": "6600ca622b066d5cf3963e21539613a15b4c5c5e8f8f8520a5f0152d80d02b31",
+      "raw_response_bytes": 971,
+      "replay_callback_wall_s": 14.700595346977934,
+      "transport_wait_wall_s": 14.699484925018623,
+      "client_inference_wall_s": 14.699472369044088,
+      "location": {
+        "status": "scored",
+        "reason": null,
+        "axes": [
+          "x",
+          "y"
+        ],
+        "coordinates_m": {
+          "x": 0.6012246511046805,
+          "y": 0.11429523559299273
+        },
+        "axis_errors_m": {
+          "x": 0.6006864830117612,
+          "y": 0.10158075136812805
+        },
+        "projected_error_m": 0.6092149866192987,
+        "euclidean_error_m": null,
+        "reference_candidate_count": 1,
+        "distance_policy": "nearest cell among exact tied maximum-speed cells"
+      },
+      "grounding": {
+        "rubric_version": 1,
+        "numeric_checks": [
+          {
+            "kind": "maximum_speed",
+            "quoted": 82.52751611538334,
+            "expected": 82.52751611538334,
+            "agrees_with_numeric_evidence": true,
+            "tolerance": "max(0.05 m/s, 0.1% of reference)",
+            "field": "observations"
+          }
+        ],
+        "numeric_contradiction_count": 0,
+        "unsupported_claim_flags": [],
+        "needs_human_review": true,
+        "hallucination_free": null,
+        "assessment": "no_automatic_flags",
+        "limitations": "English rules check a few explicit claims only; absence of flags is not proof of grounding. Numeric values occur in both prompts."
+      },
+      "pair": 2,
+      "condition": "numeric_only",
+      "seed": 20261018,
+      "name": "pair-002-numeric_only",
+      "structured_output": {
+        "observations": "Max speed |U| is 82.52751611538334 m/s at x=0.6012246511046805 m, y=0.11429523559299273 m.",
+        "possible_interpretation": "The maximum velocity is found at the upper-right corner of the domain.",
+        "checks": "Missing evidence for vertical axis scaling or shape interpretation."
+      },
+      "usage": {
+        "completion_tokens": 127,
+        "prompt_tokens": 1462,
+        "total_tokens": 1589,
+        "prompt_tokens_details": {
+          "cached_tokens": 1456
+        }
+      },
+      "server_timings": {
+        "cache_n": 1456,
+        "prompt_n": 6,
+        "prompt_ms": 451.686,
+        "prompt_per_token_ms": 75.28099999999999,
+        "prompt_per_second": 13.283564245958475,
+        "predicted_n": 127,
+        "predicted_ms": 14139.585,
+        "predicted_per_token_ms": 112.21892857142856,
+        "predicted_per_second": 8.911152625766599
+      }
+    },
+    {
+      "status": "ok",
+      "successful_response": true,
+      "request_sha256": "059a3bc84e3816fb8da0b89e08f51c8c8ba08a92ee6304a25adb9d80ecab4dc1",
+      "raw_response_sha256": "be307cf749a6845277c53100cb9ec12ac78f73a24b000cc61e9e4275ba051f10",
+      "raw_response_bytes": 959,
+      "replay_callback_wall_s": 14.549140393966809,
+      "transport_wait_wall_s": 14.547562931897119,
+      "client_inference_wall_s": 14.54755085601937,
+      "location": {
+        "status": "scored",
+        "reason": null,
+        "axes": [
+          "x",
+          "y"
+        ],
+        "coordinates_m": {
+          "x": 0.6012246511046805,
+          "y": 0.11429523559299273
+        },
+        "axis_errors_m": {
+          "x": 0.6006864830117612,
+          "y": 0.10158075136812805
+        },
+        "projected_error_m": 0.6092149866192987,
+        "euclidean_error_m": null,
+        "reference_candidate_count": 1,
+        "distance_policy": "nearest cell among exact tied maximum-speed cells"
+      },
+      "grounding": {
+        "rubric_version": 1,
+        "numeric_checks": [
+          {
+            "kind": "maximum_speed",
+            "quoted": 82.52751611538334,
+            "expected": 82.52751611538334,
+            "agrees_with_numeric_evidence": true,
+            "tolerance": "max(0.05 m/s, 0.1% of reference)",
+            "field": "observations"
+          }
+        ],
+        "numeric_contradiction_count": 0,
+        "unsupported_claim_flags": [],
+        "needs_human_review": true,
+        "hallucination_free": null,
+        "assessment": "no_automatic_flags",
+        "limitations": "English rules check a few explicit claims only; absence of flags is not proof of grounding. Numeric values occur in both prompts."
+      },
+      "pair": 3,
+      "condition": "numeric_only",
+      "seed": 20261019,
+      "name": "pair-003-numeric_only",
+      "structured_output": {
+        "observations": "Max speed |U| is 82.52751611538334 m/s at x=0.6012246511046805 m, y=0.11429523559299273 m.",
+        "possible_interpretation": "The maximum velocity is found at the upper-right corner of the domain.",
+        "checks": "Missing evidence for vertical axis scaling or shape interpretation."
+      },
+      "usage": {
+        "completion_tokens": 127,
+        "prompt_tokens": 1462,
+        "total_tokens": 1589,
+        "prompt_tokens_details": {
+          "cached_tokens": 1461
+        }
+      },
+      "server_timings": {
+        "cache_n": 1461,
+        "prompt_n": 1,
+        "prompt_ms": 117.593,
+        "prompt_per_token_ms": 117.593,
+        "prompt_per_second": 8.503907545517166,
+        "predicted_n": 127,
+        "predicted_ms": 14345.906,
+        "predicted_per_token_ms": 113.85639682539683,
+        "predicted_per_second": 8.78299355927747
+      }
+    },
+    {
+      "status": "ok",
+      "successful_response": true,
+      "request_sha256": "12eae84dc387a71e747f8ed769f5591b3ac7bc35c055fb39cd2f72981930be6f",
+      "raw_response_sha256": "06a2f8ff9bba4c099b32bff0f8d30513396a88991f072b0e90decfc878339c8a",
+      "raw_response_bytes": 942,
+      "replay_callback_wall_s": 20.721229835995473,
+      "transport_wait_wall_s": 20.71868628798984,
+      "client_inference_wall_s": 20.7186650109943,
+      "location": {
+        "status": "scored",
+        "reason": null,
+        "axes": [
+          "x",
+          "y"
+        ],
+        "coordinates_m": {
+          "x": 0.5,
+          "y": 0.11429523559299273
+        },
+        "axis_errors_m": {
+          "x": 0.49946183190708066,
+          "y": 0.10158075136812805
+        },
+        "projected_error_m": 0.5096869338922574,
+        "euclidean_error_m": null,
+        "reference_candidate_count": 1,
+        "distance_policy": "nearest cell among exact tied maximum-speed cells"
+      },
+      "grounding": {
+        "rubric_version": 1,
+        "numeric_checks": [
+          {
+            "kind": "maximum_speed",
+            "quoted": 82.52751611538334,
+            "expected": 82.52751611538334,
+            "agrees_with_numeric_evidence": true,
+            "tolerance": "max(0.05 m/s, 0.1% of reference)",
+            "field": "observations"
+          }
+        ],
+        "numeric_contradiction_count": 0,
+        "unsupported_claim_flags": [],
+        "needs_human_review": true,
+        "hallucination_free": null,
+        "assessment": "no_automatic_flags",
+        "limitations": "English rules check a few explicit claims only; absence of flags is not proof of grounding. Numeric values occur in both prompts."
+      },
+      "pair": 3,
+      "condition": "numeric_plus_image",
+      "seed": 20261019,
+      "name": "pair-003-numeric_plus_image",
+      "structured_output": {
+        "observations": "Max speed |U| is 82.52751611538334 m/s at x=0.5 m, y=0.11429523559299273 m.",
+        "possible_interpretation": "The maximum velocity is localized near the right edge of the domain.",
+        "checks": "No evidence of force balance or low Courant number is provided."
+      },
+      "usage": {
+        "completion_tokens": 113,
+        "prompt_tokens": 1568,
+        "total_tokens": 1681,
+        "prompt_tokens_details": {
+          "cached_tokens": 1456
+        }
+      },
+      "server_timings": {
+        "cache_n": 1456,
+        "prompt_n": 112,
+        "prompt_ms": 7820.988,
+        "prompt_per_token_ms": 69.83025,
+        "prompt_per_second": 14.32044135600259,
+        "predicted_n": 113,
+        "predicted_ms": 12765.884,
+        "predicted_per_token_ms": 113.98110714285714,
+        "predicted_per_second": 8.77338380953485
+      }
+    }
+  ],
+  "interpretation": [
+    "All five real solver cases completed and preserved all45 recorded field outputs.",
+    "Both controlled conditions gave incorrect explicit xy locations in all three repeats.",
+    "Numeric-only copied domain upper endpoints as the maximum-speed location.",
+    "Image condition gave x=0.5m and the upper y endpoint, still about51cm from the true maximum.",
+    "All six automatic grounding assessments had no flags; separate manual review records unsupported localization.",
+    "Large prompt-cache reuse prevents attributing the measured latency differences solely to image inclusion.",
+    "One snapshot and temperature0 repeats do not establish general model accuracy or the usefulness of SVD."
+  ],
+  "independent_review_file": "independent-ablation-review.json",
+  "full_solver_run": "pod-llm-demo.LRfJBN"
+}

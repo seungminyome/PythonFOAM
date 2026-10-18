@@ -1,0 +1,612 @@
+{
+  "schema_version": 1,
+  "review_kind": "independent_manual_review_separate_from_frozen_automated_metrics",
+  "source_directory": "/home/syome/Desktop/PythonFOAM-real-tests-20261017/ablation",
+  "no_source_or_run_result_files_modified": true,
+  "model_calls_by_reviewer": 0,
+  "source_manifest_sha256": "7f5ed1dd975be3fa8f608cc196639121d253acac294d47e4de83baff0726d3e2",
+  "independent_ground_truth": {
+    "source": "/home/syome/Desktop/PythonFOAM-real-tests-20261017/pod-llm-demo.LRfJBN/fixed-pod/llm_observation/fields.npz",
+    "fields_sha256": "14b64e399c39de9b2a6ccd8de7cc631e3b56814827bf642a7b15eed8008b12e5",
+    "max_speed_cell": 12090,
+    "max_speed_m_per_s": 82.52751611538334,
+    "max_speed_xyz_m": [
+      0.0005381680929193357,
+      0.01271448422486468,
+      0.006349999999999999
+    ]
+  },
+  "request_control_checks": [
+    {
+      "pair": 1,
+      "identical_after_removing_only_png": true,
+      "shared_seed": 20261017,
+      "png_sha256": "05a876ff878efd6ba4249dc7c82572f9e472a7524dbb9eb37cb1d539c7e16c70",
+      "derived_truth_coordinates_absent_from_transmitted_text": true
+    },
+    {
+      "pair": 2,
+      "identical_after_removing_only_png": true,
+      "shared_seed": 20261018,
+      "png_sha256": "05a876ff878efd6ba4249dc7c82572f9e472a7524dbb9eb37cb1d539c7e16c70",
+      "derived_truth_coordinates_absent_from_transmitted_text": true
+    },
+    {
+      "pair": 3,
+      "identical_after_removing_only_png": true,
+      "shared_seed": 20261019,
+      "png_sha256": "05a876ff878efd6ba4249dc7c82572f9e472a7524dbb9eb37cb1d539c7e16c70",
+      "derived_truth_coordinates_absent_from_transmitted_text": true
+    }
+  ],
+  "automated_metric_verification": "PASS: all six transmitted request and raw response hashes match, parsed model outputs match raw API bodies, and independently recomputed xy errors agree with stored metrics.",
+  "manual_scientific_review": "All six supplied correct maximum-speed magnitude but incorrect maximum-speed position. No response is validated as grounded merely because automatic flags are empty.",
+  "counts": {
+    "requests": 6,
+    "valid_responses": 6,
+    "timeouts": 0,
+    "xy_locations_scored": 6,
+    "maximum_speed_value_correct_quotations": 6,
+    "manual_incorrect_location_flags": 6,
+    "automatic_grounding_flagged_responses": 0,
+    "courant_evidence_wording_flags": 2,
+    "internal_certainty_conflict_flags": 1
+  },
+  "by_condition": {
+    "numeric_only": {
+      "attempted": 3,
+      "valid_responses": 3,
+      "explicit_xy_locations": 3,
+      "xy_scoring_coverage": 1.0,
+      "correct_supplied_max_speed_quotations": 3,
+      "manually_flagged_incorrect_max_speed_locations": 3,
+      "auto_grounding_flagged_responses": 0,
+      "projected_xy_error_m": [
+        0.6092149866192987,
+        0.6092149866192987,
+        0.6092149866192987
+      ],
+      "mean_projected_xy_error_m": 0.6092149866192987,
+      "replay_callback_wall_s_in_pair_order": [
+        55.630365020013414,
+        14.700595346977934,
+        14.549140393966809
+      ],
+      "unadjusted_mean_replay_callback_wall_s": 28.293366920319386,
+      "median_replay_callback_wall_s": 14.700595346977934,
+      "latency_interpretation": "Unadjusted descriptive values only; prompt cache differs materially by sequence."
+    },
+    "numeric_plus_image": {
+      "attempted": 3,
+      "valid_responses": 3,
+      "explicit_xy_locations": 3,
+      "xy_scoring_coverage": 1.0,
+      "correct_supplied_max_speed_quotations": 3,
+      "manually_flagged_incorrect_max_speed_locations": 3,
+      "auto_grounding_flagged_responses": 0,
+      "projected_xy_error_m": [
+        0.5096869338922574,
+        0.5096869338922574,
+        0.5096869338922574
+      ],
+      "mean_projected_xy_error_m": 0.5096869338922574,
+      "replay_callback_wall_s_in_pair_order": [
+        20.814006134984083,
+        13.202361149014905,
+        20.721229835995473
+      ],
+      "unadjusted_mean_replay_callback_wall_s": 18.24586570666482,
+      "median_replay_callback_wall_s": 20.721229835995473,
+      "latency_interpretation": "Unadjusted descriptive values only; prompt cache differs materially by sequence."
+    }
+  },
+  "observed_within_snapshot_difference": {
+    "numeric_only_minus_numeric_plus_image_xy_error_m": 0.09952805272704135,
+    "interpretation": "The image arm reports a closer but still wrong coordinate in this one snapshot. This is not evidence of reliable localization or a general improvement rate."
+  },
+  "context_and_cache_review": {
+    "context_limit_tokens": 2048,
+    "max_completion_tokens": 192,
+    "all_finish_reason_stop": true,
+    "observed_prompt_tokens": [
+      1462,
+      1568
+    ],
+    "max_observed_total_tokens": 1681,
+    "cached_tokens_in_execution_order": [
+      1,
+      1457,
+      1567,
+      1456,
+      1461,
+      1456
+    ],
+    "interpretation": "All replies fit context without truncation. The first numeric prompt has one cached token, later requests reuse 1456–1567 tokens; mean latency difference cannot isolate PNG processing cost."
+  },
+  "scope_limits": [
+    "One saved snapshot, three paired repetitions, temperature zero; repetitions are not independent physical cases or a population accuracy estimate.",
+    "Explicit x and y only: errors are projected planar distances, not full 3D Euclidean distances.",
+    "No abstentions occurred here; future unknown/missing locations must remain unscorable and included in coverage denominators.",
+    "Replay timing excludes fresh solver work, SVD construction, and image rendering. Historical/new integration C++ callback timing is a different measurement.",
+    "The frozen heuristic evaluator remains unchanged; manual flags supplement it and do not overwrite the preregistered scores.",
+    "Control checks support PNG as the sole per-pair request difference, but warm-cache history and order affect timing; the three-pair AB/BA/AB schedule is not perfectly position balanced.",
+    "Scalar value quotation can be obtained from the identical numeric input in both arms; it does not prove use of the image."
+  ],
+  "trials": [
+    {
+      "trial": "pair-001-numeric_only",
+      "pair": 1,
+      "condition": "numeric_only",
+      "response": {
+        "observations": "Max speed |U| is 82.52751611538334 m/s at x=0.6012246511046805 m, y=0.11429523559299273 m.",
+        "possible_interpretation": "The maximum velocity is found at the boundary of the domain.",
+        "checks": "Missing evidence for vertical axis scaling."
+      },
+      "status": "ok",
+      "finish_reason": "stop",
+      "request_sha256": "d33ec7c62350f106e39bb99651b560e8401b5dedc157d3b0277e7ea6a6563417",
+      "raw_response_sha256": "5e4b01b56c02de39774e3878091a6a6c79a66795e8c55af5f4202d222d7ffe04",
+      "automated_metric_review": {
+        "location_parser_correct_for_this_response": true,
+        "independently_recomputed_xy_error_m": 0.6092149866192987,
+        "auto_grounding_flags": 0,
+        "auto_numeric_contradictions": 0,
+        "reason_for_missing_automatic_flags": "Frozen grounding rubric checks selected speed/Courant numbers and physical-claim keywords, not whether asserted coordinates actually locate the field extremum. Its null hallucination_free and needs_human_review remain correct."
+      },
+      "manual_review_flags": [
+        {
+          "kind": "incorrect_maximum_speed_location",
+          "field": "observations",
+          "quote": "Max speed |U| is 82.52751611538334 m/s at x=0.6012246511046805 m, y=0.11429523559299273 m.",
+          "reference": "Independent argmax(norm(U)) from the exact saved NPZ, not the request summary",
+          "evidence": {
+            "cell": 12090,
+            "true_xy_m": [
+              0.0005381680929193357,
+              0.01271448422486468
+            ],
+            "claimed_xy_m": [
+              0.6012246511046805,
+              0.11429523559299273
+            ],
+            "xy_error_m": 0.6092149866192987,
+            "claimed_x_equals_supplied_domain_upper_bound": true,
+            "claimed_y_equals_supplied_domain_upper_bound": true
+          },
+          "judgment": "Unsupported inference of extrema position from domain bounds"
+        },
+        {
+          "kind": "unsupported_spatial_interpretation",
+          "field": "possible_interpretation",
+          "quote": "The maximum velocity is found at the boundary of the domain.",
+          "judgment": "Unqualified spatial claim inherits the incorrect maximum-speed location; the provided domain bounds are not extrema locations"
+        }
+      ],
+      "manual_review_notes": [
+        "Treated as a requested clarification, not an established physical claim: system says the vertical axis is stretched, but this numeric-only arm has no PNG and no precise rendering scale factor.",
+        "Maximum-speed magnitude exactly matches supplied numeric range maximum; correct quotation does not establish visual reasoning."
+      ],
+      "usage": {
+        "completion_tokens": 121,
+        "prompt_tokens": 1462,
+        "total_tokens": 1583,
+        "prompt_tokens_details": {
+          "cached_tokens": 1
+        }
+      },
+      "server_timings": {
+        "cache_n": 1,
+        "prompt_n": 1461,
+        "prompt_ms": 41331.228,
+        "prompt_per_token_ms": 28.28968377823409,
+        "prompt_per_second": 35.34857469030438,
+        "predicted_n": 121,
+        "predicted_ms": 13629.917,
+        "predicted_per_token_ms": 113.58264166666666,
+        "predicted_per_second": 8.804162197025851
+      },
+      "replay_callback_wall_s": 55.630365020013414,
+      "transport_wait_wall_s": 55.62550286506303
+    },
+    {
+      "trial": "pair-001-numeric_plus_image",
+      "pair": 1,
+      "condition": "numeric_plus_image",
+      "response": {
+        "observations": "Max speed |U| is 82.52751611538334 m/s at x=0.5 m, y=0.11429523559299273 m.",
+        "possible_interpretation": "The maximum velocity is localized near the center of the domain.",
+        "checks": "Missing evidence for explicit max speed location in the image."
+      },
+      "status": "ok",
+      "finish_reason": "stop",
+      "request_sha256": "515873cd3e28189d1278a08d6f3d778fe452549a94f718704ad6d1711a1ba605",
+      "raw_response_sha256": "30d061c3e3fdf86c2b0f900a40a12c32d61334514cbc622bb05065a2c1ec54f3",
+      "automated_metric_review": {
+        "location_parser_correct_for_this_response": true,
+        "independently_recomputed_xy_error_m": 0.5096869338922574,
+        "auto_grounding_flags": 0,
+        "auto_numeric_contradictions": 0,
+        "reason_for_missing_automatic_flags": "Frozen grounding rubric checks selected speed/Courant numbers and physical-claim keywords, not whether asserted coordinates actually locate the field extremum. Its null hallucination_free and needs_human_review remain correct."
+      },
+      "manual_review_flags": [
+        {
+          "kind": "incorrect_maximum_speed_location",
+          "field": "observations",
+          "quote": "Max speed |U| is 82.52751611538334 m/s at x=0.5 m, y=0.11429523559299273 m.",
+          "reference": "Independent argmax(norm(U)) from the exact saved NPZ, not the request summary",
+          "evidence": {
+            "cell": 12090,
+            "true_xy_m": [
+              0.0005381680929193357,
+              0.01271448422486468
+            ],
+            "claimed_xy_m": [
+              0.5,
+              0.11429523559299273
+            ],
+            "xy_error_m": 0.5096869338922574,
+            "claimed_x_equals_supplied_domain_upper_bound": false,
+            "claimed_y_equals_supplied_domain_upper_bound": true
+          },
+          "judgment": "The explicit image-assisted position is contradicted by same-snapshot cell fields"
+        },
+        {
+          "kind": "unsupported_spatial_interpretation",
+          "field": "possible_interpretation",
+          "quote": "The maximum velocity is localized near the center of the domain.",
+          "judgment": "Unqualified spatial claim inherits the incorrect maximum-speed location; the provided domain bounds are not extrema locations"
+        },
+        {
+          "kind": "internal_certainty_conflict",
+          "field": "checks",
+          "quote": "Missing evidence for explicit max speed location in the image.",
+          "judgment": "Acknowledges missing location evidence while observations gives an unqualified exact location; this is not an extra measured physical claim"
+        }
+      ],
+      "manual_review_notes": [
+        "Maximum-speed magnitude exactly matches supplied numeric range maximum; correct quotation does not establish visual reasoning."
+      ],
+      "usage": {
+        "completion_tokens": 110,
+        "prompt_tokens": 1568,
+        "total_tokens": 1678,
+        "prompt_tokens_details": {
+          "cached_tokens": 1457
+        }
+      },
+      "server_timings": {
+        "cache_n": 1457,
+        "prompt_n": 111,
+        "prompt_ms": 7732.523,
+        "prompt_per_token_ms": 69.66236936936937,
+        "prompt_per_second": 14.35495245212979,
+        "predicted_n": 110,
+        "predicted_ms": 12880.03,
+        "predicted_per_token_ms": 118.16541284403671,
+        "predicted_per_second": 8.46271320796613
+      },
+      "replay_callback_wall_s": 20.814006134984083,
+      "transport_wait_wall_s": 20.811816658009775
+    },
+    {
+      "trial": "pair-002-numeric_plus_image",
+      "pair": 2,
+      "condition": "numeric_plus_image",
+      "response": {
+        "observations": "Max speed |U| is 82.52751611538334 m/s at x=0.5 m, y=0.11429523559299273 m.",
+        "possible_interpretation": "The maximum velocity is observed near the center of the domain.",
+        "checks": "No evidence of force balance or low Courant number is provided."
+      },
+      "status": "ok",
+      "finish_reason": "stop",
+      "request_sha256": "a68849311bb7c7c93bea1bbfb45a7c8b08bc191f3955f7a0dc51479e1e4499ca",
+      "raw_response_sha256": "bbc5b13036941746e6fec06410157d78abb16eca752f12197122105319bad0e4",
+      "automated_metric_review": {
+        "location_parser_correct_for_this_response": true,
+        "independently_recomputed_xy_error_m": 0.5096869338922574,
+        "auto_grounding_flags": 0,
+        "auto_numeric_contradictions": 0,
+        "reason_for_missing_automatic_flags": "Frozen grounding rubric checks selected speed/Courant numbers and physical-claim keywords, not whether asserted coordinates actually locate the field extremum. Its null hallucination_free and needs_human_review remain correct."
+      },
+      "manual_review_flags": [
+        {
+          "kind": "incorrect_maximum_speed_location",
+          "field": "observations",
+          "quote": "Max speed |U| is 82.52751611538334 m/s at x=0.5 m, y=0.11429523559299273 m.",
+          "reference": "Independent argmax(norm(U)) from the exact saved NPZ, not the request summary",
+          "evidence": {
+            "cell": 12090,
+            "true_xy_m": [
+              0.0005381680929193357,
+              0.01271448422486468
+            ],
+            "claimed_xy_m": [
+              0.5,
+              0.11429523559299273
+            ],
+            "xy_error_m": 0.5096869338922574,
+            "claimed_x_equals_supplied_domain_upper_bound": false,
+            "claimed_y_equals_supplied_domain_upper_bound": true
+          },
+          "judgment": "The explicit image-assisted position is contradicted by same-snapshot cell fields"
+        },
+        {
+          "kind": "unsupported_spatial_interpretation",
+          "field": "possible_interpretation",
+          "quote": "The maximum velocity is observed near the center of the domain.",
+          "judgment": "Unqualified spatial claim inherits the incorrect maximum-speed location; the provided domain bounds are not extrema locations"
+        },
+        {
+          "kind": "misleading_missing_courant_evidence",
+          "field": "checks",
+          "quote": "No evidence of force balance or low Courant number is provided.",
+          "supplied_courant": {
+            "mean": 0.000337189,
+            "max": 0.208697,
+            "phase": "post_step_phi"
+          },
+          "judgment": "Numeric mean and maximum Courant values are provided. Wording about no evidence of a low Courant number is misleading; the qualitative threshold low is not predefined. The force-balance portion correctly identifies unavailable evidence."
+        }
+      ],
+      "manual_review_notes": [
+        "Maximum-speed magnitude exactly matches supplied numeric range maximum; correct quotation does not establish visual reasoning."
+      ],
+      "usage": {
+        "completion_tokens": 112,
+        "prompt_tokens": 1568,
+        "total_tokens": 1680,
+        "prompt_tokens_details": {
+          "cached_tokens": 1567
+        }
+      },
+      "server_timings": {
+        "cache_n": 1567,
+        "prompt_n": 1,
+        "prompt_ms": 117.949,
+        "prompt_per_token_ms": 117.949,
+        "prompt_per_second": 8.47824059551162,
+        "predicted_n": 112,
+        "predicted_ms": 12641.789,
+        "predicted_per_token_ms": 113.889990990991,
+        "predicted_per_second": 8.780402836971886
+      },
+      "replay_callback_wall_s": 13.202361149014905,
+      "transport_wait_wall_s": 13.200933704036288
+    },
+    {
+      "trial": "pair-002-numeric_only",
+      "pair": 2,
+      "condition": "numeric_only",
+      "response": {
+        "observations": "Max speed |U| is 82.52751611538334 m/s at x=0.6012246511046805 m, y=0.11429523559299273 m.",
+        "possible_interpretation": "The maximum velocity is found at the upper-right corner of the domain.",
+        "checks": "Missing evidence for vertical axis scaling or shape interpretation."
+      },
+      "status": "ok",
+      "finish_reason": "stop",
+      "request_sha256": "094703639941bc46b9ba394ad713c1d7b8d58108c5802e5f1d2be02b01b6260f",
+      "raw_response_sha256": "6600ca622b066d5cf3963e21539613a15b4c5c5e8f8f8520a5f0152d80d02b31",
+      "automated_metric_review": {
+        "location_parser_correct_for_this_response": true,
+        "independently_recomputed_xy_error_m": 0.6092149866192987,
+        "auto_grounding_flags": 0,
+        "auto_numeric_contradictions": 0,
+        "reason_for_missing_automatic_flags": "Frozen grounding rubric checks selected speed/Courant numbers and physical-claim keywords, not whether asserted coordinates actually locate the field extremum. Its null hallucination_free and needs_human_review remain correct."
+      },
+      "manual_review_flags": [
+        {
+          "kind": "incorrect_maximum_speed_location",
+          "field": "observations",
+          "quote": "Max speed |U| is 82.52751611538334 m/s at x=0.6012246511046805 m, y=0.11429523559299273 m.",
+          "reference": "Independent argmax(norm(U)) from the exact saved NPZ, not the request summary",
+          "evidence": {
+            "cell": 12090,
+            "true_xy_m": [
+              0.0005381680929193357,
+              0.01271448422486468
+            ],
+            "claimed_xy_m": [
+              0.6012246511046805,
+              0.11429523559299273
+            ],
+            "xy_error_m": 0.6092149866192987,
+            "claimed_x_equals_supplied_domain_upper_bound": true,
+            "claimed_y_equals_supplied_domain_upper_bound": true
+          },
+          "judgment": "Unsupported inference of extrema position from domain bounds"
+        },
+        {
+          "kind": "unsupported_spatial_interpretation",
+          "field": "possible_interpretation",
+          "quote": "The maximum velocity is found at the upper-right corner of the domain.",
+          "judgment": "Unqualified spatial claim inherits the incorrect maximum-speed location; the provided domain bounds are not extrema locations"
+        }
+      ],
+      "manual_review_notes": [
+        "Treated as a requested clarification, not an established physical claim: system says the vertical axis is stretched, but this numeric-only arm has no PNG and no precise rendering scale factor.",
+        "Maximum-speed magnitude exactly matches supplied numeric range maximum; correct quotation does not establish visual reasoning."
+      ],
+      "usage": {
+        "completion_tokens": 127,
+        "prompt_tokens": 1462,
+        "total_tokens": 1589,
+        "prompt_tokens_details": {
+          "cached_tokens": 1456
+        }
+      },
+      "server_timings": {
+        "cache_n": 1456,
+        "prompt_n": 6,
+        "prompt_ms": 451.686,
+        "prompt_per_token_ms": 75.28099999999999,
+        "prompt_per_second": 13.283564245958475,
+        "predicted_n": 127,
+        "predicted_ms": 14139.585,
+        "predicted_per_token_ms": 112.21892857142856,
+        "predicted_per_second": 8.911152625766599
+      },
+      "replay_callback_wall_s": 14.700595346977934,
+      "transport_wait_wall_s": 14.699484925018623
+    },
+    {
+      "trial": "pair-003-numeric_only",
+      "pair": 3,
+      "condition": "numeric_only",
+      "response": {
+        "observations": "Max speed |U| is 82.52751611538334 m/s at x=0.6012246511046805 m, y=0.11429523559299273 m.",
+        "possible_interpretation": "The maximum velocity is found at the upper-right corner of the domain.",
+        "checks": "Missing evidence for vertical axis scaling or shape interpretation."
+      },
+      "status": "ok",
+      "finish_reason": "stop",
+      "request_sha256": "059a3bc84e3816fb8da0b89e08f51c8c8ba08a92ee6304a25adb9d80ecab4dc1",
+      "raw_response_sha256": "be307cf749a6845277c53100cb9ec12ac78f73a24b000cc61e9e4275ba051f10",
+      "automated_metric_review": {
+        "location_parser_correct_for_this_response": true,
+        "independently_recomputed_xy_error_m": 0.6092149866192987,
+        "auto_grounding_flags": 0,
+        "auto_numeric_contradictions": 0,
+        "reason_for_missing_automatic_flags": "Frozen grounding rubric checks selected speed/Courant numbers and physical-claim keywords, not whether asserted coordinates actually locate the field extremum. Its null hallucination_free and needs_human_review remain correct."
+      },
+      "manual_review_flags": [
+        {
+          "kind": "incorrect_maximum_speed_location",
+          "field": "observations",
+          "quote": "Max speed |U| is 82.52751611538334 m/s at x=0.6012246511046805 m, y=0.11429523559299273 m.",
+          "reference": "Independent argmax(norm(U)) from the exact saved NPZ, not the request summary",
+          "evidence": {
+            "cell": 12090,
+            "true_xy_m": [
+              0.0005381680929193357,
+              0.01271448422486468
+            ],
+            "claimed_xy_m": [
+              0.6012246511046805,
+              0.11429523559299273
+            ],
+            "xy_error_m": 0.6092149866192987,
+            "claimed_x_equals_supplied_domain_upper_bound": true,
+            "claimed_y_equals_supplied_domain_upper_bound": true
+          },
+          "judgment": "Unsupported inference of extrema position from domain bounds"
+        },
+        {
+          "kind": "unsupported_spatial_interpretation",
+          "field": "possible_interpretation",
+          "quote": "The maximum velocity is found at the upper-right corner of the domain.",
+          "judgment": "Unqualified spatial claim inherits the incorrect maximum-speed location; the provided domain bounds are not extrema locations"
+        }
+      ],
+      "manual_review_notes": [
+        "Treated as a requested clarification, not an established physical claim: system says the vertical axis is stretched, but this numeric-only arm has no PNG and no precise rendering scale factor.",
+        "Maximum-speed magnitude exactly matches supplied numeric range maximum; correct quotation does not establish visual reasoning."
+      ],
+      "usage": {
+        "completion_tokens": 127,
+        "prompt_tokens": 1462,
+        "total_tokens": 1589,
+        "prompt_tokens_details": {
+          "cached_tokens": 1461
+        }
+      },
+      "server_timings": {
+        "cache_n": 1461,
+        "prompt_n": 1,
+        "prompt_ms": 117.593,
+        "prompt_per_token_ms": 117.593,
+        "prompt_per_second": 8.503907545517166,
+        "predicted_n": 127,
+        "predicted_ms": 14345.906,
+        "predicted_per_token_ms": 113.85639682539683,
+        "predicted_per_second": 8.78299355927747
+      },
+      "replay_callback_wall_s": 14.549140393966809,
+      "transport_wait_wall_s": 14.547562931897119
+    },
+    {
+      "trial": "pair-003-numeric_plus_image",
+      "pair": 3,
+      "condition": "numeric_plus_image",
+      "response": {
+        "observations": "Max speed |U| is 82.52751611538334 m/s at x=0.5 m, y=0.11429523559299273 m.",
+        "possible_interpretation": "The maximum velocity is localized near the right edge of the domain.",
+        "checks": "No evidence of force balance or low Courant number is provided."
+      },
+      "status": "ok",
+      "finish_reason": "stop",
+      "request_sha256": "12eae84dc387a71e747f8ed769f5591b3ac7bc35c055fb39cd2f72981930be6f",
+      "raw_response_sha256": "06a2f8ff9bba4c099b32bff0f8d30513396a88991f072b0e90decfc878339c8a",
+      "automated_metric_review": {
+        "location_parser_correct_for_this_response": true,
+        "independently_recomputed_xy_error_m": 0.5096869338922574,
+        "auto_grounding_flags": 0,
+        "auto_numeric_contradictions": 0,
+        "reason_for_missing_automatic_flags": "Frozen grounding rubric checks selected speed/Courant numbers and physical-claim keywords, not whether asserted coordinates actually locate the field extremum. Its null hallucination_free and needs_human_review remain correct."
+      },
+      "manual_review_flags": [
+        {
+          "kind": "incorrect_maximum_speed_location",
+          "field": "observations",
+          "quote": "Max speed |U| is 82.52751611538334 m/s at x=0.5 m, y=0.11429523559299273 m.",
+          "reference": "Independent argmax(norm(U)) from the exact saved NPZ, not the request summary",
+          "evidence": {
+            "cell": 12090,
+            "true_xy_m": [
+              0.0005381680929193357,
+              0.01271448422486468
+            ],
+            "claimed_xy_m": [
+              0.5,
+              0.11429523559299273
+            ],
+            "xy_error_m": 0.5096869338922574,
+            "claimed_x_equals_supplied_domain_upper_bound": false,
+            "claimed_y_equals_supplied_domain_upper_bound": true
+          },
+          "judgment": "The explicit image-assisted position is contradicted by same-snapshot cell fields"
+        },
+        {
+          "kind": "unsupported_spatial_interpretation",
+          "field": "possible_interpretation",
+          "quote": "The maximum velocity is localized near the right edge of the domain.",
+          "judgment": "Unqualified spatial claim inherits the incorrect maximum-speed location; the provided domain bounds are not extrema locations"
+        },
+        {
+          "kind": "misleading_missing_courant_evidence",
+          "field": "checks",
+          "quote": "No evidence of force balance or low Courant number is provided.",
+          "supplied_courant": {
+            "mean": 0.000337189,
+            "max": 0.208697,
+            "phase": "post_step_phi"
+          },
+          "judgment": "Numeric mean and maximum Courant values are provided. Wording about no evidence of a low Courant number is misleading; the qualitative threshold low is not predefined. The force-balance portion correctly identifies unavailable evidence."
+        }
+      ],
+      "manual_review_notes": [
+        "Maximum-speed magnitude exactly matches supplied numeric range maximum; correct quotation does not establish visual reasoning."
+      ],
+      "usage": {
+        "completion_tokens": 113,
+        "prompt_tokens": 1568,
+        "total_tokens": 1681,
+        "prompt_tokens_details": {
+          "cached_tokens": 1456
+        }
+      },
+      "server_timings": {
+        "cache_n": 1456,
+        "prompt_n": 112,
+        "prompt_ms": 7820.988,
+        "prompt_per_token_ms": 69.83025,
+        "prompt_per_second": 14.32044135600259,
+        "predicted_n": 113,
+        "predicted_ms": 12765.884,
+        "predicted_per_token_ms": 113.98110714285714,
+        "predicted_per_second": 8.77338380953485
+      },
+      "replay_callback_wall_s": 20.721229835995473,
+      "transport_wait_wall_s": 20.71868628798984
+    }
+  ]
+}

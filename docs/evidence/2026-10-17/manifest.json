@@ -1,0 +1,706 @@
+{
+  "source_run": "pod-llm-demo.LRfJBN",
+  "executed_commit": "23089bbf3447731852fa960d7d25ea18767a3f51",
+  "scope": "Selected records, full paired replay requests/responses, and step-5 image arrays. Full solver fields are in the separate release archive.",
+  "notes": [
+    "Historical remote_writes/no_remote_write fields describe the test session before publication.",
+    "Original records may contain local paths as provenance, not working download links.",
+    "ground_truth.private.json means withheld from model input, not private personal information.",
+    "Automatic review flags are unchanged; the independent response review is separate."
+  ],
+  "files": [
+    {
+      "path": "ablation/ground_truth.private.json",
+      "source": "ablation/ground_truth.private.json",
+      "kind": "byte-preserved",
+      "bytes": 320,
+      "sha256": "abf042b1f9df5b18a0a835aca4ca71da0793cf5dd14ce23e5d6d55286fded9bc"
+    },
+    {
+      "path": "ablation/manifest.json",
+      "source": "ablation/manifest.json",
+      "kind": "byte-preserved",
+      "bytes": 4439,
+      "sha256": "7f5ed1dd975be3fa8f608cc196639121d253acac294d47e4de83baff0726d3e2"
+    },
+    {
+      "path": "ablation/metrics.jsonl",
+      "source": "ablation/metrics.jsonl",
+      "kind": "byte-preserved",
+      "bytes": 7848,
+      "sha256": "9b2b366ff45930ed574d15bf5a9c9e6faa85e49c5b10c5bbceb613699d2c75c0"
+    },
+    {
+      "path": "ablation/numeric_summary.json",
+      "source": "ablation/numeric_summary.json",
+      "kind": "byte-preserved",
+      "bytes": 3650,
+      "sha256": "7e6cb6caff1f271dc22d317871266327305b0fb1518cb6b79260d159f35418a1"
+    },
+    {
+      "path": "ablation/pair-001-numeric_only.request.json",
+      "source": "ablation/pair-001-numeric_only.request.json",
+      "kind": "byte-preserved",
+      "bytes": 4866,
+      "sha256": "d33ec7c62350f106e39bb99651b560e8401b5dedc157d3b0277e7ea6a6563417"
+    },
+    {
+      "path": "ablation/pair-001-numeric_only/metrics.json",
+      "source": "ablation/pair-001-numeric_only/metrics.json",
+      "kind": "byte-preserved",
+      "bytes": 1548,
+      "sha256": "56a41e6aafdbb126d1b054fbc98d78bb23848f6c635c8ab71dd943f3bd579c51"
+    },
+    {
+      "path": "ablation/pair-001-numeric_only/request_body.json",
+      "source": "ablation/pair-001-numeric_only/request_body.json",
+      "kind": "byte-preserved",
+      "bytes": 4866,
+      "sha256": "d33ec7c62350f106e39bb99651b560e8401b5dedc157d3b0277e7ea6a6563417"
+    },
+    {
+      "path": "ablation/pair-001-numeric_only/response.json",
+      "source": "ablation/pair-001-numeric_only/response.json",
+      "kind": "byte-preserved",
+      "bytes": 1130,
+      "sha256": "fe3dba300217a1a129da96e12aacba3ab6e666da447711961c407e15cb1d31f8"
+    },
+    {
+      "path": "ablation/pair-001-numeric_only/response.raw",
+      "source": "ablation/pair-001-numeric_only/response.raw",
+      "kind": "byte-preserved",
+      "bytes": 935,
+      "sha256": "5e4b01b56c02de39774e3878091a6a6c79a66795e8c55af5f4202d222d7ffe04"
+    },
+    {
+      "path": "ablation/pair-001-numeric_only/result.json",
+      "source": "ablation/pair-001-numeric_only/result.json",
+      "kind": "byte-preserved",
+      "bytes": 1562,
+      "sha256": "d6dfcb4b1efb0e7b62f99f58239014c8370c07780e776698ac6c3d3526dc123c"
+    },
+    {
+      "path": "ablation/pair-001-numeric_plus_image.request.json",
+      "source": "ablation/pair-001-numeric_plus_image.request.json",
+      "kind": "byte-preserved",
+      "bytes": 50848,
+      "sha256": "515873cd3e28189d1278a08d6f3d778fe452549a94f718704ad6d1711a1ba605"
+    },
+    {
+      "path": "ablation/pair-001-numeric_plus_image/metrics.json",
+      "source": "ablation/pair-001-numeric_plus_image/metrics.json",
+      "kind": "byte-preserved",
+      "bytes": 1536,
+      "sha256": "fe97b7400ca916d9a3993ada234c3d9618c8e9997a82a3ec62363d6220794eda"
+    },
+    {
+      "path": "ablation/pair-001-numeric_plus_image/request_body.json",
+      "source": "ablation/pair-001-numeric_plus_image/request_body.json",
+      "kind": "byte-preserved",
+      "bytes": 50848,
+      "sha256": "515873cd3e28189d1278a08d6f3d778fe452549a94f718704ad6d1711a1ba605"
+    },
+    {
+      "path": "ablation/pair-001-numeric_plus_image/response.json",
+      "source": "ablation/pair-001-numeric_plus_image/response.json",
+      "kind": "byte-preserved",
+      "bytes": 1140,
+      "sha256": "b38943e9d69a4b0636ab5f721693755845e148401a2ac211eda7fbb62861e26b"
+    },
+    {
+      "path": "ablation/pair-001-numeric_plus_image/response.raw",
+      "source": "ablation/pair-001-numeric_plus_image/response.raw",
+      "kind": "byte-preserved",
+      "bytes": 945,
+      "sha256": "30d061c3e3fdf86c2b0f900a40a12c32d61334514cbc622bb05065a2c1ec54f3"
+    },
+    {
+      "path": "ablation/pair-001-numeric_plus_image/result.json",
+      "source": "ablation/pair-001-numeric_plus_image/result.json",
+      "kind": "byte-preserved",
+      "bytes": 1582,
+      "sha256": "f450d3296b5c74236ceaa665d71fb3156d54e15e44cd398bce36a00a3b8a7530"
+    },
+    {
+      "path": "ablation/pair-002-numeric_only.request.json",
+      "source": "ablation/pair-002-numeric_only.request.json",
+      "kind": "byte-preserved",
+      "bytes": 4866,
+      "sha256": "094703639941bc46b9ba394ad713c1d7b8d58108c5802e5f1d2be02b01b6260f"
+    },
+    {
+      "path": "ablation/pair-002-numeric_only/metrics.json",
+      "source": "ablation/pair-002-numeric_only/metrics.json",
+      "kind": "byte-preserved",
+      "bytes": 1550,
+      "sha256": "cf545e5dccb17894be3a2fbf1ca1fef27f5f3cf2cb9ade1c80bb000cc9b26db8"
+    },
+    {
+      "path": "ablation/pair-002-numeric_only/request_body.json",
+      "source": "ablation/pair-002-numeric_only/request_body.json",
+      "kind": "byte-preserved",
+      "bytes": 4866,
+      "sha256": "094703639941bc46b9ba394ad713c1d7b8d58108c5802e5f1d2be02b01b6260f"
+    },
+    {
+      "path": "ablation/pair-002-numeric_only/response.json",
+      "source": "ablation/pair-002-numeric_only/response.json",
+      "kind": "byte-preserved",
+      "bytes": 1166,
+      "sha256": "8946f718baf4dcc2392a577c1aa203630d97a24d9f8c47ae749bbea4eb72e6b9"
+    },
+    {
+      "path": "ablation/pair-002-numeric_only/response.raw",
+      "source": "ablation/pair-002-numeric_only/response.raw",
+      "kind": "byte-preserved",
+      "bytes": 971,
+      "sha256": "6600ca622b066d5cf3963e21539613a15b4c5c5e8f8f8520a5f0152d80d02b31"
+    },
+    {
+      "path": "ablation/pair-002-numeric_only/result.json",
+      "source": "ablation/pair-002-numeric_only/result.json",
+      "kind": "byte-preserved",
+      "bytes": 1633,
+      "sha256": "1d2aeb7ea58e11cd928c463dfe072f17ecc160bc92e2047b5cba761c3849461c"
+    },
+    {
+      "path": "ablation/pair-002-numeric_plus_image.request.json",
+      "source": "ablation/pair-002-numeric_plus_image.request.json",
+      "kind": "byte-preserved",
+      "bytes": 50848,
+      "sha256": "a68849311bb7c7c93bea1bbfb45a7c8b08bc191f3955f7a0dc51479e1e4499ca"
+    },
+    {
+      "path": "ablation/pair-002-numeric_plus_image/metrics.json",
+      "source": "ablation/pair-002-numeric_plus_image/metrics.json",
+      "kind": "byte-preserved",
+      "bytes": 1536,
+      "sha256": "198808cbdd2588e16890d253846a6b9e4625922bd691aa2ac9dfd634b2edf27a"
+    },
+    {
+      "path": "ablation/pair-002-numeric_plus_image/request_body.json",
+      "source": "ablation/pair-002-numeric_plus_image/request_body.json",
+      "kind": "byte-preserved",
+      "bytes": 50848,
+      "sha256": "a68849311bb7c7c93bea1bbfb45a7c8b08bc191f3955f7a0dc51479e1e4499ca"
+    },
+    {
+      "path": "ablation/pair-002-numeric_plus_image/response.json",
+      "source": "ablation/pair-002-numeric_plus_image/response.json",
+      "kind": "byte-preserved",
+      "bytes": 1126,
+      "sha256": "bbff5c8c689dd269219b9434e9cf8fb28d8bff2ce02c07987bba2f9bb3de0073"
+    },
+    {
+      "path": "ablation/pair-002-numeric_plus_image/response.raw",
+      "source": "ablation/pair-002-numeric_plus_image/response.raw",
+      "kind": "byte-preserved",
+      "bytes": 931,
+      "sha256": "bbc5b13036941746e6fec06410157d78abb16eca752f12197122105319bad0e4"
+    },
+    {
+      "path": "ablation/pair-002-numeric_plus_image/result.json",
+      "source": "ablation/pair-002-numeric_plus_image/result.json",
+      "kind": "byte-preserved",
+      "bytes": 1568,
+      "sha256": "1edc944898b81a939a42903c19b69803e5bd4c30d328aff7bdfe072fb92c3c06"
+    },
+    {
+      "path": "ablation/pair-003-numeric_only.request.json",
+      "source": "ablation/pair-003-numeric_only.request.json",
+      "kind": "byte-preserved",
+      "bytes": 4866,
+      "sha256": "059a3bc84e3816fb8da0b89e08f51c8c8ba08a92ee6304a25adb9d80ecab4dc1"
+    },
+    {
+      "path": "ablation/pair-003-numeric_only/metrics.json",
+      "source": "ablation/pair-003-numeric_only/metrics.json",
+      "kind": "byte-preserved",
+      "bytes": 1549,
+      "sha256": "1a792d7c62477251021119ecd34e29dffea1497f617372cdbd8779b5f430f253"
+    },
+    {
+      "path": "ablation/pair-003-numeric_only/request_body.json",
+      "source": "ablation/pair-003-numeric_only/request_body.json",
+      "kind": "byte-preserved",
+      "bytes": 4866,
+      "sha256": "059a3bc84e3816fb8da0b89e08f51c8c8ba08a92ee6304a25adb9d80ecab4dc1"
+    },
+    {
+      "path": "ablation/pair-003-numeric_only/response.json",
+      "source": "ablation/pair-003-numeric_only/response.json",
+      "kind": "byte-preserved",
+      "bytes": 1154,
+      "sha256": "d2d31e1ef1277cb71057d1a83db86294110cfeb628db60b4118520b4c6cfaf50"
+    },
+    {
+      "path": "ablation/pair-003-numeric_only/response.raw",
+      "source": "ablation/pair-003-numeric_only/response.raw",
+      "kind": "byte-preserved",
+      "bytes": 959,
+      "sha256": "be307cf749a6845277c53100cb9ec12ac78f73a24b000cc61e9e4275ba051f10"
+    },
+    {
+      "path": "ablation/pair-003-numeric_only/result.json",
+      "source": "ablation/pair-003-numeric_only/result.json",
+      "kind": "byte-preserved",
+      "bytes": 1620,
+      "sha256": "db7b74b03230a89438d965033dbeaa1225fa8211b5376ceb71cac5c2c44484cf"
+    },
+    {
+      "path": "ablation/pair-003-numeric_plus_image.request.json",
+      "source": "ablation/pair-003-numeric_plus_image.request.json",
+      "kind": "byte-preserved",
+      "bytes": 50848,
+      "sha256": "12eae84dc387a71e747f8ed769f5591b3ac7bc35c055fb39cd2f72981930be6f"
+    },
+    {
+      "path": "ablation/pair-003-numeric_plus_image/metrics.json",
+      "source": "ablation/pair-003-numeric_plus_image/metrics.json",
+      "kind": "byte-preserved",
+      "bytes": 1533,
+      "sha256": "ff53c53b1fda63b4769060edb766f249da8450e83e077d1f4aac740fa6883b20"
+    },
+    {
+      "path": "ablation/pair-003-numeric_plus_image/request_body.json",
+      "source": "ablation/pair-003-numeric_plus_image/request_body.json",
+      "kind": "byte-preserved",
+      "bytes": 50848,
+      "sha256": "12eae84dc387a71e747f8ed769f5591b3ac7bc35c055fb39cd2f72981930be6f"
+    },
+    {
+      "path": "ablation/pair-003-numeric_plus_image/response.json",
+      "source": "ablation/pair-003-numeric_plus_image/response.json",
+      "kind": "byte-preserved",
+      "bytes": 1137,
+      "sha256": "e8dd8b9caafac864a67ebede2aad3e0dbbbe6dff455c603fe65f6c1e6f64da6d"
+    },
+    {
+      "path": "ablation/pair-003-numeric_plus_image/response.raw",
+      "source": "ablation/pair-003-numeric_plus_image/response.raw",
+      "kind": "byte-preserved",
+      "bytes": 942,
+      "sha256": "06a2f8ff9bba4c099b32bff0f8d30513396a88991f072b0e90decfc878339c8a"
+    },
+    {
+      "path": "ablation/pair-003-numeric_plus_image/result.json",
+      "source": "ablation/pair-003-numeric_plus_image/result.json",
+      "kind": "byte-preserved",
+      "bytes": 1582,
+      "sha256": "6f24645292ee1e1191c3cfbd4867287da55d68a70e023ad9dad066e3f74f4ff2"
+    },
+    {
+      "path": "ablation/summary.json",
+      "source": "ablation/summary.json",
+      "kind": "byte-preserved",
+      "bytes": 1542,
+      "sha256": "69b7fd3d4af19797fb36d4568b13ee7808d9788db5c7c0f0b09e006e2e772c23"
+    },
+    {
+      "path": "independent-ablation-review.json",
+      "source": "independent-ablation-review.json",
+      "kind": "byte-preserved",
+      "bytes": 28188,
+      "sha256": "bcb29e8352228d28d041436567a4dd5d3386e622d3cf8a4e7164c7c683bd1e33"
+    },
+    {
+      "path": "independent-integration-check.json",
+      "source": "independent-integration-check.json",
+      "kind": "byte-preserved",
+      "bytes": 7610,
+      "sha256": "de224e04af38e5a7b53100d44a0d630d7d8d51a546637dcabe7d690b204948aa"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/HEAD",
+      "source": "pod-llm-demo.LRfJBN/HEAD",
+      "kind": "byte-preserved",
+      "bytes": 41,
+      "sha256": "3f0a4ced1350d60873317f385b213c0d093783ab83f30438280a1281ef743f06"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/build-inputs.json",
+      "source": "pod-llm-demo.LRfJBN/build-inputs.json",
+      "kind": "byte-preserved",
+      "bytes": 1028,
+      "sha256": "dc6d03196a6ea3c42319e638d3220b2c1424a0f44b0e888fe9f90378ee5e2515"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/demo-verification.json",
+      "source": "pod-llm-demo.LRfJBN/demo-verification.json",
+      "kind": "byte-preserved",
+      "bytes": 12764,
+      "sha256": "a495eb80d946632c71f6c494042a5db83bfb582090fd974cbad29083b1a2f436"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-no-llm/llm_client.py",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-no-llm/llm_client.py",
+      "kind": "byte-preserved",
+      "bytes": 15859,
+      "sha256": "f2064e01614f0210592b035b97164a3eb2787c16445fdff2504ec20ea2429ffb"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-no-llm/llm_request.json",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-no-llm/llm_request.json",
+      "kind": "byte-preserved",
+      "bytes": 11070,
+      "sha256": "525ae747ab1deea3db61c95f1a79a6b4566aefcf8fb4df48fa24e5bf3ca35b05"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-no-llm/llm_request_body.json",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-no-llm/llm_request_body.json",
+      "kind": "byte-preserved",
+      "bytes": 50661,
+      "sha256": "62e90f8f4f7b3a7c46da984c66392db2869771b416841da0739667957712fd66"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-no-llm/llm_response.json",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-no-llm/llm_response.json",
+      "kind": "byte-preserved",
+      "bytes": 1586,
+      "sha256": "cb4dc3fd42654b57654d9f801b2771fd76013e5cea4699436eea6773d8f0c1e4"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-no-llm/llm_result.json",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-no-llm/llm_result.json",
+      "kind": "byte-preserved",
+      "bytes": 1618,
+      "sha256": "ddff0120d46b749a14513aec461bb582d150217ad676e573ef6a0e509250818b"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-no-llm/log.PODFoam",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-no-llm/log.PODFoam",
+      "kind": "byte-preserved",
+      "bytes": 17541,
+      "sha256": "d5c126a0220bd9a10ccfad5d19e5538bbf207bfab8cb5fe5b96125c68f3d195d"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-no-llm/telemetry.jsonl",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-no-llm/telemetry.jsonl",
+      "kind": "byte-preserved",
+      "bytes": 7996,
+      "sha256": "d1c079fa1772f9a94dc46cc89e9dfb7d9fc6561b36b0eea45c8297811d036278"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-no-llm/timeline.json",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-no-llm/timeline.json",
+      "kind": "byte-preserved",
+      "bytes": 5070,
+      "sha256": "9d32e824e5154e0bfa06b2f570ee339021f6dbba3667f30477ba56579d7515ee"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-server-error/llm_client.py",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-server-error/llm_client.py",
+      "kind": "byte-preserved",
+      "bytes": 15859,
+      "sha256": "f2064e01614f0210592b035b97164a3eb2787c16445fdff2504ec20ea2429ffb"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-server-error/llm_request.json",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-server-error/llm_request.json",
+      "kind": "byte-preserved",
+      "bytes": 11097,
+      "sha256": "ab319fa2a1aecd409989aa45d8a62cc4ad6d6c4ea2b84ea3ad2b074262b6a056"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-server-error/llm_request_body.json",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-server-error/llm_request_body.json",
+      "kind": "byte-preserved",
+      "bytes": 50667,
+      "sha256": "a07dfd64c823f5e43f4761a4b8593f3c9a5bc7d220227248fb96dc3d9c4f3837"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-server-error/llm_response.json",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-server-error/llm_response.json",
+      "kind": "byte-preserved",
+      "bytes": 1621,
+      "sha256": "5fd1a00e72e0310adfd5e88adf21fef8e63cb2ba07bf9b1f0826c918669ef343"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-server-error/llm_result.json",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-server-error/llm_result.json",
+      "kind": "byte-preserved",
+      "bytes": 1941,
+      "sha256": "ae650e94e59459cf099b4e219e5ab1edf77180d83c58edb7af1c731250be85dd"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-server-error/log.PODFoam",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-server-error/log.PODFoam",
+      "kind": "byte-preserved",
+      "bytes": 17575,
+      "sha256": "607cc9c25fae270edc752164b58ba172243b5296a105e02d4e7d111e6216e897"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-server-error/telemetry.jsonl",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-server-error/telemetry.jsonl",
+      "kind": "byte-preserved",
+      "bytes": 8056,
+      "sha256": "5dd3f2c0b1a4a20c6aed271d51d00c8aef2d637f310119359b60934918425d2e"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-server-error/timeline.json",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-server-error/timeline.json",
+      "kind": "byte-preserved",
+      "bytes": 5092,
+      "sha256": "1adc6109800947f463ef288f231ccdcf8e5669aecc37ea124d75987966f56271"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-text-only/llm_client.py",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-text-only/llm_client.py",
+      "kind": "byte-preserved",
+      "bytes": 15859,
+      "sha256": "f2064e01614f0210592b035b97164a3eb2787c16445fdff2504ec20ea2429ffb"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-text-only/llm_http_response.raw",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-text-only/llm_http_response.raw",
+      "kind": "byte-preserved",
+      "bytes": 905,
+      "sha256": "ce2a5a38662f4df555b930c9b5c6a8d4f995bacd98ec3e883663f4dd2856a293"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-text-only/llm_request.json",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-text-only/llm_request.json",
+      "kind": "byte-preserved",
+      "bytes": 8238,
+      "sha256": "767ec823eea291bce3a8112d0cd2dcd8425c8a419b89b6e44d754d1e55673949"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-text-only/llm_request_body.json",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-text-only/llm_request_body.json",
+      "kind": "byte-preserved",
+      "bytes": 3767,
+      "sha256": "0ce9cd26c2bcdd91fabe4332359f81078a7c1fe641cb17071f75f24a261e995e"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-text-only/llm_response.json",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-text-only/llm_response.json",
+      "kind": "byte-preserved",
+      "bytes": 2162,
+      "sha256": "e545e7bee4316286ea2e1f8e76312f13fcfaa17aadcc2e79eed33c94cd9fdc39"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-text-only/llm_result.json",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-text-only/llm_result.json",
+      "kind": "byte-preserved",
+      "bytes": 2302,
+      "sha256": "7f0f54fb248ec69bf687b81a2c52e7b75e04671e627c3bb2e3d1b6c075bd006c"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-text-only/log.PODFoam",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-text-only/log.PODFoam",
+      "kind": "byte-preserved",
+      "bytes": 17558,
+      "sha256": "2e1d59572dd0b096ded481930412e72408a06d95cbc93818f7a11ff3e57f3a69"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-text-only/telemetry.jsonl",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-text-only/telemetry.jsonl",
+      "kind": "byte-preserved",
+      "bytes": 8026,
+      "sha256": "e46a02918bad1e40f5e4b3f87ed47119da043be0b75abad1450631215fcf26cb"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-text-only/timeline.json",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-text-only/timeline.json",
+      "kind": "byte-preserved",
+      "bytes": 5075,
+      "sha256": "cdba0a72731b27033f4debe236dcf5a9dbae8d91f9e088452ccf7a69d8c19d9c"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-timeout/llm_client.py",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-timeout/llm_client.py",
+      "kind": "byte-preserved",
+      "bytes": 15859,
+      "sha256": "f2064e01614f0210592b035b97164a3eb2787c16445fdff2504ec20ea2429ffb"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-timeout/llm_http_response.raw",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-timeout/llm_http_response.raw",
+      "kind": "byte-preserved",
+      "bytes": 68,
+      "sha256": "4028d38bc0fab49dadbbed4107b6db6d5b420b0989ca4aa0af284ce4bdd9e29a"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-timeout/llm_request.json",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-timeout/llm_request.json",
+      "kind": "byte-preserved",
+      "bytes": 11073,
+      "sha256": "f4181b8a8ba13b7efdf8c321683536021c1a7765293e14d47f011a052a47f6cc"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-timeout/llm_request_body.json",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-timeout/llm_request_body.json",
+      "kind": "byte-preserved",
+      "bytes": 50662,
+      "sha256": "ede8c7547e8a6c3ab79313b7cf94af5c6b2b6ef6a250fbb9cb22d521f99b2ffb"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-timeout/llm_response.json",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-timeout/llm_response.json",
+      "kind": "byte-preserved",
+      "bytes": 947,
+      "sha256": "90e1bb4b599a8cf1e6cecb0f4f36f1f2affa3757f77e274cbdf80de7b8794537"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-timeout/llm_result.json",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-timeout/llm_result.json",
+      "kind": "byte-preserved",
+      "bytes": 1006,
+      "sha256": "837da9503a00144ee07476ae5c45cc081748aa000c03851a86fecdc45a677428"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-timeout/log.PODFoam",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-timeout/log.PODFoam",
+      "kind": "byte-preserved",
+      "bytes": 17544,
+      "sha256": "0c36b34dda18a7bcce5435fe0c23c151c6924650f3ea245b7b2584c77ab9b336"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-timeout/telemetry.jsonl",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-timeout/telemetry.jsonl",
+      "kind": "byte-preserved",
+      "bytes": 8006,
+      "sha256": "4432e711bb9262dddb6c3420cfd0928a5e68719400dc2591f877577dbe15a377"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod-timeout/timeline.json",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod-timeout/timeline.json",
+      "kind": "byte-preserved",
+      "bytes": 5066,
+      "sha256": "8be33a5a355ce4c823f1be37df973f4db7cb807071911b3304528658883ccc36"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod/llm_client.py",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod/llm_client.py",
+      "kind": "byte-preserved",
+      "bytes": 15859,
+      "sha256": "f2064e01614f0210592b035b97164a3eb2787c16445fdff2504ec20ea2429ffb"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod/llm_http_response.raw",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod/llm_http_response.raw",
+      "kind": "byte-preserved",
+      "bytes": 990,
+      "sha256": "84cea8ddba438e2bca0b1312b54e38ff684512608df4a3f81e638fc5e8b265b1"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod/llm_observation/fields.npz",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod/llm_observation/fields.npz",
+      "kind": "byte-preserved",
+      "bytes": 776461,
+      "sha256": "14b64e399c39de9b2a6ccd8de7cc631e3b56814827bf642a7b15eed8008b12e5"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod/llm_observation/image-metadata.json",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod/llm_observation/image-metadata.json",
+      "kind": "byte-preserved",
+      "bytes": 1307,
+      "sha256": "12139b7d6e9b3922a599875c3611a384042b57d6ee05fa945379826f52b0258c"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod/llm_observation/state.png",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod/llm_observation/state.png",
+      "kind": "byte-preserved",
+      "bytes": 34437,
+      "sha256": "05a876ff878efd6ba4249dc7c82572f9e472a7524dbb9eb37cb1d539c7e16c70"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod/llm_request.json",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod/llm_request.json",
+      "kind": "byte-preserved",
+      "bytes": 11038,
+      "sha256": "d8b2d2cac0375a697fb7fadd54de736a8483c6ed8e4fa78dc7411673109bc1d6"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod/llm_request_body.json",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod/llm_request_body.json",
+      "kind": "byte-preserved",
+      "bytes": 50654,
+      "sha256": "8fcd7b648f116873659d3abf832fe88f683678f7756504ca46e73867020379e8"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod/llm_response.json",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod/llm_response.json",
+      "kind": "byte-preserved",
+      "bytes": 2847,
+      "sha256": "5057895fc8a86e3e94a1a5c04d6ccd2e66155ac57a716a20efeee530d2de568a"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod/llm_result.json",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod/llm_result.json",
+      "kind": "byte-preserved",
+      "bytes": 3071,
+      "sha256": "ec46f2cb7056519af9223cd555fb13fdf400bdf6cedc9597f92326817b6de3f9"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod/log.PODFoam",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod/log.PODFoam",
+      "kind": "byte-preserved",
+      "bytes": 17512,
+      "sha256": "5a62176f1ffdfffc65ae95748858c0f29152a772c03b755a07cb9a893db7871f"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod/telemetry.jsonl",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod/telemetry.jsonl",
+      "kind": "byte-preserved",
+      "bytes": 7926,
+      "sha256": "ae40c24a95c0be224d8743ff978677a2577e561d82b06f5cdb8277097a5039eb"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/fixed-pod/timeline.json",
+      "source": "pod-llm-demo.LRfJBN/fixed-pod/timeline.json",
+      "kind": "byte-preserved",
+      "bytes": 5044,
+      "sha256": "7fa344acd45430229ffbc33f5415b6970a0e21874d26c205873f771b168e06fd"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/resident-server.json",
+      "source": "pod-llm-demo.LRfJBN/resident-server.json",
+      "kind": "byte-preserved",
+      "bytes": 986,
+      "sha256": "2eba5b3336e753bb10d293acfc981d5304e533db9991d9651bf0a0b66b0fef1b"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/summary.json",
+      "source": "pod-llm-demo.LRfJBN/summary.json",
+      "kind": "byte-preserved",
+      "bytes": 1790,
+      "sha256": "550fbdcb220dbaaf1a4b00036778f05677d8adb5942ada5f489f081a1c9596dd"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/timings.json",
+      "source": "pod-llm-demo.LRfJBN/timings.json",
+      "kind": "byte-preserved",
+      "bytes": 2285,
+      "sha256": "d634a4f74b6826dc76b63b2e19cd51cae0f8206c69722ff0e93ff7ab8dc40216"
+    },
+    {
+      "path": "pod-llm-demo.LRfJBN/verification.json",
+      "source": "pod-llm-demo.LRfJBN/verification.json",
+      "kind": "byte-preserved",
+      "bytes": 1785,
+      "sha256": "3be6e2d5c29aef4b1dac2f2149f8b826bc1f26f51b01ef8aef662d561cf1d7d4"
+    },
+    {
+      "path": "runtime-summary.json",
+      "source": "runtime-identity-check.json (local audit)",
+      "kind": "derived; selected runtime fields",
+      "bytes": 2928,
+      "sha256": "65031f651a7de915078dc0f317b8d08a51fb05ba95d42055a47afc1f8f3b2b28"
+    },
+    {
+      "path": "test-results.json",
+      "source": "test-results.json",
+      "kind": "byte-preserved",
+      "bytes": 19536,
+      "sha256": "d804aab5532606a10b0d4d442e86e13b5adb22c4f3e5f1f67a0b73133aee8be7"
+    },
+    {
+      "path": "unit-tests-56.txt",
+      "source": "PythonFOAM-AI-draft-20261016/validation.log (pre-commit local test record)",
+      "kind": "byte-preserved",
+      "bytes": 18551,
+      "sha256": "52578c9c39ff982a212c6bec72c53e96a47b482de12a552183bd9c371adae09c"
+    }
+  ]
+}

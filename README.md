@@ -4,25 +4,29 @@ This fork adds a PythonFOAM callback-based in-situ **observer/logger** to the PO
 
 **[Project overview and illustrated guides](https://seungminyome.github.io/PythonFOAM/)** · **[Run report](docs/results.md)** · **[Saved data](docs/evidence/README.md)** · **[Code and execution instructions](Solver_Examples/PODFoam/llm_demo/README.md)**
 
-## Recorded result
+## Latest tested result — 2026-10-17
 
-The 2026-10-13 run (`pod-llm-demo.SwwR2e`) used a serial, 20,540-cell case. It queried the model after step 5 and completed all 10 steps. Four comparison cases each produced 45 output files byte-identical to the no-request baseline.
+The run `pod-llm-demo.LRfJBN` tested code revision `23089bb` with serial OpenFOAM v2106 and a local quantized Gemma 4 E2B multimodal model. At step 5, the callback passed numerical diagnostics and a same-step field image to the model, saved its response, and returned to the remaining calculation. All five conditions completed 10 steps; each of the four comparison runs produced 45 files byte-identical to the no-request baseline.
 
 | Case | Outcome | Full callback time |
 |---|---|---:|
-| No model request | Baseline; image rendered locally | 0.755 s |
-| Numbers and image | Actual model response | 70.604 s |
-| Numbers only | Actual model response | 41.412 s |
-| Connection refused | Returned to calculation | 0.411 s |
-| Deliberately delayed response | Timed out; returned to calculation | 4.017 s |
+| No model request | Baseline; image rendered locally | 0.493 s |
+| Numbers and image | Actual model response | 78.256 s |
+| Numbers only | Actual model response | 39.672 s |
+| Connection refused | Returned to calculation | 0.509 s |
+| Deliberately delayed response | Timed out; returned to calculation | 4.013 s |
 
-The callback is synchronous: the solver waits. These are single-run measurements, not averages. Identical output files show that the observer did not alter the saved results in these tests; they do not prove numerical stability for other cases or physical accuracy.
+The callback is **synchronous: the solver waits**. Concurrent solver/inference execution has not been implemented or tested. These are single-run measurements, not averages. Identical files establish unchanged saved outputs in these tests, not general numerical stability or physical accuracy. The two normal calls above use different demo prompts and are not the controlled image comparison.
 
-The model quoted the supplied maximum speed correctly but misplaced the high-speed location. The actual maximum is at x ≈ 0.000538 m; the answer referred to x = 0.25 m. The minimum-pressure cell is nearby but is **not the same cell**. A large pressure gradient was not independently established by this comparison.
+In a separate controlled replay, three paired trials used one saved snapshot with the same question, numeric input and model settings, changing only PNG inclusion. All six responses gave the wrong maximum-speed location: **60.92 cm planar error with numbers alone; 50.97 cm with the image**. The maximum-speed value was supplied in both inputs, so quoting it correctly is not evidence of image understanding. These repeats do not establish performance across different flow states.
 
-This result verifies the connection and the tested recovery paths. It does not establish physical accuracy, reliable model analysis, failure prediction, or an isolated benefit from adding an image.
+The automatic grounding rules raised no flags, but independent review found incorrect claims. They remain review aids, not a complete truth check. Prompt reuse affected replay timings, so the measurements do not establish a speed advantage from image inclusion.
 
-![Velocity and kinematic-pressure image sent to the model at step 5](docs/evidence/state.png)
+This is a working, tested integration prototype. Reliable spatial interpretation remains unresolved. The next priorities are evaluating useful observations across more states and reducing solver blocking; these are follow-up work, not completed features.
+
+[Latest illustrated results, Korean](https://seungminyome.github.io/PythonFOAM/results-20261017.html) · [English test report](docs/results.md) · [Latest evidence](docs/evidence/2026-10-17/README.md) · [Earlier October 13 run](docs/results-20261013.md)
+
+![Velocity and kinematic-pressure image sent to the model at step 5](docs/evidence/2026-10-17/pod-llm-demo.LRfJBN/fixed-pod/llm_observation/state.png)
 
 *Actual input image. The vertical axis is stretched; the displayed shape is not to scale.*
 
@@ -30,15 +34,15 @@ This result verifies the connection and the tested recovery paths. It does not e
 
 | Material | Link |
 |---|---|
-| Short illustrated overview, Korean | [Read in browser](https://seungminyome.github.io/PythonFOAM/overview.ko.html) |
-| Detailed guide: SVD/POD, results, limitations, review questions | [Read in browser](https://seungminyome.github.io/PythonFOAM/guide.ko.html) |
-| Selected original data with an in-page reader | [Open evidence reader](https://seungminyome.github.io/PythonFOAM/guide.ko.html#raw-library) |
-| Offline guides | [Download HTML bundle](https://github.com/seungminyome/PythonFOAM/releases/download/pod-insitu-demo-2026-10-13/explanations-ko.zip) |
-| Selected evidence | [Download evidence ZIP](https://github.com/seungminyome/PythonFOAM/releases/download/pod-insitu-demo-2026-10-13/evidence-swwr2e.zip) |
-| Complete saved run, including all five case directories | [Download run archive](https://github.com/seungminyome/PythonFOAM/releases/download/pod-insitu-demo-2026-10-13/run-archive-SwwR2e.tar.gz) |
-| Download checksums | [SHA256SUMS.txt](https://github.com/seungminyome/PythonFOAM/releases/download/pod-insitu-demo-2026-10-13/SHA256SUMS.txt) |
+| Latest results with actual responses | [Read in browser](https://seungminyome.github.io/PythonFOAM/results-20261017.html) |
+| Latest requests, responses, metrics and step-5 arrays | [Browse evidence](docs/evidence/2026-10-17/README.md) |
+| Latest solver fields, all ten saved steps | [Download solver evidence](https://github.com/seungminyome/PythonFOAM/releases/download/pod-insitu-tests-2026-10-17/solver-evidence-LRfJBN.tar.gz) |
+| Latest selected evidence and offline results page | [Download evidence ZIP](https://github.com/seungminyome/PythonFOAM/releases/download/pod-insitu-tests-2026-10-17/evidence-20261017.zip) |
+| Download checksums | [SHA256SUMS.txt](https://github.com/seungminyome/PythonFOAM/releases/download/pod-insitu-tests-2026-10-17/SHA256SUMS.txt) |
+| Illustrated introduction, based on the October 13 run | [Read overview](https://seungminyome.github.io/PythonFOAM/overview.ko.html) |
+| Detailed explanation and earlier evidence reader | [Read guide](https://seungminyome.github.io/PythonFOAM/guide.ko.html) |
 
-The HTML guides contain their selected evidence and work offline after download. The complete run archive is separate. No model weights are included.
+The latest evidence ZIP keeps the results page beside its linked data for offline reading. The larger solver archive includes all saved time directories used in the 45-file comparison. The older illustrated guides embed their own October 13 evidence. No model weights are included.
 
 ## Reproduce or inspect
 
@@ -47,12 +51,12 @@ Start with the [PODFoam bridge validation](Solver_Examples/PODFoam/validation/RE
 To inspect the existing run without executing CFD or the model, unpack the complete run archive and run:
 
 ```bash
-python3 Solver_Examples/PODFoam/llm_demo/verify_demo.py /path/to/pod-llm-demo.SwwR2e
+python3 Solver_Examples/PODFoam/llm_demo/verify_demo.py /path/to/pod-llm-demo.LRfJBN
 ```
 
 This check requires NumPy. Details of the request, response, field comparisons and read-only recheck are in the [run report](docs/results.md).
 
-A local [controlled replay benchmark](Solver_Examples/PODFoam/llm_demo/README.md#controlled-replay-benchmark) prepares numeric-only and numeric-plus-image requests with identical questions, summaries and generation settings. Its default mode sends no requests. It is a benchmark setup, not a new model-quality result or a new solver run.
+A local [controlled replay benchmark](Solver_Examples/PODFoam/llm_demo/README.md#controlled-replay-benchmark) prepares numeric-only and numeric-plus-image requests with identical questions, summaries and generation settings. Its default mode sends no requests. The October 17 evidence includes an actual six-request execution in addition to the five live solver cases. Python unit and loopback tests passed **56 tests** before the tested source was committed; [saved test log](docs/evidence/2026-10-17/unit-tests-56.txt).
 
 ## Upstream project
 

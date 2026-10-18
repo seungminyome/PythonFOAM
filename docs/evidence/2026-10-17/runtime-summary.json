@@ -1,0 +1,70 @@
+{
+  "kind": "derived public summary",
+  "source": "runtime-identity-check.json (local audit)",
+  "source_sha256": "31d9c6ecc35fc0670271cd879fec5cc4de45cb6787b5c19abe8c0ac9fc7430ee",
+  "status": "PASS",
+  "source_commit": "23089bbf3447731852fa960d7d25ea18767a3f51",
+  "actual_version": "version: 0.6.0-dev (build 11429, commit d81235049)\nbuilt with GNU 11.4.0 for Linux x86_64",
+  "settings": {
+    "device": "CPU",
+    "threads": 4,
+    "context_tokens": 2048,
+    "parallel_slots": 1,
+    "image_max_tokens": 256,
+    "reasoning": "off",
+    "model_alias": "gemma-4-E2B-it-Q4_0-vision"
+  },
+  "checks": {
+    "pid_matches_test_context": true,
+    "command_matches_test_context": true,
+    "process_unchanged_during_audit": true,
+    "executable_matches_command": true,
+    "host_localhost": true,
+    "port_8088": true,
+    "model_path_matches_vision_manifest": true,
+    "model_filename_matches_runtime_manifest": true,
+    "model_bytes_match_runtime_manifest": true,
+    "model_sha256_matches_runtime_manifest": true,
+    "model_sha256_matches_vision_manifest": true,
+    "projector_filename_matches_manifest": true,
+    "projector_bytes_match_manifest": true,
+    "projector_sha256_matches_manifest": true,
+    "model_projector_revision_pins_match": true,
+    "engine_path_matches_vision_manifest": true,
+    "version_command_exits_zero": true,
+    "engine_version_matches_runtime_manifest": true,
+    "engine_version_matches_vision_manifest": true,
+    "archive_bytes_match_manifest": true,
+    "archive_sha256_matches_manifest": true,
+    "actual_binary_matches_pinned_archive_member": true,
+    "hashed_files_unchanged_during_read": true
+  },
+  "cache_note": "Read-only SHA-256 verification streamed complete model/projector files before benchmark. These reads may warm the operating-system filesystem cache; cache was not dropped. No model request or inference warm-up was issued.",
+  "scope": "On-disk files, active process command/executable, version and pinned archive binary identity; does not independently inspect all loaded shared-library contents or prove server internal tensor state.",
+  "omitted": [
+    "absolute paths",
+    "process identifiers",
+    "memory addresses",
+    "filesystem device/inode details"
+  ],
+  "model": {
+    "filename": "gemma-4-E2B-it-Q4_0.gguf",
+    "bytes": 2841481184,
+    "sha256": "8e30dff3ac4c8434c49a7036fa15564bdbb6044e42bf04550bf1a096ad7e6a52"
+  },
+  "projector": {
+    "filename": "mmproj-gemma-4-E2B-it-Q8_0.gguf",
+    "bytes": 557368064,
+    "sha256": "9406f99c16d68cda4f1f0552192dcc99021ea1fc6d2fd50b1dc3ccf30d04b292"
+  },
+  "engine": {
+    "filename": "llama-server",
+    "bytes": 17864,
+    "sha256": "5faf410bbbc00a1b94b09ee01623699f255365628dfa73b1ee552d9e52a2231d"
+  },
+  "engine_release_archive": {
+    "filename": "llama-b11429-bin-ubuntu-x64.tar.gz",
+    "bytes": 17693462,
+    "sha256": "f6d25dde8f51133143d1453da4fd5f73b145127177612a283bf7995957af3392"
+  }
+}

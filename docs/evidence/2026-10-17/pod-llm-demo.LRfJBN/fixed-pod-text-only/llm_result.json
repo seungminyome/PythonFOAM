@@ -1,0 +1,63 @@
+{
+  "parent_pid": 242307,
+  "run_id": "pod-llm-demo.LRfJBN/fixed-pod-text-only",
+  "step": 5,
+  "time_s": 5e-07,
+  "image_requested": false,
+  "deadline_s": 120.0,
+  "cleanup_budget_s": 0.2,
+  "connect_timeout_s": 2.0,
+  "read_timeout_s": 90.0,
+  "kill_join_allowance_s": 0.02,
+  "scheduling_tolerance_s": 0.05,
+  "callback_started_at": "2026-10-17T08:32:23.751677+00:00",
+  "summary_wall_s": 0.010134560987353325,
+  "image_input": false,
+  "text_input_only": true,
+  "request_before_at": "2026-10-17T08:32:23.771601+00:00",
+  "image_skipped": {
+    "reason": "LLM_IMAGE_INPUT=0; numeric summary only"
+  },
+  "worker_reaped": true,
+  "ipc_select_calls": 4,
+  "response_after_at": "2026-10-17T08:33:03.415040+00:00",
+  "callback_elapsed_s": 39.66371958691161,
+  "elapsed_since_request_s": 39.64357760606799,
+  "worker_wait_elapsed_s": 39.660884524928406,
+  "cleanup_elapsed_before_result_write_s": 0.007581092999316752,
+  "status": "ok",
+  "output_text": "{\n  \"observations\": \"Residuals show small values, e.g., p final last is 9.19188e-07.\",\n  \"possible_interpretation\": \"The simulation appears to be progressing with small residuals.\",\n  \"checks\": \"Check for missing force equilibrium data.\"\n}",
+  "request_sha256": "0ce9cd26c2bcdd91fabe4332359f81078a7c1fe641cb17071f75f24a261e995e",
+  "request_bytes": 3767,
+  "http_status": 200,
+  "transport_phase": "complete",
+  "raw_response_bytes": 905,
+  "request_sent": true,
+  "finish_reason": "stop",
+  "usage": {
+    "completion_tokens": 73,
+    "prompt_tokens": 1080,
+    "total_tokens": 1153,
+    "prompt_tokens_details": {
+      "cached_tokens": 1
+    }
+  },
+  "server_timings": {
+    "cache_n": 1,
+    "prompt_n": 1079,
+    "prompt_ms": 31207.747,
+    "prompt_per_token_ms": 28.922842446709915,
+    "prompt_per_second": 34.57474837898423,
+    "predicted_n": 73,
+    "predicted_ms": 8052.06,
+    "predicted_per_token_ms": 111.83416666666668,
+    "predicted_per_second": 8.941811163851238
+  },
+  "structured_output": {
+    "observations": "Residuals show small values, e.g., p final last is 9.19188e-07.",
+    "possible_interpretation": "The simulation appears to be progressing with small residuals.",
+    "checks": "Check for missing force equilibrium data."
+  },
+  "output_format_valid": true,
+  "inference_wall_s": 39.63716281298548
+}

@@ -1,0 +1,147 @@
+[
+  {
+    "wall_since_start_s": 2.7930976840434596,
+    "monotonic_s": 643386.326792258,
+    "line": "PYTHON LLM mesh geometry received: cells=20540 cell_polygons=20540 solution_d=[1, 1, -1] backend_ready=True backend_import_wall_s=1.486"
+  },
+  {
+    "wall_since_start_s": 2.793172952020541,
+    "monotonic_s": 643386.326867024,
+    "line": "POD mesh geometry passed to Python: cells=20540 solutionD=(1 1 -1) cellPolygons=20540"
+  },
+  {
+    "wall_since_start_s": 2.798572831088677,
+    "monotonic_s": 643386.332267237,
+    "line": "Time = 1e-07 deltaT = 1e-07"
+  },
+  {
+    "wall_since_start_s": 2.9869784160982817,
+    "monotonic_s": 643386.520673445,
+    "line": "POD analysis callback returned: step=1 wall_seconds=8.8991e-05"
+  },
+  {
+    "wall_since_start_s": 3.023156136041507,
+    "monotonic_s": 643386.556851241,
+    "line": "Time = 2e-07 deltaT = 1e-07"
+  },
+  {
+    "wall_since_start_s": 3.140740995062515,
+    "monotonic_s": 643386.674435977,
+    "line": "POD analysis callback returned: step=2 wall_seconds=9.7215e-05"
+  },
+  {
+    "wall_since_start_s": 3.1754902970278636,
+    "monotonic_s": 643386.709185991,
+    "line": "Time = 3e-07 deltaT = 1e-07"
+  },
+  {
+    "wall_since_start_s": 3.236897761002183,
+    "monotonic_s": 643386.770592896,
+    "line": "POD analysis callback returned: step=3 wall_seconds=8.4139e-05"
+  },
+  {
+    "wall_since_start_s": 3.281059803091921,
+    "monotonic_s": 643386.814754449,
+    "line": "Time = 4e-07 deltaT = 1e-07"
+  },
+  {
+    "wall_since_start_s": 3.3364290710305795,
+    "monotonic_s": 643386.870123615,
+    "line": "POD analysis callback returned: step=4 wall_seconds=6.9388e-05"
+  },
+  {
+    "wall_since_start_s": 3.3796187590342015,
+    "monotonic_s": 643386.913313815,
+    "line": "Time = 5e-07 deltaT = 1e-07"
+  },
+  {
+    "wall_since_start_s": 3.449532305006869,
+    "monotonic_s": 643386.983227185,
+    "line": "PYTHON LLM_MARKER {\"event\":\"callback_start\",\"timestamp_utc\":\"2026-10-17T08:30:56.161199+00:00\",\"parent_pid\":237719,\"writer_pid\":237764,\"run_id\":\"pod-llm-demo.LRfJBN/fixed-pod-no-llm\",\"step\":5,\"time_s\":5e-07}"
+  },
+  {
+    "wall_since_start_s": 3.900112297036685,
+    "monotonic_s": 643387.433807079,
+    "line": "PYTHON LLM_MARKER {\"event\":\"request_before\",\"timestamp_utc\":\"2026-10-17T08:30:56.613909+00:00\",\"parent_pid\":237719,\"writer_pid\":237764,\"run_id\":\"pod-llm-demo.LRfJBN/fixed-pod-no-llm\",\"step\":5,\"time_s\":5e-07}"
+  },
+  {
+    "wall_since_start_s": 3.908312574028969,
+    "monotonic_s": 643387.442007588,
+    "line": "PYTHON LLM_MARKER {\"event\":\"response_after\",\"timestamp_utc\":\"2026-10-17T08:30:56.622209+00:00\",\"parent_pid\":237719,\"writer_pid\":237765,\"run_id\":\"pod-llm-demo.LRfJBN/fixed-pod-no-llm\",\"step\":5,\"time_s\":5e-07}"
+  },
+  {
+    "wall_since_start_s": 3.9309149580076337,
+    "monotonic_s": 643387.464609661,
+    "line": "PYTHON LLM step=5 time=5e-07 status=disabled image_input=True analysis_wait=0.461136s"
+  },
+  {
+    "wall_since_start_s": 3.9383150110952556,
+    "monotonic_s": 643387.472009868,
+    "line": "POD analysis callback returned: step=5 wall_seconds=0.493481532"
+  },
+  {
+    "wall_since_start_s": 3.9762329370714724,
+    "monotonic_s": 643387.509927731,
+    "line": "Time = 6e-07 deltaT = 1e-07"
+  },
+  {
+    "wall_since_start_s": 4.075179549050517,
+    "monotonic_s": 643387.608874669,
+    "line": "POD analysis callback returned: step=6 wall_seconds=0.000273067"
+  },
+  {
+    "wall_since_start_s": 4.108413779991679,
+    "monotonic_s": 643387.642108833,
+    "line": "Time = 7e-07 deltaT = 1e-07"
+  },
+  {
+    "wall_since_start_s": 4.1695816030260175,
+    "monotonic_s": 643387.703276549,
+    "line": "POD analysis callback returned: step=7 wall_seconds=7.7573e-05"
+  },
+  {
+    "wall_since_start_s": 4.2032553480239585,
+    "monotonic_s": 643387.736950032,
+    "line": "Time = 8e-07 deltaT = 1e-07"
+  },
+  {
+    "wall_since_start_s": 4.265272695105523,
+    "monotonic_s": 643387.79896766,
+    "line": "POD analysis callback returned: step=8 wall_seconds=8.7876e-05"
+  },
+  {
+    "wall_since_start_s": 4.310274796094745,
+    "monotonic_s": 643387.843969147,
+    "line": "Time = 9e-07 deltaT = 1e-07"
+  },
+  {
+    "wall_since_start_s": 4.3638574910582975,
+    "monotonic_s": 643387.897552506,
+    "line": "POD analysis callback returned: step=9 wall_seconds=7.362e-05"
+  },
+  {
+    "wall_since_start_s": 4.425914954044856,
+    "monotonic_s": 643387.959609913,
+    "line": "Time = 1e-06 deltaT = 1e-07"
+  },
+  {
+    "wall_since_start_s": 4.605609326041304,
+    "monotonic_s": 643388.139304532,
+    "line": "POD SVD returned to OpenFOAM: rows=61620 modes=5 finite=true time=1e-06"
+  },
+  {
+    "wall_since_start_s": 4.645407317089848,
+    "monotonic_s": 643388.179102705,
+    "line": "POD analysis callback returned: step=10 wall_seconds=0.039362317"
+  },
+  {
+    "wall_since_start_s": 4.734045953024179,
+    "monotonic_s": 643388.267740807,
+    "line": "Python finalized successfully"
+  },
+  {
+    "wall_since_start_s": 4.7340509770438075,
+    "monotonic_s": 643388.267745039,
+    "line": "End"
+  }
+]

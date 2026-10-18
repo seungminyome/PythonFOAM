@@ -1,5 +1,12 @@
 # PODFoam in-situ observer/logger
 
+**Latest actual tests:** [October 17 report](../../../docs/results.md), executed
+revision `23089bb`. Five solver conditions completed all ten steps with 45 saved
+files matching the no-request baseline. Three controlled pairs on one snapshot
+returned incorrect maximum-speed locations in both conditions (60.92 cm planar
+error for numbers only; 50.97 cm with the PNG). The image callback took 78.256 s.
+This remains synchronous; concurrent solver/inference execution is not implemented.
+
 At one time step PODFoam hands a small open-source vision-language model
 (Gemma 4 E2B, Q4_0, served by llama.cpp on localhost, CPU only) a numeric
 summary of the step and a picture of that step's |U| and p fields, gets a
@@ -168,13 +175,18 @@ metrics. Review these distinctions when interpreting the results:
   `original_cpp_callback_wall_s` with its source. This is historical context,
   not a new A/B measurement.
 
-No new CFD or model-quality result is implied by this script. To check a
+Preparing requests alone supplies no CFD or model-quality result. The
+[October 17 records](../../../docs/evidence/2026-10-17/README.md) include an actual
+six-request execution of this runner. To check a
 backport in the actual solver, separately run the existing five-case demo and
 `verify_demo.py`, including the 45-file baseline comparison. Unit tests cover
 Python failure paths and fixture responses; they do not replace that solver
 integration check.
 
-## One run on this machine
+## Earlier run on this machine — October 13
+
+The measurements below are retained from `pod-llm-demo.SwwR2e`; use the
+[latest report](../../../docs/results.md) for the October 17 execution.
 
 8 vCPU, 7.7 GiB RAM, no GPU, llama.cpp b11429 with 4 threads, context 2048.
 Callback times are what the C++ side measured around `analysis_func`.

@@ -1,0 +1,149 @@
+{
+  "status": "PASS",
+  "run": "/home/syome/Desktop/PythonFOAM-real-tests-20261017/pod-llm-demo.LRfJBN",
+  "source_commit": "23089bbf3447731852fa960d7d25ea18767a3f51",
+  "callback_source_sha256": {
+    "python_module.py": "671f5a98184f1468a179a268620daafa1e5c474003726737f27f9a57d7f73c7a",
+    "llm_client.py": "f2064e01614f0210592b035b97164a3eb2787c16445fdff2504ec20ea2429ffb",
+    "pod_image.py": "a2989e8762302eb7c2feb3e4f07045542405be1764b8b780646273d6edf0f384",
+    "bounded_ipc.py": "3f48a19eaa4ff835266ba1f5c6661c1ee26af08726f27fd538abed866f67763a",
+    "pod_svd.py": "110e5e70b77bced27587808349c155ef0797b5eac3f059fce16bcad862772123"
+  },
+  "baseline_field_sha256": {
+    "1e-06/U": "68fbdda81cdc94053e58b309b0e456d0a68c2a561280da068b3ba151f5070aa9",
+    "1e-06/p": "778fd4b0856df31f564faf39f19eb265adad2c7209c022088fe9cf99277bd5d0",
+    "1e-06/phi": "0cf3e0cabbdeca2b97a32e513b215bd659947ff7cf4a61bc8dccc2d2aa06aa05",
+    "1e-06/upod_0": "c9d10f402ca72f8ef0363b320e4a5a2bc09ac1db9990f232f500664ac03e6131",
+    "1e-06/upod_1": "06175b973386384bec70500d8fddb03d2013cfdafce42414fd9884456532940e",
+    "1e-06/upod_2": "5892d96b98ccb2aac4d21ff73be57669a3c09ae4188ef04c969c4eee2ea29a2c",
+    "1e-06/upod_3": "a69be5a7c09e041482964befd47488f0f05c3715b3a50047792e4bd37d9cc8f9",
+    "1e-06/upod_4": "acefe26f721b41d8952741fa565c32676a678943ee3ec5cc740b185b052c33de",
+    "1e-06/vpod_0": "fcbbc7c01b349eae41c6e086268140ed31cafa357a0146a8f4ec90c631434608",
+    "1e-06/vpod_1": "df6350d8cb8ceeec3ad3d671c6da3ad53641583459d136812b5c6869e79bd1f9",
+    "1e-06/vpod_2": "3df0419e119e1137de78898cff84d7124469b63ef7932a9a667fe8a7e0784b8c",
+    "1e-06/vpod_3": "dcd4991a2b399fa0f3ecf2c170adf679bed29c584482282ad4876eea70404183",
+    "1e-06/vpod_4": "a7e0ced5b69ab288ad31c03fa0f97195b29593c539867dfbc05cbee365978107",
+    "1e-06/wpod_0": "459d63387fe28eee3e49e7eb8db3f1c8a0ecbfcc09831da4293b84def5877e5c",
+    "1e-06/wpod_1": "fb0c026f9a4ae46c54fc7fc6e99258424beec3463b595cdf4b7a7909d4a51c4c",
+    "1e-06/wpod_2": "97915c3a216db7d10d97f11d3f51d576f8eb163c8e340221c34d805fba001731",
+    "1e-06/wpod_3": "eee4c0333af0396421968c920a2f5fcc1ab8117bf5aa434edee2114a9ecc4b55",
+    "1e-06/wpod_4": "746bd8c6bfe9e14c189cf68fec47d376f7d7a45791f41856980b6ed2ea744e0e",
+    "1e-07/U": "c810f0441bd6427988a44facc377a9d9674209037828b98a0c0e37983059c7c0",
+    "1e-07/p": "8b2075ddca263b49c099fa245cd328f74b12f7215ad392ffa13f894ff109e505",
+    "1e-07/phi": "0d795d8db454e3fb1668d31bb4b7a21a9e7e065221f82eb4db93d440a077f5a8",
+    "2e-07/U": "0d330e1841a86e59a54bcfd20fe6174b6cc499a79ba1cd30d377a1bbdec3ab7b",
+    "2e-07/p": "ba40b4c228d2256cd603662f5ae12f8a993f0a3c7e85d73176b279c4928e89eb",
+    "2e-07/phi": "78bb64c24ec6d328275cc1d143581c3abaac6b5528864ae648714d300d81ce86",
+    "3e-07/U": "a2d68696a7e80fe6c3ba22d0242375c3a4bbfbfa3a8a61cb6820ea6a18229172",
+    "3e-07/p": "4c449ec9d3a16d4b913f47de1b325e83a11ebde73b420717401450d2f973667c",
+    "3e-07/phi": "19c2939145c94ea3ea262bd317649adfbad4a6a6719dce0aede28f3dbd575670",
+    "4e-07/U": "730846f1af169ad7ee48b3d58a71b1163c438ec2acf9e9b7d88ec3609c88c929",
+    "4e-07/p": "9e34ba391e6f0bd2c296e2c028ae6d62e2c431047153d28feee67ee93d4a1eaf",
+    "4e-07/phi": "2d15ce9fc66dbceb6372480c3b7596a76aa87cfdf2a05361949ea460731f5db2",
+    "5e-07/U": "07015ef760566935b15833078743802f5708cd26e564e9ebbea1bbcd48d3c984",
+    "5e-07/p": "10e26c496babb18c37fbc5d70d1c416a9b8fb79814e9e9dafe18805448f131c4",
+    "5e-07/phi": "c649abf67f6c7049f82a497f12e6a9fe95f0797b7c8675a337f84504bd7bd929",
+    "6e-07/U": "4e6dd2e224d8d05f4b556dfee8ab0326a95260bf5dc46e9f92045860afbe42e4",
+    "6e-07/p": "a1a520d8037b112f4dca2493523b1b0f04cf7c8eea01234e904fe39ee7b18dcf",
+    "6e-07/phi": "8d1ad2b51c1e91cea2c69464a54b9133c658c6f300bdcc9e745d1d2fc9bbb626",
+    "7e-07/U": "571a05e536171290a993ecd40863ac46894f0b1eeccb0743b19efd5285497c2e",
+    "7e-07/p": "13d76827bfeb534619117d26952415e3c3d7315112990b3bcdba910f1f71de97",
+    "7e-07/phi": "53b74ac8456a1d0d8adbeb889f06331402ab4b3d187955e1ac696287772034c3",
+    "8e-07/U": "e0459dcb39a1864d1eebbcfa6fad4a27793ae4bb6b2b46267b9eaf04bcaf041e",
+    "8e-07/p": "f980c44ce9c5f474ec6100c8e4985eec81783ed4ae7df961f317e24e0e55dcc6",
+    "8e-07/phi": "5b9c18f2072f8ca3ca295b6ea6c5cd9b66ad8f2788bff518165ed4af31b1957d",
+    "9e-07/U": "f422424239f6f6362729b64872f740573f0757c7867e8ad71a331433d53a58f2",
+    "9e-07/p": "6c78bab92d430fd5315fd3e0d9819f22d02b25f7f8e6adc4d69ade644b1e2544",
+    "9e-07/phi": "5fc7882a8c802cf90e464b880d19e409339affcf5a09f1e16b82871804207afa"
+  },
+  "compiled_binary_sha256": "ed354674ec38b44ca77a3126bab8bb0cada7abafa957a68063fb824f21fbc15b",
+  "cases": {
+    "fixed-pod-no-llm": {
+      "status": "PASS",
+      "model_status": "disabled",
+      "steps_completed": 10,
+      "exact_expected_field_files": 45,
+      "identical_to_baseline": 45,
+      "callback_source_matches_commit": true,
+      "full_cpp_callback_seconds": 0.493481532,
+      "full_callback_limit_seconds": 120.27,
+      "step6_to_step10_after_response": true,
+      "worker_reaped": true,
+      "recorded_child_pids": [
+        237764,
+        237765
+      ],
+      "recorded_child_pids_still_present_at_audit": []
+    },
+    "fixed-pod": {
+      "status": "PASS",
+      "model_status": "ok",
+      "steps_completed": 10,
+      "exact_expected_field_files": 45,
+      "identical_to_baseline": 45,
+      "callback_source_matches_commit": true,
+      "full_cpp_callback_seconds": 78.255546163,
+      "full_callback_limit_seconds": 120.27,
+      "step6_to_step10_after_response": true,
+      "worker_reaped": true,
+      "recorded_child_pids": [
+        237774,
+        242274
+      ],
+      "recorded_child_pids_still_present_at_audit": []
+    },
+    "fixed-pod-text-only": {
+      "status": "PASS",
+      "model_status": "ok",
+      "steps_completed": 10,
+      "exact_expected_field_files": 45,
+      "identical_to_baseline": 45,
+      "callback_source_matches_commit": true,
+      "full_cpp_callback_seconds": 39.671958236,
+      "full_callback_limit_seconds": 120.27,
+      "step6_to_step10_after_response": true,
+      "worker_reaped": true,
+      "recorded_child_pids": [
+        242317,
+        246718
+      ],
+      "recorded_child_pids_still_present_at_audit": []
+    },
+    "fixed-pod-server-error": {
+      "status": "PASS",
+      "model_status": "error",
+      "steps_completed": 10,
+      "exact_expected_field_files": 45,
+      "identical_to_baseline": 45,
+      "callback_source_matches_commit": true,
+      "full_cpp_callback_seconds": 0.509044383,
+      "full_callback_limit_seconds": 4.27,
+      "step6_to_step10_after_response": true,
+      "worker_reaped": true,
+      "recorded_child_pids": [
+        246743,
+        246744
+      ],
+      "recorded_child_pids_still_present_at_audit": []
+    },
+    "fixed-pod-timeout": {
+      "status": "PASS",
+      "model_status": "timeout",
+      "steps_completed": 10,
+      "exact_expected_field_files": 45,
+      "identical_to_baseline": 45,
+      "callback_source_matches_commit": true,
+      "full_cpp_callback_seconds": 4.013077974,
+      "full_callback_limit_seconds": 4.27,
+      "step6_to_step10_after_response": true,
+      "worker_reaped": true,
+      "recorded_child_pids": [
+        246754,
+        246763
+      ],
+      "recorded_child_pids_still_present_at_audit": []
+    }
+  },
+  "interpretation": "This tested run preserved saved fields, including both failure fixtures; it does not establish physical stability or AI accuracy.",
+  "archive_note": "The normal run-archive.tar.gz omits intermediate time directories and its fixed-pimple reference; this audit reads the complete original run directory."
+}

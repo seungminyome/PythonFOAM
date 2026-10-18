@@ -1,0 +1,36 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "{\n  \"observations\": \"Max speed |U| is 82.52751611538334 m/s at x=0.5 m, y=0.11429523559299273 m.\",\n  \"possible_interpretation\": \"The maximum velocity is observed near the center of the domain.\",\n  \"checks\": \"No evidence of force balance or low Courant number is provided.\"\n}"
+      }
+    }
+  ],
+  "created": 1792226125,
+  "model": "gemma-4-E2B-it-Q4_0-vision",
+  "system_fingerprint": "b11429-d81235049",
+  "object": "chat.completion",
+  "usage": {
+    "completion_tokens": 112,
+    "prompt_tokens": 1568,
+    "total_tokens": 1680,
+    "prompt_tokens_details": {
+      "cached_tokens": 1567
+    }
+  },
+  "id": "chatcmpl-u9ymveoe5ripQAtRe2D7Dw8j0kQTRWkn",
+  "timings": {
+    "cache_n": 1567,
+    "prompt_n": 1,
+    "prompt_ms": 117.949,
+    "prompt_per_token_ms": 117.949,
+    "prompt_per_second": 8.47824059551162,
+    "predicted_n": 112,
+    "predicted_ms": 12641.789,
+    "predicted_per_token_ms": 113.889990990991,
+    "predicted_per_second": 8.780402836971886
+  }
+}

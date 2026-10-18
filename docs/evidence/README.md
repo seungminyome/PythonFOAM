@@ -1,5 +1,7 @@
 # Saved evidence: SwwR2e
 
+This directory preserves the **October 13** evidence. The [October 17 evidence](2026-10-17/README.md) and [latest test report](../results.md) cover the newer executed code and paired model comparison.
+
 The source run was recorded on 2026-10-13. Documentation and read-only rechecks were prepared on 2026-10-15; no new CFD or model inference is represented by these rechecks.
 
 [Run report](../results.md) · [Interactive reader](https://seungminyome.github.io/PythonFOAM/guide.ko.html#raw-library) · [Download all original run files](https://github.com/seungminyome/PythonFOAM/releases/download/pod-insitu-demo-2026-10-13/run-archive-SwwR2e.tar.gz)

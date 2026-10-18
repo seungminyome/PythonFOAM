@@ -1,0 +1,36 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "{\n  \"observations\": \"Max speed |U| is 82.52751611538334 m/s at x=0.6012246511046805 m, y=0.11429523559299273 m.\",\n  \"possible_interpretation\": \"The maximum velocity is found at the upper-right corner of the domain.\",\n  \"checks\": \"Missing evidence for vertical axis scaling or shape interpretation.\"\n}"
+      }
+    }
+  ],
+  "created": 1792226140,
+  "model": "gemma-4-E2B-it-Q4_0-vision",
+  "system_fingerprint": "b11429-d81235049",
+  "object": "chat.completion",
+  "usage": {
+    "completion_tokens": 127,
+    "prompt_tokens": 1462,
+    "total_tokens": 1589,
+    "prompt_tokens_details": {
+      "cached_tokens": 1456
+    }
+  },
+  "id": "chatcmpl-K9ABJmGa4OyogHAuRD6IeL2r8gdcAfVn",
+  "timings": {
+    "cache_n": 1456,
+    "prompt_n": 6,
+    "prompt_ms": 451.686,
+    "prompt_per_token_ms": 75.28099999999999,
+    "prompt_per_second": 13.283564245958475,
+    "predicted_n": 127,
+    "predicted_ms": 14139.585,
+    "predicted_per_token_ms": 112.21892857142856,
+    "predicted_per_second": 8.911152625766599
+  }
+}

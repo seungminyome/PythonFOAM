@@ -13,7 +13,7 @@ revision that produced it is given.
   Korean material moved to [PythonFOAM-Korean](https://github.com/seungminyome/PythonFOAM-Korean).
 - CI: unit tests on Python 3.10 and 3.12; evidence files checked against their
   manifests; relative links checked.
-- `CITATION.cff`, this changelog, a `Makefile`.
+- This changelog and a `Makefile`.
 - README states what "step 5" is and gives the test machine specification.
 
 ## 2026-10-18

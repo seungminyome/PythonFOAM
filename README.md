@@ -76,7 +76,9 @@ sequenceDiagram
 
 8 vCPU, 7.7 GiB RAM, no GPU; llama-server on 4 threads, llama.cpp
 b11429, context 2048. 20,540 cells, time step
-10⁻⁷ s, ten steps. Each condition was run once.
+10⁻⁷ s, ten steps. Each condition was run once on this date. A repeat on
+October 19 gave the same answers and the same step-5 hashes
+([details](docs/results.md#repeat-on-2026-10-19)).
 
 | Condition | Result | Steps | Files equal to baseline | Callback time |
 |---|---|---:|---:|---:|
@@ -136,6 +138,7 @@ Solver_Examples/PODFoam/      PODFoam solver (OpenFOAM v2106) with the callback 
 docs/results.md               October 17 test report
 docs/evidence/2026-10-17/     raw requests, responses, logs, verification, hash manifest
 docs/evidence/2026-10-13/     earlier run (pod-llm-demo.SwwR2e) and its report, docs/results-20261013.md
+docs/evidence/2026-10-19/     repeat of the October 17 run (pod-llm-demo.o5sNLJ), same answers and hashes
 docs/evidence/check_manifest.py  verifies every evidence file against its manifest (also run in CI)
 docs/upstream-project.md      original PythonFOAM README (other solvers, Docker, build notes)
 .github/workflows/            tests.yml (unit tests, Python 3.10 and 3.12), evidence.yml (hashes, links)

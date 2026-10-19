@@ -1,6 +1,9 @@
 # PythonFOAM + Gemma 4 E2B: reading solver state during a run
 
 [![tests](https://github.com/seungminyome/PythonFOAM/actions/workflows/tests.yml/badge.svg)](https://github.com/seungminyome/PythonFOAM/actions/workflows/tests.yml)
+[![evidence](https://github.com/seungminyome/PythonFOAM/actions/workflows/evidence.yml/badge.svg)](https://github.com/seungminyome/PythonFOAM/actions/workflows/evidence.yml)
+![OpenFOAM v2106](https://img.shields.io/badge/OpenFOAM-v2106-lightgrey)
+![Python 3.10 | 3.12](https://img.shields.io/badge/python-3.10%20%7C%203.12-lightgrey)
 [![license](https://img.shields.io/badge/license-Argonne%20OSS-blue.svg)](LICENSE)
 
 [Test report](docs/results.md) · [Evidence](docs/evidence/2026-10-17/README.md) · [How to run](Solver_Examples/PODFoam/llm_demo/README.md) · [Korean](https://github.com/seungminyome/PythonFOAM-Korean)
@@ -17,12 +20,12 @@ while it waits for them.
 
 ## Quick start
 
-Python unit tests, no OpenFOAM or model needed (about 10 s):
+Unit tests, no OpenFOAM or model needed (about 10 s):
 
 ```bash
 pip install -r Solver_Examples/PODFoam/llm_demo/requirements.txt
-cd Solver_Examples/PODFoam/llm_demo
-python3 -m unittest test_llm_client test_callback test_ablation_runner
+make test          # or: cd Solver_Examples/PODFoam/llm_demo && python3 -m unittest
+make evidence      # every evidence file matches its manifest hash
 ```
 
 Full run (OpenFOAM v2106, about 3.4 GB of disk for the model files, a few GB of RAM):
@@ -39,6 +42,21 @@ python3 llm_demo/runtime.py stop
 Details and environment variables: [llm_demo/README.md](Solver_Examples/PODFoam/llm_demo/README.md).
 
 ## Implementation
+
+```mermaid
+sequenceDiagram
+    participant S as PODFoam (C++)
+    participant P as python_module.py
+    participant W as worker process
+    participant L as llama-server (Gemma 4 E2B)
+    S->>P: analysis_func(state), after step 5
+    P->>W: fork
+    W->>W: numeric summary, state.png, fields.npz
+    W->>L: POST /v1/chat/completions (JSON + PNG)
+    L-->>W: three-field JSON reply
+    W-->>P: result over pipe (deadline 120 s, else killed)
+    P-->>S: return, steps 6 to 10 run as usual
+```
 
 - A Python callback added to PODFoam (OpenFOAM v2106). Right after a chosen step
   (step 5 in the tests) it sends residuals, Courant number, continuity error,
@@ -113,8 +131,10 @@ Solver_Examples/PODFoam/      PODFoam solver (OpenFOAM v2106) with the callback 
 docs/results.md               October 17 test report
 docs/evidence/2026-10-17/     raw requests, responses, logs, verification, hash manifest
 docs/evidence/2026-10-13/     earlier run (pod-llm-demo.SwwR2e) and its report, docs/results-20261013.md
+docs/evidence/check_manifest.py  verifies every evidence file against its manifest (also run in CI)
 docs/upstream-project.md      original PythonFOAM README (other solvers, Docker, build notes)
-.github/workflows/tests.yml   runs the unit tests on every push
+.github/workflows/            tests.yml (unit tests, Python 3.10 and 3.12), evidence.yml (hashes, links)
+CHANGELOG.md, CITATION.cff, Makefile
 ```
 
 Other directories (`APMOSFoam`, `AEFoam`, `PINNFoam`, `TurbulenceModel_Examples`,
@@ -125,7 +145,13 @@ Other directories (`APMOSFoam`, `AEFoam`, `PINNFoam`, `TurbulenceModel_Examples`
 - [Test report](docs/results.md): conditions, measurements, limitations
 - [Evidence](docs/evidence/2026-10-17/README.md): raw requests and responses, logs, verification results, hash manifest
 - [Full run download](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-tests-2026-10-17): all saved results of the five conditions and the executed sources (no model weights)
+- [Changelog](CHANGELOG.md)
 - [Korean repository](https://github.com/seungminyome/PythonFOAM-Korean) and its [illustrated results](https://seungminyome.github.io/PythonFOAM-Korean/)
+
+## Citing
+
+`CITATION.cff` is in the root; GitHub's "Cite this repository" button formats it.
+Cite the code revision you used (`23089bb` for the October 17 results).
 
 ## Acknowledgements and license
 

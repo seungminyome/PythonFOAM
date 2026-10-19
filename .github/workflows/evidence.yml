@@ -1,0 +1,16 @@
+name: evidence
+
+on:
+  push:
+    branches: [main, pod-insitu-llm]
+  pull_request:
+
+jobs:
+  integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Evidence files match their manifests
+        run: python3 docs/evidence/check_manifest.py
+      - name: Relative links resolve
+        run: python3 docs/check_links.py

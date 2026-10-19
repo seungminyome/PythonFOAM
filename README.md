@@ -58,10 +58,12 @@ sequenceDiagram
     P-->>S: return, steps 6 to 10 run as usual
 ```
 
-- A Python callback added to PODFoam (OpenFOAM v2106). Right after a chosen step
-  (step 5 in the tests) it sends residuals, Courant number, continuity error,
-  an SVD summary and a PNG of that step's |U| and p to a local llama.cpp server
-  (Gemma 4 E2B Q4_0 with image projector) and stores the response.
+- A Python callback added to PODFoam (OpenFOAM v2106). Right after a chosen
+  time step it sends residuals, Courant number, continuity error, an SVD summary
+  and a PNG of that step's |U| and p to a local llama.cpp server (Gemma 4 E2B
+  Q4_0 with image projector) and stores the response. "Step 5" in this document
+  is the fifth of the ten time steps (t = 5×10⁻⁷ s), the default; set
+  `LLM_ANALYSIS_STEP` to change it.
 - If the server is absent or slow, control returns to the solver within a fixed
   deadline.
 - A verification script checks that all ten steps completed, that the 45 saved

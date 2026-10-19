@@ -76,6 +76,13 @@ validation run by default), `LLM_ANALYSIS_STEP`, `LLM_IMAGE_INPUT` (1/0),
 `LLM_CALLBACK_DEADLINE_S`, `LLM_CONNECT_TIMEOUT_S`, `LLM_READ_TIMEOUT_S`,
 `LLM_MAX_TOKENS` (up to 192).
 
+`run_cases.py` checks that the server behind `LLM_ENDPOINT` is the process
+recorded in `$POD_LLM_RUNTIME/server.pid`. If the server was started from a
+different runtime directory, point `POD_LLM_RUNTIME` at that directory.
+
+To repeat the measurements with Gemma 4 12B on a cluster GPU, see
+[hpc/README.md](hpc/README.md).
+
 `run_demo.sh` builds the solver into `llm-demo-work/bin/` in the workspace,
 creates `pod-llm-demo.XXXXXX` and runs five cases, each for ten steps:
 

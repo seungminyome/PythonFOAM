@@ -5,6 +5,8 @@ revision that produced it is given.
 
 ## 2026-10-19
 
+- Repeat of the October 17 run and replay (`docs/evidence/2026-10-19/`): same hashes, same answers.
+- `llm_demo/hpc/`: scripts and Slurm jobs to repeat the measurements with Gemma 4 12B on a GPU node.
 - Docs reorganised: evidence under dated folders, English-only pages here,
   Korean material moved to [PythonFOAM-Korean](https://github.com/seungminyome/PythonFOAM-Korean).
 - CI: unit tests on Python 3.10 and 3.12; evidence files checked against their

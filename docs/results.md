@@ -91,6 +91,17 @@ conditions and the paired replay with the 12B model on a machine with more
 memory (this one has 7.7 GiB RAM and no GPU; the E2B server alone peaked at
 2.2 GiB).
 
+## Repeat on 2026-10-19
+
+The five cases and the paired replay were run again on the same machine and
+server two days later ([evidence](evidence/2026-10-19/README.md)). Step-5
+arrays and image have the same hashes, all 45 files again match the baseline,
+and every model answer is the same text as on October 17, so the position
+errors are unchanged. Callback times were 0.517 / 72.256 / 40.587 / 0.813 /
+4.026 s. Both solver requests started from a cold prompt cache this time:
+prompt processing took 58.6 s with the image (1541 tokens) and 30.2 s without
+(1080 tokens).
+
 ## Checking the evidence yourself
 
 The [release](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-tests-2026-10-17)

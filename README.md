@@ -14,11 +14,6 @@ solver continue. That much works. Nothing from the model goes back into the
 computation. The answers themselves are not yet reliable, and the solver stalls
 while it waits for them.
 
-The original suggestion named Gemma 4 12B as an example model. These tests use
-the smaller E2B because the test machine has 7.7 GiB of RAM, eight cores and no
-GPU: the E2B server peaked at 2.2 GiB, while published 4-bit 12B files are
-6.6–7.4 GB of weights alone. 12B is listed under next steps.
-
 <img src="docs/evidence/2026-10-17/pod-llm-demo.LRfJBN/fixed-pod/llm_observation/state.png" width="640" alt="|U| and p at step 5, the image sent to the model">
 
 *The image sent at step 5 of the October 17 run: |U| on top, kinematic pressure p below (640x360, one polygon per cell).*

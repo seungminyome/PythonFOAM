@@ -1,4 +1,4 @@
-# PODFoam in-situ observer/logger
+# PODFoam callback to a local vision-language model
 
 At a chosen time step, PODFoam sends a numerical summary and an image of its
 velocity and pressure fields to Gemma 4 E2B. PythonFOAM provides the callback;
@@ -171,71 +171,23 @@ comparing errors, repeated answers and timings. To check the callback in
 OpenFOAM itself, run the five-case demo and `verify_demo.py`; replay and unit
 tests exercise different parts of the system.
 
-## Earlier run on this machine — October 13
+## Earlier run (October 13)
 
-The measurements below are from `pod-llm-demo.SwwR2e`. The
-[latest report](../../../docs/results.md) covers the October 17 execution.
+`pod-llm-demo.SwwR2e` (solver revision `9ae54d0`) is described in the
+[October 13 report](../../../docs/results-20261013.md) with its
+[evidence](../../../docs/evidence/2026-10-13/README.md). Its image and
+numbers-only requests used different instructions, so that run does not
+isolate the effect of the image; the October 17 replay does.
 
-8 vCPU, 7.7 GiB RAM, no GPU, llama.cpp b11429 with 4 threads, context 2048.
-Callback times were measured by C++ around `analysis_func`.
+## SVD summary
 
-| Case | Status | Callback | HTTP | Request | Prompt tokens |
-|---|---|---:|---:|---:|---:|
-| No request | disabled | 0.8 s | - | - | - |
-| Numbers + image | ok | 70.6 s | 70.1 s | 50.5 KB | 1516 |
-| Numbers only | ok | 41.4 s | 41.4 s | 3.7 KB | 1062 |
-| Connection refused | error | 0.4 s | - | - | - |
-| Trickling server | timeout | 4.0 s | - | - | - |
+Both request types include a componentwise SVD summary of the velocity
+snapshots collected so far: singular values and their fractions, no spatial
+modes. `leading_energy_fraction` is sigma_1 squared over the sum of squared
+singular values, the leading pattern's share of the snapshot matrix (about
+99.997% for Ux in the recorded runs). The matrices are uncentered and
+unweighted. This is a data summary, not a physical energy or an accuracy
+measure, and whether it helps the model has not been tested.
 
-All five runs completed ten steps and wrote identical fields. The maximum
-difference in final U and p against the no-request run was zero. Rendering
-took 0.4 s inside the worker. Of the image request's 70 s, about 58 s went
-into prompt processing and 11 s into generating 92 tokens. The recorded
-image-run server peak PSS was about 2.22 GiB.
-
-Answers at step 5 (t = 5e-7 s), as returned:
-
-numbers + image
-
-> observations: The velocity magnitude |U| shows a high value near x=0.25 m, with a maximum of 82.5 m/s.
-> possible_interpretation: The flow exhibits a localized high-speed region in the central x-domain.
-> checks: The pressure field shows a significant pressure gradient near the high-velocity region.
-
-numbers only
-
-> observations: Residuals show small values, e.g., p final last is 9.19188e-07. Courant mean is 0.000337189.
-> possible_interpretation: The simulation appears to be progressing with small residuals. Velocity SVD shows high leading energy fractions.
-> checks: Check if linear-solver residuals are physical force balance. Verify velocity SVD centering.
-
-The quoted values match the supplied JSON: maximum speed about 82.5 m/s,
-pressure residual 9.19e-07, mean Courant number 3.4e-4, and leading fractions
-above 0.9999. The spatial part is weaker. The maximum-speed cell is near
-the step corner at x ≈ 0.0005 m, y ≈ 0.013 m. The answer's x = 0.25 m gives
-an **x-axis error of about 25 cm**. The October 17 comparison reports XY
-distances, so the two error measures are not directly comparable.
-
-The minimum-pressure and maximum-speed cells are close but distinct:
-zero-based indices 10409 and 12090. Their proximity does not establish the
-claimed pressure gradient; no quantitative gradient check was made.
-
-This October 13 comparison used different instructions and additional
-numerical metadata for the image request. It therefore does not isolate
-the effect of adding an image. The numeric-only reply also asked about force
-balance and SVD centering, although the input already stated that residuals
-are not force balance and that the SVD was uncentered.
-
-SVD means **Singular Value Decomposition**. The legacy key
-`leading_energy_fraction` is retained for compatibility. It is sigma_1
-squared divided by the sum of squared singular values: the leading pattern's
-share of the numerical snapshot table. For Ux in this run it is about
-99.997%. That is a data-summary ratio, not an AI accuracy or physical-energy
-measurement. The component matrices are uncentered, without cell-volume or
-density weighting.
-
-The normal worker deadline was 120 s. The deliberate timeout test used a
-4 s deadline and a 4.27 s overall acceptance limit; it tested recovery from
-a delayed response.
-
-See the [October 13 evidence](../../../docs/evidence/README.md), its
-[Korean illustrated guide](https://seungminyome.github.io/PythonFOAM/guide.ko.html),
-and the current report's [limitations](../../../docs/results.md#limitations).
+The normal worker deadline is 120 s. The deliberate failure cases use 4 s with
+a 4.27 s acceptance limit that includes cleanup.

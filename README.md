@@ -1,12 +1,42 @@
 # PythonFOAM + Gemma 4 E2B: reading solver state during a run
 
-[Korean](https://github.com/seungminyome/PythonFOAM-Korean) · [Test report](docs/results.md) · [Evidence](docs/evidence/2026-10-17/README.md) · [How to run](Solver_Examples/PODFoam/llm_demo/README.md)
+[![tests](https://github.com/seungminyome/PythonFOAM/actions/workflows/tests.yml/badge.svg)](https://github.com/seungminyome/PythonFOAM/actions/workflows/tests.yml)
+[![license](https://img.shields.io/badge/license-Argonne%20OSS-blue.svg)](LICENSE)
+
+[Test report](docs/results.md) · [Evidence](docs/evidence/2026-10-17/README.md) · [How to run](Solver_Examples/PODFoam/llm_demo/README.md) · [Korean](https://github.com/seungminyome/PythonFOAM-Korean)
 
 During a PODFoam run, a callback sends one step's numbers and a velocity/pressure
 image to Gemma 4 E2B running on the local CPU, stores the answer and lets the
 solver continue. This part works. Model output never feeds back into the
 computation. The answers are not yet reliable, and the solver stalls while it
 waits for them.
+
+<img src="docs/evidence/2026-10-17/pod-llm-demo.LRfJBN/fixed-pod/llm_observation/state.png" width="640" alt="|U| and p at step 5, the image sent to the model">
+
+*The image sent at step 5 of the October 17 run: |U| on top, kinematic pressure p below (640x360, one polygon per cell).*
+
+## Quick start
+
+Python unit tests, no OpenFOAM or model needed (about 10 s):
+
+```bash
+pip install -r Solver_Examples/PODFoam/llm_demo/requirements.txt
+cd Solver_Examples/PODFoam/llm_demo
+python3 -m unittest test_llm_client test_callback test_ablation_runner
+```
+
+Full run (OpenFOAM v2106, about 3.4 GB of disk for the model files, a few GB of RAM):
+
+```bash
+cd Solver_Examples/PODFoam
+./validation/run_v2106.sh        # bridge check; its passed run is the reference case
+./llm_demo/setup_runtime.sh      # Gemma 4 E2B Q4_0, image projector, llama.cpp b11429
+python3 llm_demo/runtime.py start
+./llm_demo/run_demo.sh           # builds PODFoam, runs the five cases, verifies
+python3 llm_demo/runtime.py stop
+```
+
+Details and environment variables: [llm_demo/README.md](Solver_Examples/PODFoam/llm_demo/README.md).
 
 ## Implementation
 
@@ -19,8 +49,8 @@ waits for them.
 - A verification script checks that all ten steps completed, that the 45 saved
   field files are byte-identical to the baseline, that logs match the records,
   and that the image hash matches the request body.
-- The tested code is revision `23089bb`. Later commits change documentation and
-  evidence only.
+- The tested code is revision `23089bb`. Later commits change documentation,
+  evidence and repository layout only.
 
 ## Measurements (2026-10-17, run `pod-llm-demo.LRfJBN`)
 
@@ -73,11 +103,33 @@ wrong.
 4. Compare with the 12B model if memory allows, and improve the image input
    (axes, grid marks).
 
+## Repository layout
+
+```
+Solver_Examples/PODFoam/      PODFoam solver (OpenFOAM v2106) with the callback hooks
+  validation/                 bridge check: ten steps, SVD round trip, verify.py
+  llm_demo/                   callback module, llama-server client, five-case runner,
+                              paired replay benchmark, unit tests, requirements.txt
+docs/results.md               October 17 test report
+docs/evidence/2026-10-17/     raw requests, responses, logs, verification, hash manifest
+docs/evidence/2026-10-13/     earlier run (pod-llm-demo.SwwR2e) and its report, docs/results-20261013.md
+docs/upstream-project.md      original PythonFOAM README (other solvers, Docker, build notes)
+.github/workflows/tests.yml   runs the unit tests on every push
+```
+
+Other directories (`APMOSFoam`, `AEFoam`, `PINNFoam`, `TurbulenceModel_Examples`,
+`Handson_Examples`) are unchanged from upstream.
+
 ## Material
 
 - [Test report](docs/results.md): conditions, measurements, limitations
 - [Evidence](docs/evidence/2026-10-17/README.md): raw requests and responses, logs, verification results, hash manifest
 - [Full run download](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-tests-2026-10-17): all saved results of the five conditions and the executed sources (no model weights)
-- [Illustrated results, Korean](https://seungminyome.github.io/PythonFOAM/)
+- [Korean repository](https://github.com/seungminyome/PythonFOAM-Korean) and its [illustrated results](https://seungminyome.github.io/PythonFOAM-Korean/)
 
-This extends the PODFoam example of [Argonne PythonFOAM](https://github.com/argonne-lcf/PythonFOAM). The original description and setup notes are in the [project reference](docs/upstream-project.md); the [license](LICENSE) is unchanged.
+## Acknowledgements and license
+
+This extends the PODFoam example of [PythonFOAM](https://github.com/argonne-lcf/PythonFOAM)
+(Argonne National Laboratory). The original description and setup notes are in
+the [project reference](docs/upstream-project.md). The model is served with
+[llama.cpp](https://github.com/ggml-org/llama.cpp). The [license](LICENSE) is unchanged.

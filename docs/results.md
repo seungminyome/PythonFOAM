@@ -6,7 +6,7 @@ Live run: **pod-llm-demo.LRfJBN**, 2026-10-17
 
 Model: **Gemma 4 E2B Q4_0**, image projector, local CPU inference
 
-[Repository](../README.md) · [Illustrated results, Korean](https://seungminyome.github.io/PythonFOAM/results-20261017.html) · [Evidence index](evidence/2026-10-17/README.md) · [October 13 report](results-20261013.md)
+[Repository](../README.md) · [Illustrated results, Korean](https://seungminyome.github.io/PythonFOAM-Korean/results-20261017.html) · [Evidence index](evidence/2026-10-17/README.md) · [October 13 report](results-20261013.md)
 
 ## Live solver test
 
@@ -84,7 +84,7 @@ llama.cpp b11429, four CPU threads, context 2048, one slot, image-token cap 256,
 reasoning off, and matching model/projector hashes. Comparison with the larger
 12B model remains future work.
 
-Both inputs retain the example's [Singular Value Decomposition (SVD) summary](../Solver_Examples/PODFoam/llm_demo/README.md#earlier-run-on-this-machine--october-13).
+Both inputs retain the example's [Singular Value Decomposition (SVD) summary](../Solver_Examples/PODFoam/llm_demo/README.md#svd-summary).
 It supplies singular values and their fractions; spatial modes are omitted.
 I have not tested whether this summary helps the model.
 

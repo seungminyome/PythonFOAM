@@ -4,7 +4,7 @@ These files accompany the [October 17 report](../../results.md). The solver
 run was `pod-llm-demo.LRfJBN`, using revision
 `23089bbf3447731852fa960d7d25ea18767a3f51`.
 
-[Korean results](https://seungminyome.github.io/PythonFOAM/results-20261017.html) ·
+[Korean results](https://seungminyome.github.io/PythonFOAM-Korean/results-20261017.html) ·
 [Downloads](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-tests-2026-10-17)
 
 ## Find a record

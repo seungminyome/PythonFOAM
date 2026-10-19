@@ -12,6 +12,25 @@ GPU. The solver code, prompts, seeds and the saved state are the ones used on
 | `demo_12b.slurm` | Bridge validation, the five solver conditions, verification, and the paired replay of the new state. Needs OpenFOAM v2106 on the node. |
 | `build_llama_cuda.sh` | Fallback: build llama.cpp b11429 from source with CUDA if the prebuilt binary does not run (older glibc, other CUDA). |
 
+## Getting the files onto the cluster
+
+Either works; the job scripts detect the layout.
+
+```bash
+git clone https://github.com/seungminyome/PythonFOAM.git && cd PythonFOAM
+# or: tar -xzf pythonfoam-12b-hpc-20261019.tar.gz && cd pythonfoam-12b-hpc
+```
+
+The saved state for the replay is in the repository
+(`docs/evidence/2026-10-17/pod-llm-demo.LRfJBN/fixed-pod`), so a clone needs
+nothing else. If compute nodes have no internet, run the download once on the
+login node before submitting:
+
+```bash
+export HF_TOKEN=hf_... POD_LLM_RUNTIME=$PWD/llm-runtime-12b
+bash Solver_Examples/PODFoam/llm_demo/hpc/setup_12b.sh
+```
+
 ## Before submitting
 
 1. Accept the Gemma licence on
@@ -25,10 +44,11 @@ GPU. The solver code, prompts, seeds and the saved state are the ones used on
 ## Submit
 
 ```bash
-# package root: PODFoam/ and snapshot/ next to each other
+# from the repository root (or the tarball root)
 export HF_TOKEN=hf_...
-sbatch PODFoam/llm_demo/hpc/replay_12b.slurm     # 1 GPU, under an hour
-sbatch PODFoam/llm_demo/hpc/demo_12b.slurm       # only if OpenFOAM v2106 is available
+sbatch Solver_Examples/PODFoam/llm_demo/hpc/replay_12b.slurm   # 1 GPU, under an hour
+sbatch Solver_Examples/PODFoam/llm_demo/hpc/demo_12b.slurm     # only if OpenFOAM v2106 is available
+# from the tarball the path is PODFoam/llm_demo/hpc/...
 ```
 
 Results land in `results/`: `replay-12b-<jobid>.tar.gz` (six requests, replies,

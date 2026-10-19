@@ -2,7 +2,7 @@ name: evidence
 
 on:
   push:
-    branches: [main, pod-insitu-llm]
+    branches: [main]
   pull_request:
 
 jobs:

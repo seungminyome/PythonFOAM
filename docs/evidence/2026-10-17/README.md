@@ -1,13 +1,12 @@
 # October 17 evidence
 
-These files accompany the [October 17 report](../../results.md). The solver
-run was `pod-llm-demo.LRfJBN`, using revision
-`23089bbf3447731852fa960d7d25ea18767a3f51`.
+Records behind the [October 17 report](../../results.md). Solver run
+`pod-llm-demo.LRfJBN`, code `23089bbf3447731852fa960d7d25ea18767a3f51`.
 
 [Korean results](https://seungminyome.github.io/PythonFOAM-Korean/results-20261017.html) ·
 [Downloads](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-tests-2026-10-17)
 
-## Find a record
+## Files
 
 | File | What it contains |
 |---|---|
@@ -26,29 +25,22 @@ run was `pod-llm-demo.LRfJBN`, using revision
 | [Response review](independent-ablation-review.json) | Separate review of the answers and claims the automatic checks missed |
 | [Reference coordinates](ablation/ground_truth.private.json) | Maximum-speed coordinates used for scoring; they were withheld from the model |
 
-The [ablation](ablation/) folder holds the three paired comparisons. Each
-`pair-*` subfolder contains the request, raw response, parsed response, result
-and metrics. These are separate from the requests made during the solver run.
-For the meaning and limits of the scores and timings, see the report's
-[limitations](../../results.md#limitations).
+[ablation/](ablation/) holds the three paired replays, one `pair-*` folder per
+request with the body sent, the raw and parsed reply, result and metrics. These
+were sent after the solver run, from the saved step-5 state.
 
-## Download the complete run
+## Complete run
 
-This directory contains selected records. The release file
-`solver-evidence-LRfJBN.tar.gz` also contains all ten saved time directories
-for each of the five solver cases, the pimpleFoam reference case, and the
-verification code. Its `README.txt` explains how to check the saved files
-without rerunning the solver or model.
+This folder has the records worth reading. `solver-evidence-LRfJBN.tar.gz` in
+the release also has every time directory of the five runs, the pimpleFoam
+reference case and the verifier, with a `README.txt` on how to check the files
+without rerunning anything. `SHA256SUMS.txt` covers the release files. The
+smaller `run-archive.tar.gz` that the demo script writes skips intermediate
+time steps; use the release archive for the full record.
 
-The evidence ZIP includes the Korean results page and its linked files for
-offline reading. `SHA256SUMS.txt` lists checksums for both archives. The older
-automatically generated `run-archive.tar.gz` omits intermediate time steps;
-use `solver-evidence-LRfJBN.tar.gz` for the complete solver record.
+## Notes
 
-## About the saved files
-
-Requests, replies, arrays and logs retain their recorded bytes.
-`runtime-summary.json` is a shortened version of the runtime information;
-the manifest identifies it as derived. Original records may contain local
-paths, so use the relative links above to open the published files.
-Any `remote_writes` entries describe the test session before publication.
+Requests, replies, arrays and logs are the recorded bytes. `runtime-summary.json`
+is a trimmed copy of the runtime record and is marked as derived in the
+manifest. Some records contain paths from the test machine; the links above are
+the published locations.

@@ -6,9 +6,8 @@ llama.cpp serves the model locally on the CPU. The callback saves a structured
 reply, then returns control to the solver. Model output does not change U, p,
 solver settings or control algorithms.
 
-The callback is synchronous: the solver waits for a reply or timeout.
-The [October 17 report](../../../docs/results.md) covers the latest five-case
-solver test and the separate comparison with and without an image.
+The callback is synchronous: the solver waits for the reply or the deadline.
+Results are in the [October 17 report](../../../docs/results.md).
 
 This extends the stock PODFoam example with an optional callback. Modules that
 only define `snapshot_func` and `svd_func` keep working as before.
@@ -88,18 +87,17 @@ creates `pod-llm-demo.XXXXXX` and runs five cases, each for ten steps:
 | `fixed-pod-server-error` | To a closed port | Sent | `error`, 4 s deadline |
 | `fixed-pod-timeout` | To a trickling fixture | Sent | `timeout`, 4 s deadline |
 
-`verify_demo.py` checks that residuals, Courant numbers and continuity values
-in the telemetry match the solver log; that the callback returned before
-step 6 and within its deadline plus cleanup allowance; and that all 45 saved
-field files match the baseline byte for byte.
+`verify_demo.py` checks that the residuals, Courant numbers and continuity
+values in the telemetry match the solver log, that the callback returned before
+step 6 and within its deadline plus cleanup allowance, and that all 45 saved
+field files are identical to the baseline.
 
 For image cases, it also checks that `fields.npz` matches `5e-07/U` and `p`,
 that the PNG matches the image encoded in the request, and that the request
 text matches the saved summary. It prints `PASS` when all checks pass.
-`pack_run.py` then saves sources, run records, requests and responses in
-`run-archive.tar.gz`. This archive omits intermediate time steps; the
-[October 17 download guide](../../../docs/evidence/2026-10-17/README.md#download-the-complete-run)
-links to that test's complete solver archive.
+`pack_run.py` then packs sources, run records, requests and replies into
+`run-archive.tar.gz`, without intermediate time steps. The complete October 17
+run is a [release asset](../../../docs/evidence/2026-10-17/README.md#complete-run).
 
 Unit tests (no model needed):
 
@@ -108,24 +106,25 @@ cd Solver_Examples/PODFoam/llm_demo
 python3 -m unittest test_llm_client test_callback test_ablation_runner -v
 ```
 
-## Controlled replay benchmark
+## Replaying a saved state with and without the image
 
-`ablation_runner.py` compares two requests made from one saved step:
+The two live requests in the demo use different prompts, so they cannot tell
+you what the image adds. `ablation_runner.py` takes one saved step and sends
+two requests that differ only in the PNG:
 
 | Condition | Question and numerical summary | PNG |
 |---|---|---|
 | `numeric_only` | Same frozen text | Omitted |
 | `numeric_plus_image` | Same frozen text | Included |
 
-Within each pair, the requests have the same instructions, model, seed and
-generation settings. Only the image content part differs. Both receive the
-image ranges and domain extents recorded in the numerical summary. Reference
-coordinates come from the saved arrays and are used only for scoring.
-The runner checks the PNG, metadata, arrays and summary before preparing
-requests.
+Same instructions, model, seed and sampling settings within a pair. Both
+conditions get the image ranges and domain extents from the summary. The true
+maximum-speed location is computed from the saved arrays and used only for
+scoring. Before building requests the runner checks that the PNG, its metadata,
+the arrays and the summary belong together.
 
-From `llm_demo`, this example prepares requests from the published October 17
-snapshot without contacting a server:
+Prepare the requests from the published October 17 snapshot without talking
+to a server (run from `llm_demo`):
 
 ```bash
 python3 ablation_runner.py \
@@ -134,9 +133,8 @@ python3 ablation_runner.py \
   --repeats 3 --seed 20261017
 ```
 
-Use a new output directory each time. You can also pass a saved run's
-`fixed-pod` directory as `--case`. With the local server running, this example
-sends the three pairs:
+Use a fresh output directory each time. Any run's `fixed-pod` directory works
+as `--case`. With the server up, send the three pairs:
 
 ```bash
 python3 ablation_runner.py \
@@ -145,31 +143,29 @@ python3 ablation_runner.py \
   --repeats 3 --seed 20261017 --timeout-s 120 --execute
 ```
 
-These are rerun examples. The [recorded manifest](../../../docs/evidence/2026-10-17/ablation/manifest.json)
-lists the original requests and their execution order: pair 1 used seed
-`20261017`, followed by `20261018` and `20261019`. The runner alternates
-which condition goes first. Keep the server build, model weights, projector,
-thread count and context size fixed, and record them with `--server-note`.
+The October 17 [manifest](../../../docs/evidence/2026-10-17/ablation/manifest.json)
+records the original requests and order (seeds 20261017, 20261018, 20261019;
+the runner alternates which condition goes first). Keep the server build,
+weights, projector, thread count and context size fixed between runs and note
+them with `--server-note`.
 
-Each trial saves requests, responses, hashes, status and metrics:
+Each request saves its body, reply, hashes, status and metrics:
 
 - **Location:** an x-only answer gets an x-axis error; two axes give a
   projected distance; all three give a 3D distance. Missing or ambiguous
   coordinates remain unscored. The summary includes scoring coverage.
-- **Grounding:** automatic rules check selected numerical claims and
-  unsupported assertions. Keep their output alongside a review of the
-  answers; the October 17 [response review](../../../docs/evidence/2026-10-17/independent-ablation-review.json)
-  records claims these rules missed.
+- **Claim checks:** a few rules look for misquoted numbers and unsupported
+  assertions. They miss a lot; the October 17
+  [answer review](../../../docs/evidence/2026-10-17/independent-ablation-review.json)
+  lists what they missed, so read the answers too.
 - **Time:** `replay_callback_wall_s` covers sending a prepared request,
   waiting, evaluating and saving the result. HTTP/client wait is also logged
   separately. The replay does not rerun the solver, SVD or image rendering.
   If a matching solver log is present, `original_cpp_callback_wall_s` records
   that earlier callback time separately.
 
-See the report's [limitations](../../../docs/results.md#limitations) when
-comparing errors, repeated answers and timings. To check the callback in
-OpenFOAM itself, run the five-case demo and `verify_demo.py`; replay and unit
-tests exercise different parts of the system.
+Replays test the model, not the solver hookup. For that, run the five-case
+demo and `verify_demo.py`.
 
 ## Earlier run (October 13)
 

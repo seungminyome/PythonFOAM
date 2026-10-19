@@ -7,9 +7,9 @@
 
 During a PODFoam run, a callback sends one step's numbers and a velocity/pressure
 image to Gemma 4 E2B running on the local CPU, stores the answer and lets the
-solver continue. This part works. Model output never feeds back into the
-computation. The answers are not yet reliable, and the solver stalls while it
-waits for them.
+solver continue. That much works. Nothing from the model goes back into the
+computation. The answers themselves are not yet reliable, and the solver stalls
+while it waits for them.
 
 <img src="docs/evidence/2026-10-17/pod-llm-demo.LRfJBN/fixed-pod/llm_observation/state.png" width="640" alt="|U| and p at step 5, the image sent to the model">
 
@@ -47,8 +47,8 @@ Details and environment variables: [llm_demo/README.md](Solver_Examples/PODFoam/
 - If the server is absent or slow, control returns to the solver within a fixed
   deadline.
 - A verification script checks that all ten steps completed, that the 45 saved
-  field files are byte-identical to the baseline, that logs match the records,
-  and that the image hash matches the request body.
+  field files are identical to the baseline, that logs match the records, and
+  that the image hash matches the request body.
 - The tested code is revision `23089bb`. Later commits change documentation,
   evidence and repository layout only.
 
@@ -63,7 +63,7 @@ Details and environment variables: [llm_demo/README.md](Solver_Examples/PODFoam/
 | Numbers + image | answer stored | 10 | 45 / 45 | 78.256 s |
 | Numbers only | answer stored | 10 | 45 / 45 | 39.672 s |
 | Connection refused | error stored, run continues | 10 | 45 / 45 | 0.509 s |
-| Delayed response (4 s deadline) | timeout stored, run continues | 10 | 45 / 45 | 4.013 s |
+| Server made to stall (4 s deadline) | timeout stored, run continues | 10 | 45 / 45 | 4.013 s |
 
 Callback time is measured in C++ from just before the Python analysis call to
 just after it returns. Of the 78.256 s in the image condition, rendering took
@@ -120,7 +120,7 @@ docs/upstream-project.md      original PythonFOAM README (other solvers, Docker,
 Other directories (`APMOSFoam`, `AEFoam`, `PINNFoam`, `TurbulenceModel_Examples`,
 `Handson_Examples`) are unchanged from upstream.
 
-## Material
+## More
 
 - [Test report](docs/results.md): conditions, measurements, limitations
 - [Evidence](docs/evidence/2026-10-17/README.md): raw requests and responses, logs, verification results, hash manifest

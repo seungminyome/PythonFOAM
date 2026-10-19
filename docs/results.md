@@ -1,113 +1,106 @@
-# PythonFOAM multimodal integration: October 17 tests
+# October 17 tests
 
-Executed code: **23089bbf3447731852fa960d7d25ea18767a3f51**
+Code `23089bb` · run `pod-llm-demo.LRfJBN` · Gemma 4 E2B Q4_0 with image projector, llama.cpp b11429 on CPU
 
-Live run: **pod-llm-demo.LRfJBN**, 2026-10-17
+[README](../README.md) · [Evidence](evidence/2026-10-17/README.md) · [October 13 run](results-20261013.md) · [Korean, illustrated](https://seungminyome.github.io/PythonFOAM-Korean/results-20261017.html)
 
-Model: **Gemma 4 E2B Q4_0**, image projector, local CPU inference
+## Five solver runs
 
-[Repository](../README.md) · [Illustrated results, Korean](https://seungminyome.github.io/PythonFOAM-Korean/results-20261017.html) · [Evidence index](evidence/2026-10-17/README.md) · [October 13 report](results-20261013.md)
+Serial PODFoam on OpenFOAM v2106, 20,540 cells, ten steps of 1e-7 s. After
+step 5 the callback sends that step's numbers and a |U|/p image to the model,
+stores the reply and returns. Nothing in the reply goes back into the solver.
 
-## Live solver test
-
-I tested the callback in serial OpenFOAM v2106 with 20,540 cells and ten 10⁻⁷ s
-steps. After step 5 (5 × 10⁻⁷ s), it sent numbers and a velocity/pressure image
-from that step to Gemma, saved the answer, and returned to the solver. The answer
-is recorded without changing solver fields, settings or control.
-
-| Condition | Model result | Completed steps | Files matching baseline | C++-measured Python analysis callback |
+| Run | Model | Steps | Files equal to baseline | Callback time |
 |---|---|---:|---:|---:|
-| No model request | Disabled | 10 | Baseline | 0.493 s |
-| Numerical summary + image | Response recorded | 10 | 45 / 45 | 78.256 s |
-| Numerical summary only | Response recorded | 10 | 45 / 45 | 39.672 s |
-| Connection refused | Error recorded | 10 | 45 / 45 | 0.509 s |
-| Deliberately delayed response | Timeout recorded | 10 | 45 / 45 | 4.013 s |
+| No request (baseline) | off | 10 | - | 0.493 s |
+| Numbers + image | reply stored | 10 | 45 / 45 | 78.256 s |
+| Numbers only | reply stored | 10 | 45 / 45 | 39.672 s |
+| Connection refused | error stored | 10 | 45 / 45 | 0.509 s |
+| Server made to stall (4 s deadline) | timeout stored | 10 | 45 / 45 | 4.013 s |
 
-Each comparison matched all 45 saved files byte for byte: U, p and phi across
-ten steps, plus 15 final POD-mode fields.
-The no-request baseline still prepares the observation and image.
+The 45 files are U, p and phi for each of the ten steps plus the 15 POD mode
+fields written at the end. The baseline run still builds the summary and
+renders the image, which is where its half second goes.
 
-The timer surrounds the Python analysis call; preceding C++ field-copy and
-diagnostic preparation are excluded. Within the image callback, summary
-preparation took 0.006 s, rendering 0.438 s and HTTP/client wait 77.560 s.
+Callback time is measured in C++ around the Python call. Inside the image
+callback: summary 0.006 s, rendering 0.438 s, waiting for the server 77.560 s.
 
-Records: [run verification](evidence/2026-10-17/pod-llm-demo.LRfJBN/demo-verification.json),
-[field/source/process checks](evidence/2026-10-17/independent-integration-check.json),
-[image response](evidence/2026-10-17/pod-llm-demo.LRfJBN/fixed-pod/llm_response.json),
-[56 passing Python/loopback tests](evidence/2026-10-17/unit-tests-56.txt).
+Records: [demo-verification.json](evidence/2026-10-17/pod-llm-demo.LRfJBN/demo-verification.json),
+[integration check](evidence/2026-10-17/independent-integration-check.json),
+[reply to the image request](evidence/2026-10-17/pod-llm-demo.LRfJBN/fixed-pod/llm_response.json),
+[unit test output](evidence/2026-10-17/unit-tests-56.txt).
 
-## Image/no-image comparison
+## Same state, with and without the image
 
-Three pairs used the saved step-5 state, keeping the question, numbers and
-settings fixed while adding or omitting the PNG. Temperature was zero;
-order was A1, B1, B2, A2, A3, B3.
+The two live requests above use different prompts, so they are not a fair
+image/no-image comparison. For that, the step-5 state was saved and sent again
+three times per condition with the question, numbers and settings identical and
+only the PNG added or removed. Temperature 0, order A1 B1 B2 A2 A3 B3
+(A = numbers only, B = numbers + image).
 
-The reference location was cell 12090 at **(0.0005381681, 0.0127144842, 0.00635) m**,
-calculated from saved fields and withheld from the model.
-Both inputs supplied the maximum speed, **82.5275161154 m/s**.
+Both conditions were told the maximum speed, 82.5275 m/s, and asked where it
+is. The true cell is 12090 at (0.000538, 0.012714, 0.00635) m. That location was
+never sent.
 
-| Condition | Claimed (x, y), m, in all three responses | Planar location error |
+| Condition | Answer (x, y) m, same in all three | Distance from the true cell |
 |---|---|---:|
-| Numbers only | (0.6012246511, 0.1142952356) | 60.92 cm |
-| Numbers + image | (0.5, 0.1142952356) | 50.97 cm |
+| Numbers only | (0.6012, 0.1143) | 60.92 cm |
+| Numbers + image | (0.5, 0.1143) | 50.97 cm |
 
-All six structured replies gave wrong locations. Numbers-only replies reused
-upper domain bounds; image replies were about 10 cm closer.
-The position scorer measured the errors correctly; the separate grounding
-heuristic flagged none. Review against the data found unsupported locations and
-contradictions, including replies denying supplied Courant-number evidence.
+All six answers put the maximum in the wrong place. The numbers-only answers
+took the domain's upper x and y bounds straight from the summary. With the image,
+x moved to 0.5 m and y stayed at the bound, about 10 cm closer and still far
+off. The automatic claim checker flagged nothing. Reading the answers against the
+data turned up more: unsupported statements about location, and one reply that
+said the Courant number was missing when it was in the input.
 
-Evidence: [paired settings](evidence/2026-10-17/ablation/manifest.json),
-[metrics](evidence/2026-10-17/ablation/summary.json),
-[response review](evidence/2026-10-17/independent-ablation-review.json),
+Records: [pair settings](evidence/2026-10-17/ablation/manifest.json),
+[scores](evidence/2026-10-17/ablation/summary.json),
+[answer review](evidence/2026-10-17/independent-ablation-review.json),
 [field arrays](evidence/2026-10-17/pod-llm-demo.LRfJBN/fixed-pod/llm_observation/fields.npz).
 
-## Limitations
+## What this shows, and what it does not
 
-These tests cover one short serial fluid case and two failure conditions.
-Numerical and physical stability, MPI, solid solvers, long runs and early failure
-prediction need separate tests.
+Works: sending numbers and an image from inside the solver, getting a
+structured reply, carrying on with identical results, and recovering from a
+dead or stalled server within the deadline.
 
-The solver waited about 78 seconds for the image call. Asynchronous operation is
-still to be implemented. The two normal live calls used different instructions
-and metadata. In the paired replay, each pair's inputs differed only by the PNG.
+Not shown: that the model reads the picture usefully. One flow state, six
+answers, all wrong on location. More states and a larger model are needed
+before saying anything about accuracy.
 
-Accuracy needs checking across more states. The maximum speed was supplied in
-both inputs, so the location question is the useful check here. October 13's
-approximately 25 cm error measured x alone; the current distances include y.
+Cost: the solver waits about 78 s for an image reply on this CPU. The replay
+requests took 13–56 s, but cached prompt tokens went from 1 to over 1,400
+between requests, so those times do not isolate the cost of the image.
+Server settings are in [runtime-summary.json](evidence/2026-10-17/runtime-summary.json):
+four threads, context 2048, one slot, image tokens capped at 256, reasoning off.
 
-Replay requests took 13–56 s, excluding summary/rendering. Cached prompt tokens
-rose from one to over 1,400. The model was already loaded; hash checks may also
-have warmed the filesystem cache. Timing needs consistent cache conditions.
-The [runtime record](evidence/2026-10-17/runtime-summary.json) lists
-llama.cpp b11429, four CPU threads, context 2048, one slot, image-token cap 256,
-reasoning off, and matching model/projector hashes. Comparison with the larger
-12B model remains future work.
+Both conditions also received the [SVD summary](../Solver_Examples/PODFoam/llm_demo/README.md#svd-summary)
+(singular values only, no spatial modes). Whether it helps has not been tested.
 
-Both inputs retain the example's [Singular Value Decomposition (SVD) summary](../Solver_Examples/PODFoam/llm_demo/README.md#svd-summary).
-It supplies singular values and their fractions; spatial modes are omitted.
-I have not tested whether this summary helps the model.
+The 25 cm error reported for October 13 was measured along x only; the
+distances above include y. Do not compare the two.
 
-I plan to test more states and models, improve the field inputs, and let the
-solver continue during analysis. That needs fixed snapshots, bounded pending
-requests and clean worker shutdown.
+Not covered at all: MPI, 3D cases, long runs, solid solvers, predicting
+failures ahead of time.
 
-## Check the evidence
+Next: repeat the paired comparison on several states, let the solver keep
+running while the model works (frozen snapshot, bounded queue, clean worker
+shutdown), re-measure cost with the cache controlled, try the 12B model if
+memory allows.
+
+## Checking the evidence yourself
 
 The [release](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-tests-2026-10-17)
-provides checksums, records and `solver-evidence-LRfJBN.tar.gz`: all ten
-time directories for five cases, pimpleFoam reference and executed sources,
-without model weights. Repository records have a
-[hash manifest](evidence/2026-10-17/manifest.json).
+has `solver-evidence-LRfJBN.tar.gz` (all ten time directories for the five
+runs, the pimpleFoam reference and the sources as executed, no weights) and
+checksums. Files in this repository are listed with hashes in
+[manifest.json](evidence/2026-10-17/manifest.json).
 
-After unpacking, recheck with NumPy:
+After unpacking:
 
 ```bash
 python3 pod-llm-demo.LRfJBN/sources/llm_demo/verify_demo.py pod-llm-demo.LRfJBN
 ```
 
-This launches neither solver nor model. The archive README explains other
-checks. The demo's smaller `run-archive.tar.gz` omitted intermediate directories.
-Raw requests, responses and metrics remain unchanged; the public runtime summary
-is derived. Raw local paths and no-remote-write fields describe the test session.
-Publication changes documentation and evidence; executed code remains `23089bb`.
+This reads the saved files only; it runs neither the solver nor the model.

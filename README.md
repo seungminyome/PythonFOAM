@@ -74,7 +74,7 @@ sequenceDiagram
 
 ## Measurements (2026-10-17, run `pod-llm-demo.LRfJBN`)
 
-Eight-core CPU, 7.7 GiB RAM, no GPU; llama-server on 4 threads, llama.cpp
+8 vCPU, 7.7 GiB RAM, no GPU; llama-server on 4 threads, llama.cpp
 b11429, context 2048. 20,540 cells, time step
 10⁻⁷ s, ten steps. Each condition was run once.
 
@@ -117,14 +117,14 @@ wrong.
 
 ## Next steps
 
-1. Repeat the paired comparison at several time steps and on other flow states.
-2. Implement an asynchronous path with frozen snapshots and a bound on pending
+1. Run the same five conditions and the same paired replay with Gemma 4 12B
+   QAT on a GPU node and put E2B and 12B in one table. Scripts are in
+   [llm_demo/hpc/](Solver_Examples/PODFoam/llm_demo/hpc/README.md).
+2. Repeat the paired comparison at several time steps and on other flow states.
+3. Implement an asynchronous path with frozen snapshots and a bound on pending
    requests.
-3. Re-measure the time cost of the image under controlled cache conditions.
-4. Run the same five conditions and the same paired replay with the 12B QAT
-   GGUF on a machine with more memory (a GPU node), after checking that the
-   llama.cpp build can load its image projector. Improve the image input (axes,
-   grid marks).
+4. Re-measure the time cost of the image under controlled cache conditions.
+5. Improve the image input (axes, grid marks).
 
 ## Repository layout
 
@@ -139,7 +139,7 @@ docs/evidence/2026-10-13/     earlier run (pod-llm-demo.SwwR2e) and its report, 
 docs/evidence/check_manifest.py  verifies every evidence file against its manifest (also run in CI)
 docs/upstream-project.md      original PythonFOAM README (other solvers, Docker, build notes)
 .github/workflows/            tests.yml (unit tests, Python 3.10 and 3.12), evidence.yml (hashes, links)
-CHANGELOG.md, CITATION.cff, Makefile
+CHANGELOG.md, Makefile
 ```
 
 Other directories (`APMOSFoam`, `AEFoam`, `PINNFoam`, `TurbulenceModel_Examples`,
@@ -152,11 +152,6 @@ Other directories (`APMOSFoam`, `AEFoam`, `PINNFoam`, `TurbulenceModel_Examples`
 - [Full run download](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-tests-2026-10-17): all saved results of the five conditions and the executed sources (no model weights)
 - [Changelog](CHANGELOG.md)
 - [Korean repository](https://github.com/seungminyome/PythonFOAM-Korean) and its [illustrated results](https://seungminyome.github.io/PythonFOAM-Korean/)
-
-## Citing
-
-`CITATION.cff` is in the root; GitHub's "Cite this repository" button formats it.
-Cite the code revision you used (`23089bb` for the October 17 results).
 
 ## Acknowledgements and license
 

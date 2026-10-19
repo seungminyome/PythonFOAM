@@ -5,6 +5,7 @@ revision that produced it is given.
 
 ## 2026-10-19
 
+- `CITATION.cff` removed: there is no paper to cite yet. 12B is now the first item under next steps.
 - `test_callback.py`: the image-rendering test gets a 4 s callback deadline; 1 s was too short on a shared CI runner. Test only, solver code unchanged.
 - Repeat of the October 17 run and replay (`docs/evidence/2026-10-19/`): same hashes, same answers.
 - `llm_demo/hpc/`: scripts and Slurm jobs to repeat the measurements with Gemma 4 12B on a GPU node.

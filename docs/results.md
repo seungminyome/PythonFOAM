@@ -86,8 +86,10 @@ failures ahead of time.
 
 Next: repeat the paired comparison on several states, let the solver keep
 running while the model works (frozen snapshot, bounded queue, clean worker
-shutdown), re-measure cost with the cache controlled, try the 12B model if
-memory allows.
+shutdown), re-measure cost with the cache controlled, repeat the five
+conditions and the paired replay with the 12B model on a machine with more
+memory (this one has 7.7 GiB RAM and no GPU; the E2B server alone peaked at
+2.2 GiB).
 
 ## Checking the evidence yourself
 

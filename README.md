@@ -14,6 +14,11 @@ solver continue. That much works. Nothing from the model goes back into the
 computation. The answers themselves are not yet reliable, and the solver stalls
 while it waits for them.
 
+The original suggestion named Gemma 4 12B as an example model. These tests use
+the smaller E2B because the test machine has 7.7 GiB of RAM, eight cores and no
+GPU: the E2B server peaked at 2.2 GiB, while published 4-bit 12B files are
+6.6–7.4 GB of weights alone. 12B is listed under next steps.
+
 <img src="docs/evidence/2026-10-17/pod-llm-demo.LRfJBN/fixed-pod/llm_observation/state.png" width="640" alt="|U| and p at step 5, the image sent to the model">
 
 *The image sent at step 5 of the October 17 run: |U| on top, kinematic pressure p below (640x360, one polygon per cell).*
@@ -74,7 +79,8 @@ sequenceDiagram
 
 ## Measurements (2026-10-17, run `pod-llm-demo.LRfJBN`)
 
-4 CPU threads, no GPU, llama.cpp b11429, context 2048. 20,540 cells, time step
+Eight-core CPU, 7.7 GiB RAM, no GPU; llama-server on 4 threads, llama.cpp
+b11429, context 2048. 20,540 cells, time step
 10⁻⁷ s, ten steps. Each condition was run once.
 
 | Condition | Result | Steps | Files equal to baseline | Callback time |
@@ -120,8 +126,10 @@ wrong.
 2. Implement an asynchronous path with frozen snapshots and a bound on pending
    requests.
 3. Re-measure the time cost of the image under controlled cache conditions.
-4. Compare with the 12B model if memory allows, and improve the image input
-   (axes, grid marks).
+4. Run the same five conditions and the same paired replay with the 12B QAT
+   GGUF on a machine with more memory (a GPU node), after checking that the
+   llama.cpp build can load its image projector. Improve the image input (axes,
+   grid marks).
 
 ## Repository layout
 

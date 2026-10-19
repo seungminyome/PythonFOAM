@@ -1,32 +1,83 @@
-# PythonFOAM: Local LLM Integration
+# PythonFOAM + Gemma 4 E2B: reading solver state during a run
 
-I am testing whether a local language model can help a user understand a running fluid simulation. At a selected step, a PythonFOAM callback sends numerical summaries and a flow image from OpenFOAM to Gemma, running locally on CPU through llama.cpp. It saves the answer and returns to the calculation. The answer is for the user and does not change the simulation.
+[Korean](https://github.com/seungminyome/PythonFOAM-Korean) · [Test report](docs/results.md) · [Evidence](docs/evidence/2026-10-17/README.md) · [How to run](Solver_Examples/PODFoam/llm_demo/README.md)
 
-The model responded during the test run and the calculation resumed. Reliable flow interpretation remains an open problem.
+During a PODFoam run, a callback sends one step's numbers and a velocity/pressure
+image to Gemma 4 E2B running on the local CPU, stores the answer and lets the
+solver continue. This part works. Model output never feeds back into the
+computation. The answers are not yet reliable, and the solver stalls while it
+waits for them.
 
-## What this fork adds
+## Implementation
 
-[PythonFOAM](https://github.com/argonne-lcf/PythonFOAM) already provides the OpenFOAM–Python connection and the PODFoam example. This fork adds:
+- A Python callback added to PODFoam (OpenFOAM v2106). Right after a chosen step
+  (step 5 in the tests) it sends residuals, Courant number, continuity error,
+  an SVD summary and a PNG of that step's |U| and p to a local llama.cpp server
+  (Gemma 4 E2B Q4_0 with image projector) and stores the response.
+- If the server is absent or slow, control returns to the solver within a fixed
+  deadline.
+- A verification script checks that all ten steps completed, that the 45 saved
+  field files are byte-identical to the baseline, that logs match the records,
+  and that the image hash matches the request body.
+- The tested code is revision `23089bb`. Later commits change documentation and
+  evidence only.
 
-- A callback that sends a numerical summary and velocity/pressure image to a local Gemma 4 E2B model.
-- Saved answers and error records, with timeout handling so the simulation can continue when a request fails.
-- Five test cases checking saved outputs: no request, numbers only, numbers with an image, connection refusal, and timeout.
-- A comparison of model answers with and without the image, keeping the question and numbers fixed.
+## Measurements (2026-10-17, run `pod-llm-demo.LRfJBN`)
 
-## What the tests showed
+4 CPU threads, no GPU, llama.cpp b11429, context 2048. 20,540 cells, time step
+10⁻⁷ s, ten steps. Each condition was run once.
 
-On October 17, all five test cases finished, including connection failure and timeout. The saved output files in each comparison run matched those from the run without a model request, byte for byte.
+| Condition | Result | Steps | Files equal to baseline | Callback time |
+|---|---|---:|---:|---:|
+| No model request | baseline | 10 | - | 0.493 s |
+| Numbers + image | answer stored | 10 | 45 / 45 | 78.256 s |
+| Numbers only | answer stored | 10 | 45 / 45 | 39.672 s |
+| Connection refused | error stored, run continues | 10 | 45 / 45 | 0.509 s |
+| Delayed response (4 s deadline) | timeout stored, run continues | 10 | 45 / 45 | 4.013 s |
 
-On one saved flow state, all six answers in the image/no-image comparison gave the wrong maximum-speed location. The simulation also pauses for the answer: the call with an image took about 78 seconds on CPU.
+Callback time is measured in C++ from just before the Python analysis call to
+just after it returns. Of the 78.256 s in the image condition, rendering took
+0.438 s and waiting for the model 77.560 s.
 
-The current prototype needs further validation for real-time use. Next, I plan to check answers across more flow states and let the simulation continue while the model processes a saved state.
+Using the saved step-5 state, the model was asked three paired times (six
+requests) with the question, numbers and settings fixed and only the PNG added
+or removed. The maximum speed, 82.53 m/s, was in the input for both conditions;
+its location was not. The reference is cell 12090 at (0.0005, 0.0127) m.
 
-## Read further
+| Condition | Claimed (x, y) m | In-plane error | Outcome |
+|---|---|---:|---|
+| Numbers only | (0.6012, 0.1143) | 60.92 cm | wrong in all 3 |
+| Numbers + image | (0.5, 0.1143) | 50.97 cm | wrong in all 3 |
 
-Start with the [test report](docs/results.md) for the experimental conditions, measurements and limitations.
+The numbers-only answers copied the domain's x and y upper bounds from the
+input as the location. The image answers were about 10 cm closer and still
+wrong.
 
-- [Recorded requests, responses and logs](docs/evidence/2026-10-17/README.md)
-- [Run the demo](Solver_Examples/PODFoam/llm_demo/README.md)
-- [그림으로 보는 한국어 설명](https://seungminyome.github.io/PythonFOAM/)
+## Open problems
 
-The original PythonFOAM description and setup notes are retained in the [project reference](docs/upstream-project.md). The integration remains under the repository's [Argonne open-source license](LICENSE).
+1. Answer accuracy. All six answers on one state gave a wrong location. No other
+   state has been tested, so whether the image helps cannot be said yet.
+2. Synchronous wait. The solver stalls for about 78 s during an image request.
+   There is no asynchronous path yet.
+3. Cost measurement. Replayed requests took 13–56 s, but prompt-cache reuse
+   varied between requests, so the extra cost of the image cannot be separated.
+4. Scope. One short serial fluid case. MPI, 3D, long runs, the 12B model and
+   the contribution of the SVD summary have not been tested.
+
+## Next steps
+
+1. Repeat the paired comparison at several time steps and on other flow states.
+2. Implement an asynchronous path with frozen snapshots and a bound on pending
+   requests.
+3. Re-measure the time cost of the image under controlled cache conditions.
+4. Compare with the 12B model if memory allows, and improve the image input
+   (axes, grid marks).
+
+## Material
+
+- [Test report](docs/results.md): conditions, measurements, limitations
+- [Evidence](docs/evidence/2026-10-17/README.md): raw requests and responses, logs, verification results, hash manifest
+- [Full run download](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-tests-2026-10-17): all saved results of the five conditions and the executed sources (no model weights)
+- [Illustrated results, Korean](https://seungminyome.github.io/PythonFOAM/)
+
+This extends the PODFoam example of [Argonne PythonFOAM](https://github.com/argonne-lcf/PythonFOAM). The original description and setup notes are in the [project reference](docs/upstream-project.md); the [license](LICENSE) is unchanged.

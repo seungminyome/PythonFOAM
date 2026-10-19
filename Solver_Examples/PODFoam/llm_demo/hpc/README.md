@@ -68,6 +68,6 @@ the replay on the new state).
 
 ## Not checked here
 
-The CUDA build and the 12B projector have not been run on this laptop (no GPU).
+The CUDA build and the 12B projector have not been run on the test machine (no GPU).
 `start_server.sh` fails fast if the server does not answer `/health` within ten
 minutes; the log is in `llm-runtime-12b/server-*.log`.

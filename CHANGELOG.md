@@ -3,6 +3,23 @@
 Dates are when a run or change happened. Where a run is recorded, the code
 revision that produced it is given.
 
+## 2026-10-20 (code `9449085`)
+
+- Asynchronous requests (`LLM_ASYNC=1`): the request step forks the worker and
+  returns; later steps poll without blocking and record the arrival step; a
+  late worker is killed by the same polling; pending requests are bounded; at
+  the last step a pending request is waited for or detached.
+- Request modes: `describe` (one image, description plus the positions of the
+  fastest flow and the lowest pressure as percent of the plotted ranges) and
+  `sequence` (frames captured at chosen steps, sent together, trend words).
+- `LLM_IMAGE_XRANGE` / `LLM_IMAGE_YRANGE` plot a window of the domain.
+- `PythonAnalysis.H` passes `end_time_s`.
+- `run_async_cases.py`, `verify_async.py` (`POD_SUITE=async`),
+  `snapshot_runner.py`, `test_async.py` (14 tests, 70 in all).
+- Runs: five asynchronous cases on 3000 steps (`pod-llm-async.pp7agC`),
+  windowed frames (`pod-llm-async.8YC6bG`), describe and sequence replays.
+  Report: [docs/results-20261020.md](docs/results-20261020.md).
+
 ## 2026-10-19
 
 - `CITATION.cff` removed: there is no paper to cite yet. 12B is now the first item under next steps.

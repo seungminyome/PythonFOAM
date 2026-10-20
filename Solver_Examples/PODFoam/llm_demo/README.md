@@ -6,8 +6,14 @@ llama.cpp serves the model locally on the CPU. The callback saves a structured
 reply, then returns control to the solver. Model output does not change U, p,
 solver settings or control algorithms.
 
-The callback is synchronous: the solver waits for the reply or the deadline.
-Results are in the [October 17 report](../../../docs/results.md).
+The callback can be synchronous (the solver waits for the reply or the
+deadline; the October 17 measurements) or asynchronous (`LLM_ASYNC=1`: the
+solver keeps stepping and the reply is recorded when it arrives). Three
+request modes exist: `observe` (numbers plus the same-step image, the original),
+`describe` (one image, a description and the positions of the extrema) and
+`sequence` (several images along the run, how the flow changes).
+Results: [October 17 report](../../../docs/results.md),
+[October 20 report](../../../docs/results-20261020.md).
 
 This extends the stock PODFoam example with an optional callback. Modules that
 only define `snapshot_func` and `svd_func` keep working as before.
@@ -51,7 +57,84 @@ read-inactivity and whole-call timeouts.
 
 Rendering needs matplotlib; the 3D fallback (nearest-cell raster) also needs
 scipy. matplotlib is imported once at startup inside `mesh_func`, not in the
-time loop.
+time loop. `LLM_IMAGE_XRANGE="x0,x1"` (and `LLM_IMAGE_YRANGE`) plot only that
+window in metres; the colour range then spans the cells inside the window and
+the request says which range was plotted.
+
+## Request modes
+
+| `LLM_MODE` | Sent | Asked for | Reply fields |
+|---|---|---|---|
+| `observe` (default) | numeric summary (+ image) | observations | `observations`, `possible_interpretation`, `checks` |
+| `describe` | step, time, plotted ranges + one image | describe the snapshot; where are the fastest flow and the lowest pressure, as percent of the plotted x and y ranges | `flow_description`, `fastest_flow_x_percent`, `fastest_flow_y_percent`, `lowest_pressure_x_percent`, `lowest_pressure_y_percent`, `uncertainties` |
+| `sequence` | steps and times + 2 to 6 images in time order | how the flow changes from the first image to the last | `change_description`, `max_speed_trend`, `min_pressure_trend`, `fastest_flow_region`, `uncertainties` |
+
+In `describe` mode the text carries no field values and no positions: the
+extrema have to be read from the picture and its colour bars. In `sequence`
+mode frames are captured at `LLM_SEQUENCE_STEPS` (for example `250,750,1250`)
+by a forked renderer at each of those steps, and one request with all frames
+goes out at the last one. The trend words are a fixed vocabulary
+(`increasing`, `decreasing`, `roughly_constant`, `cannot_tell`; for the
+pressure minimum `more_negative`, `less_negative`; for the fastest spot
+`same_place`, `moves`) so that answers can be scored against the saved arrays.
+The reply schema is enforced by the server (`response_format`, JSON schema
+with integer ranges and enums) and checked again by the client.
+
+## Asynchronous requests
+
+With `LLM_ASYNC=1` the request step only forks the worker and returns (a few
+milliseconds). Every later step polls the worker's pipe without blocking; when
+the reply arrives it is written with `arrived_at_step`, and a `response_after`
+marker goes to the solver log. A worker that passes its deadline is killed by
+the same polling. At most `LLM_ASYNC_MAX_PENDING` requests are in flight
+(default 1); a request that would exceed it is skipped and logged. At the last
+step (the solver passes `end_time_s`; `LLM_FINAL_STEP` overrides) a request
+that is still pending is waited for until its own deadline
+(`LLM_ASYNC_END=wait`, default) or left running (`LLM_ASYNC_END=detach`; the
+worker then still writes `llm_response.json` by itself).
+
+`POD_SUITE=async ./llm_demo/run_demo.sh` runs the five asynchronous cases on a
+longer run (`LLM_LONG_STEPS`, default 3000 steps of `LLM_LONG_DT` = 5e-7 s,
+fields and SVD modes written every `LLM_LONG_WRITE` = 250 steps, request at
+`LLM_LONG_STEP` = 250, sequence frames at `LLM_LONG_SEQUENCE_STEPS` =
+250,750,1250) and checks them with `verify_async.py`:
+
+| Case | Mode | Model request | Expected |
+|---|---|---|---|
+| `async-no-llm` | sequence | Off (frames rendered) | baseline fields and frames |
+| `async-describe` | describe | On | `ok`, reply arrives while the solver runs |
+| `async-sequence` | sequence | On | `ok`, three frames in one request |
+| `async-server-error` | describe | closed port | `error`, found by polling |
+| `async-timeout` | describe | trickling fixture | `timeout`, killed by polling |
+
+`verify_async.py` checks that every written time directory is identical to
+the baseline, that the frames' arrays equal the written fields and the
+baseline's frames, that the request step took under 0.5 s, that every other
+step took under 1 s, and that the reply (or error) was recorded with its
+arrival step. `LLM_LONG_CASES=async-no-llm` runs only the baseline, which is a
+way to capture frames without a model.
+
+## Replaying saved frames (describe and sequence)
+
+`snapshot_runner.py` sends saved frames (directories with `state.png`,
+`fields.npz`, `image-metadata.json`) through the describe or sequence prompt
+and scores the answers against the arrays:
+
+```bash
+python3 snapshot_runner.py --mode describe --frames RUN/async-no-llm/llm_observation/step-000250 \
+    RUN/async-no-llm/llm_observation/step-000750 --output /tmp/describe-replay --repeats 3 --execute
+python3 snapshot_runner.py --mode sequence --frames RUN/async-no-llm/llm_observation/step-000250 \
+    RUN/async-no-llm/llm_observation/step-000750 RUN/async-no-llm/llm_observation/step-001250 \
+    --output /tmp/sequence-replay --repeats 3 --execute
+```
+
+For `describe` the score is the distance between the answered percent position
+and the true cell of the maximum speed (and the minimum pressure) inside the
+plotted window, in percent of the plotted ranges and in metres. For `sequence`
+the answered trend words are compared with the trends of the saved extrema
+(relative change above 2 % counts as a trend; the fastest spot "moves" when
+its position changes by more than 5 % of the plotted range). Reference values
+are written to `ground_truth.private.json` and never sent to the model.
 
 ## Running it
 
@@ -74,7 +157,7 @@ Environment variables: `OPENFOAM_BASHRC`, `PYTHON`, `POD_WORKSPACE`,
 checkout), `POD_LLM_PORT` (8088), `POD_REFERENCE_RUN` (newest passed
 validation run by default), `LLM_ANALYSIS_STEP`, `LLM_IMAGE_INPUT` (1/0),
 `LLM_CALLBACK_DEADLINE_S`, `LLM_CONNECT_TIMEOUT_S`, `LLM_READ_TIMEOUT_S`,
-`LLM_MAX_TOKENS` (up to 192).
+`LLM_MAX_TOKENS` (up to 192 for `observe`, 320 for the other modes), `LLM_MODE`, `LLM_ASYNC`, `LLM_SEQUENCE_STEPS`, `LLM_ASYNC_MAX_PENDING`, `LLM_ASYNC_END`, `LLM_IMAGE_XRANGE`, `LLM_IMAGE_YRANGE`.
 
 `run_cases.py` checks that the server behind `LLM_ENDPOINT` is the process
 recorded in `$POD_LLM_RUNTIME/server.pid`. If the server was started from a
@@ -110,7 +193,7 @@ Unit tests (no model needed):
 
 ```bash
 cd Solver_Examples/PODFoam/llm_demo
-python3 -m unittest test_llm_client test_callback test_ablation_runner -v
+python3 -m unittest test_llm_client test_callback test_ablation_runner test_async -v
 ```
 
 ## Replaying a saved state with and without the image

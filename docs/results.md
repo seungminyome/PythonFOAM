@@ -51,8 +51,9 @@ All six answers put the maximum in the wrong place. The numbers-only answers
 took the domain's upper x and y bounds straight from the summary. With the image,
 x moved to 0.5 m and y stayed at the bound, about 10 cm closer and still far
 off. The automatic claim checker flagged nothing. Reading the answers against the
-data turned up more: unsupported statements about location, and one reply that
-said the Courant number was missing when it was in the input.
+data turned up more: unsupported statements about location, and two replies
+(both with the image) that said there was no evidence of a low Courant number
+when the Courant mean and maximum were in the input.
 
 Records: [pair settings](evidence/2026-10-17/ablation/manifest.json),
 [scores](evidence/2026-10-17/ablation/summary.json),
@@ -88,19 +89,21 @@ Next: repeat the paired comparison on several states, let the solver keep
 running while the model works (frozen snapshot, bounded queue, clean worker
 shutdown), re-measure cost with the cache controlled, repeat the five
 conditions and the paired replay with the 12B model on a machine with more
-memory (this one has 7.7 GiB RAM and no GPU; the E2B server alone peaked at
+memory (this one has 7.8 GiB RAM and no GPU; the E2B server alone peaked at
 2.2 GiB).
 
 ## Repeat on 2026-10-19
 
 The five cases and the paired replay were run again on the same machine and
 server two days later ([evidence](evidence/2026-10-19/README.md)). Step-5
-arrays and image have the same hashes, all 45 files again match the baseline,
-and every model answer is the same text as on October 17, so the position
-errors are unchanged. Callback times were 0.517 / 72.256 / 40.587 / 0.813 /
-4.026 s. Both solver requests started from a cold prompt cache this time:
-prompt processing took 58.6 s with the image (1541 tokens) and 30.2 s without
-(1080 tokens).
+arrays and image have the same hashes and all 45 files again match the
+baseline. The image reply from inside the solver is the same text as on
+October 17 and all six replay answers give the same coordinates, so the
+position errors are unchanged. The numbers-only reply and the wording of five
+replay answers changed, although the requests differed only in the run id.
+Callback times were 0.517 / 72.256 / 40.587 / 0.813 / 4.026 s. As on October
+17, both solver requests started from a cold prompt cache: prompt processing
+took 58.6 s with the image (1541 tokens) and 30.2 s without (1080 tokens).
 
 ## Checking the evidence yourself
 

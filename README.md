@@ -23,7 +23,7 @@ wrong in nearly every case tested.
 
 ## Quick start
 
-Unit tests, no OpenFOAM or model needed (about 10 s):
+Unit tests, no OpenFOAM or model needed (70 tests, about 25 s):
 
 ```bash
 pip install -r Solver_Examples/PODFoam/llm_demo/requirements.txt
@@ -82,8 +82,9 @@ sequenceDiagram
   deadline, in either mode.
 - Verification scripts check that all steps completed, that every written
   field file is identical to a run without requests, that logs match the
-  records, that the frames' arrays equal the written fields, and that the
-  image hashes match the request body.
+  records, that the frames' arrays equal the written fields, and, for the
+  synchronous image cases and the asynchronous sequence case, that the image
+  hashes match the request body.
 - The October 17 measurements used revision `23089bb`; the October 20
   measurements used `9449085`, which added the modes, the asynchronous path
   and the plot window.
@@ -94,23 +95,27 @@ sequenceDiagram
 
 | Run | Request at step | Reply recorded at step | Solver wait at the request step | Model wait | Files equal to baseline |
 |---|---:|---:|---:|---:|---:|
-| No request (baseline) | 1250 | 1261 | 0.004 s | - | - |
+| Model off (baseline: request built, not sent) | 1250 | 1261 | 0.004 s | - | - |
 | Describe one image | 250 | 1093 | 0.006 s | 34.0 s | 216 / 216 |
 | Sequence of three images | 1250 | 2321 | 0.004 s | 43.4 s | 216 / 216 |
-| Connection refused | 250 | 280 | 0.004 s | 0.002 s | 216 / 216 |
-| Server made to stall (4 s deadline) | 250 | 353 | 0.004 s | killed at 4.0 s | 216 / 216 |
+| Connection refused | 250 | 280 | 0.005 s | 0.002 s | 216 / 216 |
+| Server made to stall (4 s deadline) | 250 | 353 | 0.005 s | killed at the 4 s deadline | 216 / 216 |
 
-Every other step's callback took under 0.005 s. Both replies arrived while
-the solver was still running (843 and 1071 steps after the request). The
-model waits are shorter than on October 17 because the system prompts were
-already in the server's cache.
+The callback took 0.008 to 0.019 s at the step at which a reply or error was
+recorded (the solver waits for the child that writes the result files), about
+0.1 s at the last step and at most 0.0052 s at every other step; a whole run
+took about 0.05 s per step. Both replies arrived while the
+solver was still running (843 and 1071 steps after the request). The model
+waits are shorter than on October 17 mainly because the prompts are shorter
+(570 and 907 tokens against 1541); 266 and 273 of those tokens were also still
+in the server's cache from a trial run a few minutes earlier.
 
 Replays of saved frames, three repeats each, two views (whole domain and a
 window around the step):
 
 | Question | Frames | Result |
 |---|---|---|
-| Where is the fastest flow? (percent of the plotted range) | 3 states × 2 views | 18 answers, none within 10 % of the true spot; 14 to 18 % off in the whole-domain view (0.27 to 0.39 m), 50 to 80 % off in the window |
+| Where is the fastest flow? (percent of the plotted range) | 3 states × 2 views | 18 answers (6 frames, 3 repeats each), none within 10 % of the true spot; 14 to 18 % off in the whole-domain view (0.27 to 0.39 m), 50 to 80 % off in the window |
 | How does the flow change? (trend words) | 3 frames × 2 views | Peak speed called `increasing` in both views while it falls from 60 to 47 (42) m/s; 1 of 3 words right in the whole-domain view, 2 of 3 in the window |
 
 Details, the model's texts and the caveats are in the
@@ -118,11 +123,12 @@ Details, the model's texts and the caveats are in the
 
 ## Measurements (2026-10-17, run `pod-llm-demo.LRfJBN`)
 
-8 vCPU, 7.7 GiB RAM, no GPU; llama-server on 4 threads, llama.cpp
+8 vCPU, 7.8 GiB RAM, no GPU; llama-server on 4 threads, llama.cpp
 b11429, context 2048. 20,540 cells, time step
 10⁻⁷ s, ten steps. Each condition was run once on this date. A repeat on
-October 19 gave the same answers and the same step-5 hashes
-([details](docs/results.md#repeat-on-2026-10-19)).
+October 19 gave the same step-5 hashes, the same image reply and the same
+replay coordinates; the numbers-only reply and the wording of five replay
+answers changed ([details](docs/results.md#repeat-on-2026-10-19)).
 
 | Condition | Result | Steps | Files equal to baseline | Callback time |
 |---|---|---:|---:|---:|
@@ -157,8 +163,9 @@ wrong.
    speed increasing while the colour bars show it falling. With this model
    the descriptions are not usable.
 2. Cost measurement. Latencies depend on the server's prompt cache (26 to
-   33 s for one image with a cold image, 15 s warm; 11 to 45 s for three),
-   so the cost of an image is still not isolated.
+   33 s for one image with only the first 266 tokens cached, 14 to 18 s with
+   nearly all cached; 11 to 45 s for three), so the time cost of an image is
+   still not isolated.
 3. Scope. One serial fluid case (a backward-facing step at start-up), one
    request in flight at a time. MPI, 3D, the 12B model and the contribution
    of the SVD summary have not been tested.
@@ -168,7 +175,7 @@ wrong.
 1. Run the describe and sequence replays, and the asynchronous suite, with
    Gemma 4 12B QAT on a GPU node and put E2B and 12B in one table. Scripts
    for the server are in [llm_demo/hpc/](Solver_Examples/PODFoam/llm_demo/hpc/README.md);
-   the replay commands are in the [October 20 report](docs/results-20261020.md).
+   the replay commands are in [llm_demo/README.md](Solver_Examples/PODFoam/llm_demo/README.md#replaying-saved-frames-describe-and-sequence).
 2. Try a picture the model can read: larger, with grid lines and labelled
    ticks, or a single panel; test with the same replay scripts.
 3. Allow more than one request in flight and a request every N steps, and
@@ -187,7 +194,7 @@ docs/evidence/2026-10-20/     records of the October 20 runs and replays, hash m
 docs/results.md               October 17 test report
 docs/evidence/2026-10-17/     raw requests, responses, logs, verification, hash manifest
 docs/evidence/2026-10-13/     earlier run (pod-llm-demo.SwwR2e) and its report, docs/results-20261013.md
-docs/evidence/2026-10-19/     repeat of the October 17 run (pod-llm-demo.o5sNLJ), same answers and hashes
+docs/evidence/2026-10-19/     repeat of the October 17 run (pod-llm-demo.o5sNLJ), same hashes and replay coordinates
 docs/evidence/check_manifest.py  verifies every evidence file against its manifest (also run in CI)
 docs/upstream-project.md      original PythonFOAM README (other solvers, Docker, build notes)
 .github/workflows/            tests.yml (unit tests, Python 3.10 and 3.12), evidence.yml (hashes, links)
@@ -202,7 +209,7 @@ Other directories (`APMOSFoam`, `AEFoam`, `PINNFoam`, `TurbulenceModel_Examples`
 - [October 20 report](docs/results-20261020.md): asynchronous runs, one-snapshot and sequence replays, caveats
 - [October 17 report](docs/results.md): synchronous conditions, paired image/no-image replay
 - [Evidence](docs/evidence/README.md): raw requests and responses, logs, verification results, hash manifests
-- Full run downloads: [October 20](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-async-2026-10-20), [October 17](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-tests-2026-10-17) (all saved results and the executed sources, no model weights)
+- Full run downloads: [October 20](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-async-2026-10-20), [October 17](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-tests-2026-10-17) (all saved results of the five-case runs and the executed sources, no model weights; the time directories of the October 20 windowed frame run are not included)
 - [Changelog](CHANGELOG.md)
 - [Korean repository](https://github.com/seungminyome/PythonFOAM-Korean) and its [illustrated results](https://seungminyome.github.io/PythonFOAM-Korean/)
 

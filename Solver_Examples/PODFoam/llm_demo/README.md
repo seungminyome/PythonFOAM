@@ -73,10 +73,12 @@ In `describe` mode the text carries no field values and no positions: the
 extrema have to be read from the picture and its colour bars. In `sequence`
 mode frames are captured at `LLM_SEQUENCE_STEPS` (for example `250,750,1250`)
 by a forked renderer at each of those steps, and one request with all frames
-goes out at the last one. The trend words are a fixed vocabulary
-(`increasing`, `decreasing`, `roughly_constant`, `cannot_tell`; for the
-pressure minimum `more_negative`, `less_negative`; for the fastest spot
-`same_place`, `moves`) so that answers can be scored against the saved arrays.
+goes out at the last one. The earlier frames go to `llm_observation/step-XXXXXX/`;
+the frame of the last step is `llm_observation/` itself. The trend words are a
+fixed vocabulary (peak speed `increasing`, `decreasing`, `roughly_constant`,
+`cannot_tell`; pressure minimum `more_negative`, `less_negative`,
+`roughly_constant`, `cannot_tell`; fastest spot `same_place`, `moves`,
+`cannot_tell`) so that answers can be scored against the saved arrays.
 The reply schema is enforced by the server (`response_format`, JSON schema
 with integer ranges and enums) and checked again by the client.
 
@@ -109,10 +111,13 @@ fields and SVD modes written every `LLM_LONG_WRITE` = 250 steps, request at
 
 `verify_async.py` checks that every written time directory is identical to
 the baseline, that the frames' arrays equal the written fields and the
-baseline's frames, that the request step took under 0.5 s, that every other
-step took under 1 s, and that the reply (or error) was recorded with its
-arrival step. `LLM_LONG_CASES=async-no-llm` runs only the baseline, which is a
-way to capture frames without a model.
+baseline's frames, that the request step took under 0.5 s, that every step
+other than the request, arrival and last steps took under 1 s, and that the
+reply (or error) was recorded with its arrival step. For the sequence case it
+also checks the image hashes in the request body. `LLM_LONG_CASES=async-no-llm`
+runs only the baseline, which is a way to capture frames without a model
+request; the llama-server must still be running with the model loaded,
+because the runner checks it before the first case.
 
 ## Replaying saved frames (describe and sequence)
 
@@ -122,11 +127,20 @@ and scores the answers against the arrays:
 
 ```bash
 python3 snapshot_runner.py --mode describe --frames RUN/async-no-llm/llm_observation/step-000250 \
-    RUN/async-no-llm/llm_observation/step-000750 --output /tmp/describe-replay --repeats 3 --execute
+    RUN/async-no-llm/llm_observation/step-000750 RUN/async-no-llm/llm_observation \
+    --output /tmp/describe-replay --repeats 3 --execute
 python3 snapshot_runner.py --mode sequence --frames RUN/async-no-llm/llm_observation/step-000250 \
-    RUN/async-no-llm/llm_observation/step-000750 RUN/async-no-llm/llm_observation/step-001250 \
+    RUN/async-no-llm/llm_observation/step-000750 RUN/async-no-llm/llm_observation \
     --output /tmp/sequence-replay --repeats 3 --execute
 ```
+
+`RUN` is a `pod-llm-async.XXXXXX` folder. With the published frames
+(`docs/evidence/2026-10-20/pod-llm-async.pp7agC` for the whole domain, and
+`pod-llm-async.8YC6bG` with `step-000250`, `step-001250` and `llm_observation`
+for the window) the commands rebuild all 24 October 20 replay requests byte
+for byte (defaults: seed 20261020 for the first repeat and one more for each
+further repeat, `--max-tokens` 320). Without `--execute`
+they only prepare the requests and the reference values.
 
 For `describe` the score is the distance between the answered percent position
 and the true cell of the maximum speed (and the minimum pressure) inside the
@@ -157,7 +171,17 @@ Environment variables: `OPENFOAM_BASHRC`, `PYTHON`, `POD_WORKSPACE`,
 checkout), `POD_LLM_PORT` (8088), `POD_REFERENCE_RUN` (newest passed
 validation run by default), `LLM_ANALYSIS_STEP`, `LLM_IMAGE_INPUT` (1/0),
 `LLM_CALLBACK_DEADLINE_S`, `LLM_CONNECT_TIMEOUT_S`, `LLM_READ_TIMEOUT_S`,
-`LLM_MAX_TOKENS` (up to 192 for `observe`, 320 for the other modes), `LLM_MODE`, `LLM_ASYNC`, `LLM_SEQUENCE_STEPS`, `LLM_ASYNC_MAX_PENDING`, `LLM_ASYNC_END`, `LLM_IMAGE_XRANGE`, `LLM_IMAGE_YRANGE`.
+`LLM_MAX_TOKENS` (up to 192 for `observe`, 320 for the other modes), `LLM_MODE`, `LLM_ASYNC`, `LLM_SEQUENCE_STEPS`, `LLM_ASYNC_MAX_PENDING` (1 to 8), `LLM_ASYNC_END`, `LLM_FINAL_STEP`, `LLM_IMAGE_XRANGE`, `LLM_IMAGE_YRANGE`, `POD_SUITE` (`async` for the long asynchronous suite), and for that suite `LLM_LONG_STEPS`, `LLM_LONG_DT`, `LLM_LONG_WRITE`, `LLM_LONG_STEP`, `LLM_LONG_SEQUENCE_STEPS`, `LLM_LONG_CASES`.
+
+`run_demo.sh` sets `LLM_MAX_TOKENS=192` for every mode unless it is already
+set, so the October 20 in-solver describe and sequence requests used 192 (the
+replays used 320). The runners set some variables per case. The synchronous
+runner sets `LLM_ENABLED` and `LLM_IMAGE_INPUT` and passes `LLM_ANALYSIS_STEP`
+through (default 5). The asynchronous runner sets `LLM_ENABLED`,
+`LLM_IMAGE_INPUT` (always 1), `LLM_ASYNC`, `LLM_MODE`, `LLM_ANALYSIS_STEP`
+(from `LLM_LONG_STEP`) and `LLM_SEQUENCE_STEPS` (from
+`LLM_LONG_SEQUENCE_STEPS`) and ignores `LLM_FINAL_STEP`, so use the
+`LLM_LONG_*` variables there.
 
 `run_cases.py` checks that the server behind `LLM_ENDPOINT` is the process
 recorded in `$POD_LLM_RUNTIME/server.pid`. If the server was started from a
@@ -267,12 +291,13 @@ isolate the effect of the image; the October 17 replay does.
 
 ## SVD summary
 
-Both request types include a componentwise SVD summary of the velocity
-snapshots collected so far: singular values and their fractions, no spatial
-modes. `leading_energy_fraction` is sigma_1 squared over the sum of squared
-singular values, the leading pattern's share of the snapshot matrix (about
-99.997% for Ux in the recorded runs). The matrices are uncentered and
-unweighted. This is a data summary, not a physical energy or an accuracy
+Observe requests (with and without the image) include a componentwise SVD
+summary of the velocity snapshots collected so far: singular values and their
+fractions, no spatial modes. Describe and sequence requests send no SVD
+summary. `leading_energy_fraction` is sigma_1 squared over the sum of squared
+singular values, the leading pattern's share of the snapshot matrix (99.997 %
+for Ux at step 5 of the October 17 and 19 runs). The matrices are uncentered
+and unweighted. This is a data summary, not a physical energy or an accuracy
 measure, and whether it helps the model has not been tested.
 
 The normal worker deadline is 120 s. The deliberate failure cases use 4 s with

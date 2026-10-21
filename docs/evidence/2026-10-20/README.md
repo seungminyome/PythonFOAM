@@ -16,7 +16,8 @@ path, describe and sequence modes, plot window, `end_time_s` in the state).
 | [replay/sequence-window/](replay/sequence-window/) | Three sequence requests with the windowed frames 250, 1250, 2750 |
 | [unit-tests-70.txt](unit-tests-70.txt) | Output of the 70 unit tests |
 
-Each replay folder has `manifest.json` (frames, schedule, prompts' hashes),
+Each replay folder has `manifest.json` (the frames with their PNG and array
+hashes, and the schedule with each request body's size and SHA-256),
 `ground_truth.private.json` (reference positions and trends from the arrays,
 never sent to the model), one `*.request.json` per request, and per request a
 folder with the body sent, the raw and parsed reply, the result and the

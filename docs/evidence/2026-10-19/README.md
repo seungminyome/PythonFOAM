@@ -19,7 +19,7 @@ of the five passing test invocations.
 - All five cases completed ten steps with 45 files identical to the baseline;
   `demo-verification.json` says `PASS`.
 - The reply to the image request from inside the solver is the same text as on
-  October 17. The six replay answers are the same as on October 17
+  October 17. The six replay answers give the same coordinates as on October 17
   (numbers only: x = 0.6012 m, y = 0.1143 m; with image: x = 0.5 m,
   y = 0.1143 m), so the position errors are again 60.92 cm and 50.97 cm.
 
@@ -39,6 +39,11 @@ Both solver requests on October 19 started from a cold prompt cache
 (58.6 s for 1541 tokens) and of the numbers-only request (30.2 s for 1080
 tokens) are comparable on this date. The replay requests again reused
 1457–1568 cached tokens after the first.
+
+The numbers-only reply from inside the solver differed from October 17 in
+all three fields, and five of the six replay answers changed
+their `possible_interpretation` or `checks` text. The requests differed from
+October 17 only in the run id.
 
 ## Notes
 

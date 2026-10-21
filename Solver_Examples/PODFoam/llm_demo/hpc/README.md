@@ -15,6 +15,7 @@ The paired replay has been run once, on MedicineBow (2026-10-19): see
 | `start_server.sh` / `stop_server.sh` | llama-server on the node's GPU with the same settings as the E2B runs (context 2048, one slot, 256 image tokens requested, reasoning off), all layers on the GPU. Writes `server.pid`. With the 12B projector the server lowers the image-token limit to 128 because `--ubatch-size` is 128. |
 | `replay_12b.slurm` | Paired replay of the 2026-10-17 step-5 state: three pairs, numbers only vs numbers + image, seed 20261017. No OpenFOAM needed. |
 | `demo_12b.slurm` | Bridge validation, the five solver conditions, verification, and the paired replay of the new state. Needs OpenFOAM v2106 on the node. |
+| `picture_test.slurm`, `fetch_models.sh`, `models.tsv` | The picture-reading test of 2026-10-21 for several model sizes; see [below](#picture-reading-test-prepared-2026-10-21-not-yet-run). |
 | `build_llama_cuda.sh` | Fallback: build llama.cpp b11429 from source with CUDA if the prebuilt binary does not run (older glibc, other CUDA). |
 
 ## Getting the files onto the cluster
@@ -75,6 +76,93 @@ the replay on the new state).
   `demo-verification.json` → `status` must be `PASS` with 45 identical files.
 - `server_timings.cache_n` in each result: 0 or 1 means a cold prompt cache (0
   on a freshly started server, as in the 12B run).
+
+## Picture-reading test (prepared 2026-10-21, not yet run)
+
+`picture_test.slurm` sends one prepared set of 308 requests to each model in
+`MODELS`, one model after another on one GPU. The set is built on a
+workstation with `picture_test.py build` (matplotlib needed) and copied to the
+cluster; the job itself needs only Python 3 with numpy and no OpenFOAM.
+
+| Set | Requests | Content |
+|---|---:|---|
+| `oct17-paired` | 6 | the 2026-10-17 paired requests; only the model name changes |
+| `oct17-paired-cold` | 6 | the same six with `cache_prompt: false` |
+| `oct20-replay` | 24 | the 2026-10-20 describe and sequence requests; only the model name changes |
+| `control-position-v1`, `-v2` | 32 each | synthetic fields with one bright \|U\| spot and one dark p spot at chosen places, whole domain and window |
+| `planted-position-v1`, `-v2` | 32 each | saved states (steps 1000, 2500, 4000, 5500) with one narrow \|U\| peak and one narrow p dip added at least 15 % away from the step corner |
+| `control-trend-v1`, `-v2`, `-v2own` | 18 each | synthetic three-time sequences: every speed trend x pressure trend x spot motion once |
+| `flow-describe-v1`, `-v2` | 24 each | saved states every 500 steps up to step 6000, whole domain and window |
+| `flow-sequence-v1`, `-v2`, `-v2own` | 14 each | seven triples of saved states, whole domain and window |
+
+v1 is the picture the solver sends (`pod_image.py`: two panels, 640x360,
+colour range per picture). v2 is `readable_image.py`: one field per picture,
+1024x576, axes in percent of the plotted range with a grid line every 10 %,
+the colour bar labelled at both ends, and in sequences one colour range for
+all frames. v2own is v2 with each picture's own colour range; its prompt
+differs from the v2 prompt only in the colour-scale sentence and in what the
+trends are judged from (colours or colour-bar numbers), so v2 against v2own
+isolates the shared colour range. v2 also sends about five times
+the image tokens of v1. The new sets send `cache_prompt: false`, so every
+prompt is processed in full. The flow states come from a PODFoam run without
+model requests (6000 steps of 5e-7 s, written every 250 steps; the first 12
+written times are identical to the 2026-10-20 run). In every flow state the
+fastest flow and the lowest pressure are at the step corner and the flow
+trends hardly change, so each summary also gives the score of one fixed
+answer (`constant_answer_baseline`); the controls and planted sets are where
+reading can be told apart from a fixed answer.
+
+Models (`models.tsv`, pinned revisions and SHA-256; none of these repositories
+needs a token):
+
+| Key | Repository, files | Download |
+|---|---|---:|
+| `e2b` | `ggml-org/gemma-4-E2B-it-GGUF`, Q4_0 + Q8_0 projector, the pair used on the CPU | 3.4 GB |
+| `e2b-bf16` | the same Q4_0 weights + the BF16 projector of that repository | 1.0 GB more |
+| `e2b-qat` | `google/gemma-4-E2B-it-qat-q4_0-gguf`, BF16 projector | 4.3 GB |
+| `e4b` | `google/gemma-4-E4B-it-qat-q4_0-gguf`, BF16 projector | 6.1 GB |
+| `12b` | `google/gemma-4-12B-it-qat-q4_0-gguf`, the files of 2026-10-19 | 7.2 GB |
+| `26b` | `google/gemma-4-26B-A4B-it-qat-q4_0-gguf`, BF16 projector | 15.6 GB |
+| `31b` | `google/gemma-4-31B-it-qat-q4_0-gguf`, BF16 projector | 18.9 GB |
+
+e2b against e2b-bf16 changes only the projector, e2b-bf16 against e2b-qat only
+the weights. Every model gets the same server: context 4096 (a v2 sequence
+with six images is about 2,200 prompt tokens), batch and ubatch 512 (so no
+projector lowers the 256-token image limit), all layers on the GPU, otherwise
+as `start_server.sh`. The job keeps its server's pid, log and stamp files in
+`results/picture-test-<jobid>/server/` (`POD_LLM_STATE`) and uses port
+20000 + job id mod 10000, so it does not meet another job's server.
+
+```bash
+# on the cluster, from the package root
+export POD_LLM_RUNTIME=<folder that holds llama-b11429-cuda/ from the 12B run>
+bash PODFoam/llm_demo/hpc/fetch_models.sh e2b e2b-bf16 e2b-qat e4b 12b 26b 31b   # login node if compute nodes are offline
+sbatch --account=<account> --partition=mb-a30 PODFoam/llm_demo/hpc/picture_test.slurm
+# fewer models: sbatch --export=ALL,MODELS="e2b 12b" ...
+```
+
+Results land in `results/picture-test-<jobid>.tar.gz`: one folder per model
+(each set's `summary.json` and `metrics.jsonl`, every reply; the sent request
+bodies are left out because each is the prepared body with the model name
+replaced, and its SHA-256 is in `metrics.jsonl`), the server log and command
+line per model, `llama-server-version.txt`, `nvidia-smi.txt`, `modules.txt`,
+`sha256.txt` (llama.cpp folder, test set, scripts), `failed.txt` if anything
+failed, the job log so far, and `report.md` (`picture_test.py report`: counts
+out of attempted requests, the fixed-answer score, item-by-item v1/v2 and
+v2/v2own comparisons, and for each model how many 2026-10-17/20 answers equal
+the published E2B answers). With `GH_TOKEN` (contents write access) and
+`RESULTS_RELEASE=<tag>` the job also uploads the tarball to that GitHub
+release. With `CLEANUP_MODELS=1` it deletes the model files it downloaded
+itself (`fetched.txt`), with `CLEANUP_MODELS=all` the `models/<key>` folders of
+every key in `MODELS`; the 12B files are never deleted. Use neither while
+another job uses the same `POD_LLM_RUNTIME`. Before any model starts, the job
+runs `picture_test.py check`, which compares every request file and the answer
+key with the manifest.
+
+Checked so far: the request path, with one v1 and one v2 position control and
+one v2 sequence sent to the E2B server on the workstation CPU. Not checked: the
+job on the cluster, the 26B-A4B and 31B models with llama.cpp b11429, the 31B
+model in 24 GB.
 
 ## Tested on
 

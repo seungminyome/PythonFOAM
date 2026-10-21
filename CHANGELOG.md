@@ -21,7 +21,11 @@ again.
   Courant evidence; on October 19 the coordinates were the same but the
   numbers-only reply and the wording of five replay answers changed; the
   machine has 7.8 GiB of RAM.
-- `make test` and the CI tests include `test_async.py` (70 tests).
+- `make test` and the CI tests include `test_async.py` (70 tests). Two of its
+  tests assumed a fast machine and failed on the CI runner: the detached-worker
+  test now waits for the reply file, and the sequence test checks the fork
+  steps strictly and leaves out the last step, which may wait for a late reply.
+  The other step-time bounds are 0.5 s.
 - `docs/evidence/2026-10-20/manifest.json` lists the four replay manifests,
   with corrected origin paths and the gzip copies marked as such.
 - `llm_demo/README.md`: replay commands fixed (the last frame is

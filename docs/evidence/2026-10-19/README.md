@@ -4,6 +4,9 @@ Repeat of the October 17 tests on the same machine, against the same resident
 llama-server, two days later. Solver run `pod-llm-demo.o5sNLJ`, documentation
 commit `4187659`; the solver code is byte-identical to `23089bb`.
 
+The same day the paired replay was also sent to Gemma 4 12B on a GPU node:
+[2026-10-19-12b](../2026-10-19-12b/README.md).
+
 ## Files
 
 Same selection as [2026-10-17](../2026-10-17/README.md): the five-case

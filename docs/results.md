@@ -90,7 +90,9 @@ running while the model works (frozen snapshot, bounded queue, clean worker
 shutdown), re-measure cost with the cache controlled, repeat the five
 conditions and the paired replay with the 12B model on a machine with more
 memory (this one has 7.8 GiB RAM and no GPU; the E2B server alone peaked at
-2.2 GiB).
+2.2 GiB). The paired replay was sent to 12B on a GPU node on October 19
+([below](#same-replay-with-gemma-4-12b-on-a-gpu-2026-10-19)); the five
+conditions were not.
 
 ## Repeat on 2026-10-19
 
@@ -104,6 +106,37 @@ replay answers changed, although the requests differed only in the run id.
 Callback times were 0.517 / 72.256 / 40.587 / 0.813 / 4.026 s. As on October
 17, both solver requests started from a cold prompt cache: prompt processing
 took 58.6 s with the image (1541 tokens) and 30.2 s without (1080 tokens).
+
+## Same replay with Gemma 4 12B on a GPU (2026-10-19)
+
+The six paired requests were sent again to Gemma 4 12B QAT Q4_0 with its image
+projector on one NVIDIA A30 (MedicineBow cluster, Slurm job 24696203, code
+`934da23`, request and scoring code equal to `23089bb`). The request bodies
+are the ones above with only the model name changed. llama.cpp b11429 was
+built from source with CUDA; all layers on the GPU, context 2048, one slot.
+
+| Condition | E2B answer (x, y) m | E2B distance | 12B answer | Time per request, E2B / 12B |
+|---|---|---:|---|---:|
+| Numbers only | (0.6012, 0.1143) | 60.92 cm | position "unknown", all 3 | 14.5–55.6 s / 2.0–3.3 s |
+| Numbers + image | (0.5, 0.1143) | 50.97 cm | position "unknown", all 3 | 13.2–20.8 s / 2.1–2.7 s |
+
+12B gave no position in any answer, so there is no distance to compare, and
+"unknown" is not a zero error. It quoted the maximum speed correctly. The
+three image answers add, as a possible interpretation, high velocity "near
+x=0.00 m" (the true x is 0.000538 m) with no y; the same answers say exact
+coordinates are not provided, and the scorer reads only the observations
+field. Two numbers-only answers mention "the image" although none was sent.
+Every answer had 52 to 54 words, over the 45 asked (E2B: 28 to 34). The
+automatic checker flagged nothing.
+
+The time difference mixes model size, a GPU against a CPU and a fresh server
+against a warm one. The first prompt (1466 tokens, empty cache) took 1.6 s
+against 41.3 s for E2B, and generation ran at about 62 against 9 tokens per
+second.
+
+Records: [evidence](evidence/2026-10-19-12b/README.md),
+[scores](evidence/2026-10-19-12b/ablation/summary.json),
+[answer review](evidence/2026-10-19-12b/answer-review.json).
 
 ## Checking the evidence yourself
 

@@ -15,7 +15,9 @@ asynchronous: the solver keeps stepping and the answer is recorded when it
 arrives. That much works. Nothing from the model goes back into the
 computation. The answers themselves are not usable yet: asked where the
 fastest flow is, or how the flow changes between snapshots, the model is
-wrong in nearly every case tested.
+wrong in nearly every case tested. Gemma 4 12B on a GPU node, given the six
+paired requests of October 17, answered in 2 to 3 s but gave no position at
+all ([details](docs/results.md#same-replay-with-gemma-4-12b-on-a-gpu-2026-10-19)).
 
 <img src="docs/evidence/2026-10-17/pod-llm-demo.LRfJBN/fixed-pod/llm_observation/state.png" width="640" alt="|U| and p at step 5, the image sent to the model">
 
@@ -87,7 +89,8 @@ sequenceDiagram
   hashes match the request body.
 - The October 17 measurements used revision `23089bb`; the October 20
   measurements used `9449085`, which added the modes, the asynchronous path
-  and the plot window.
+  and the plot window. The October 19 12B replay ran from `934da23`, whose
+  request and scoring code equal `23089bb`.
 
 ## Measurements (2026-10-20, asynchronous runs and replays)
 
@@ -120,6 +123,27 @@ window around the step):
 
 Details, the model's texts and the caveats are in the
 [October 20 report](docs/results-20261020.md).
+
+## Measurements (2026-10-19, Gemma 4 12B on a GPU node)
+
+The October 17 paired replay (below) sent again with only the model name
+changed: Gemma 4 12B QAT Q4_0 with its image projector on one NVIDIA A30
+(MedicineBow, Slurm job 24696203), llama.cpp b11429 built from source with
+CUDA, all layers on the GPU, context 2048.
+
+| Model, machine | Condition | Position given | Error | Time per request |
+|---|---|---|---:|---:|
+| E2B, CPU, Oct 17 | Numbers only | (0.6012, 0.1143) m, all 3 | 60.92 cm | 14.5 to 55.6 s |
+| E2B, CPU, Oct 17 | Numbers + image | (0.5, 0.1143) m, all 3 | 50.97 cm | 13.2 to 20.8 s |
+| 12B, A30, Oct 19 | Numbers only | "unknown", all 3 | not scored | 2.0 to 3.3 s |
+| 12B, A30, Oct 19 | Numbers + image | "unknown", all 3 | not scored | 2.1 to 2.7 s |
+
+"Unknown" is not a zero error. The image answers add, as a possible
+interpretation, high velocity "near x=0.00 m" (true x = 0.0005 m) with no y,
+which the scorer does not read; two numbers-only answers blamed "the image"
+although none was sent. The speed difference mixes model size, GPU against
+CPU and a fresh server against a warm one. Details: [October 17 report](docs/results.md#same-replay-with-gemma-4-12b-on-a-gpu-2026-10-19),
+[evidence](docs/evidence/2026-10-19-12b/README.md).
 
 ## Measurements (2026-10-17, run `pod-llm-demo.LRfJBN`)
 
@@ -161,20 +185,24 @@ wrong.
 1. Answer accuracy. On three states and two views the model never placed the
    fastest flow within 10 % of the plotted range, and it called the peak
    speed increasing while the colour bars show it falling. With this model
-   the descriptions are not usable.
+   the descriptions are not usable. Gemma 4 12B, asked the October 17 paired
+   question on a GPU node, gave no position at all.
 2. Cost measurement. Latencies depend on the server's prompt cache (26 to
    33 s for one image with only the first 266 tokens cached, 14 to 18 s with
    nearly all cached; 11 to 45 s for three), so the time cost of an image is
    still not isolated.
 3. Scope. One serial fluid case (a backward-facing step at start-up), one
-   request in flight at a time. MPI, 3D, the 12B model and the contribution
-   of the SVD summary have not been tested.
+   request in flight at a time. MPI, 3D, the 12B model beyond the paired
+   replay and the contribution of the SVD summary have not been tested.
 
 ## Next steps
 
 1. Run the describe and sequence replays, and the asynchronous suite, with
-   Gemma 4 12B QAT on a GPU node and put E2B and 12B in one table. Scripts
-   for the server are in [llm_demo/hpc/](Solver_Examples/PODFoam/llm_demo/hpc/README.md);
+   Gemma 4 12B QAT on a GPU node and put E2B and 12B in one table. The paired
+   replay is done ([October 19](docs/results.md#same-replay-with-gemma-4-12b-on-a-gpu-2026-10-19): no position given).
+   The replays need no OpenFOAM; the asynchronous suite needs OpenFOAM v2106
+   on the GPU node.
+   Scripts for the server are in [llm_demo/hpc/](Solver_Examples/PODFoam/llm_demo/hpc/README.md);
    the replay commands are in [llm_demo/README.md](Solver_Examples/PODFoam/llm_demo/README.md#replaying-saved-frames-describe-and-sequence).
 2. Try a picture the model can read: larger, with grid lines and labelled
    ticks, or a single panel; test with the same replay scripts.
@@ -189,12 +217,14 @@ Solver_Examples/PODFoam/      PODFoam solver (OpenFOAM v2106) with the callback 
   validation/                 bridge check: ten steps, SVD round trip, verify.py
   llm_demo/                   callback module, llama-server client, five-case runners (sync and async),
                               replay benchmarks (paired, describe, sequence), unit tests, requirements.txt
+  llm_demo/hpc/               Slurm scripts for Gemma 4 12B on a GPU node (paired replay tested on MedicineBow)
 docs/results-20261020.md      October 20 report: asynchronous runs, describe and sequence replays
 docs/evidence/2026-10-20/     records of the October 20 runs and replays, hash manifest
 docs/results.md               October 17 test report
 docs/evidence/2026-10-17/     raw requests, responses, logs, verification, hash manifest
 docs/evidence/2026-10-13/     earlier run (pod-llm-demo.SwwR2e) and its report, docs/results-20261013.md
 docs/evidence/2026-10-19/     repeat of the October 17 run (pod-llm-demo.o5sNLJ), same hashes and replay coordinates
+docs/evidence/2026-10-19-12b/ paired replay with Gemma 4 12B on an NVIDIA A30 (Slurm job 24696203), hash manifest
 docs/evidence/check_manifest.py  verifies every evidence file against its manifest (also run in CI)
 docs/upstream-project.md      original PythonFOAM README (other solvers, Docker, build notes)
 .github/workflows/            tests.yml (unit tests, Python 3.10 and 3.12), evidence.yml (hashes, links)
@@ -208,6 +238,7 @@ Other directories (`APMOSFoam`, `AEFoam`, `PINNFoam`, `TurbulenceModel_Examples`
 
 - [October 20 report](docs/results-20261020.md): asynchronous runs, one-snapshot and sequence replays, caveats
 - [October 17 report](docs/results.md): synchronous conditions, paired image/no-image replay
+- [12B replay](docs/results.md#same-replay-with-gemma-4-12b-on-a-gpu-2026-10-19): the October 17 paired requests, Gemma 4 12B on a GPU node
 - [Evidence](docs/evidence/README.md): raw requests and responses, logs, verification results, hash manifests
 - Full run downloads: [October 20](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-async-2026-10-20), [October 17](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-tests-2026-10-17) (all saved results of the five-case runs and the executed sources, no model weights; the time directories of the October 20 windowed frame run are not included)
 - [Changelog](CHANGELOG.md)

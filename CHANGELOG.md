@@ -3,6 +3,27 @@
 Dates are when a run or change happened. Where a run is recorded, the code
 revision that produced it is given.
 
+## 2026-10-20, 12B replay published (run of 2026-10-19, code `934da23`)
+
+- Records of the October 19 paired replay with Gemma 4 12B QAT on an NVIDIA A30
+  in [docs/evidence/2026-10-19-12b/](docs/evidence/2026-10-19-12b/README.md):
+  six requests and replies, job script and output, Slurm accounting, server and
+  build logs, hash manifest, and a manual review of the answers. All six
+  answers say the position is unknown; 2.0 to 3.3 s per request.
+- New section in the October 17 report and a 12B table in the README;
+  corrected statements that 12B was untested (README, October 20 report,
+  `hpc/README.md`); a 12B paragraph and link on the pages index; links from
+  the evidence index, the 2026-10-17 and 2026-10-19 evidence pages and
+  `llm_demo/README.md`.
+- `hpc/README.md`: "Tested on" with the MedicineBow site lines and the source
+  build of llama.cpp (the prebuilt b11429 libraries need GLIBC_2.38); the 12B
+  server lowers the image-token limit to 128.
+- `replay_12b.slurm`, `demo_12b.slurm`: `HF_TOKEN` only needed to download the
+  weights; account and partition go on the `sbatch` command line.
+  `setup_12b.sh` also hashes the `llama-server` in use.
+- `.gitignore`: the 12B runtime folder and job outputs; `check_links.py`
+  skips the runtime folder.
+
 ## 2026-10-20, corrections (documents and tests)
 
 Every number in the October 17 to 20 pages was checked against the records
@@ -60,6 +81,8 @@ again.
 - `test_callback.py`: the image-rendering test gets a 4 s callback deadline; 1 s was too short on a shared CI runner. Test only, solver code unchanged.
 - Repeat of the October 17 run and replay (`docs/evidence/2026-10-19/`): same hashes, the same image reply and replay coordinates; the numbers-only reply and the wording of five replay answers changed.
 - `llm_demo/hpc/`: scripts and Slurm jobs to repeat the measurements with Gemma 4 12B on a GPU node.
+- Paired replay with Gemma 4 12B QAT on an NVIDIA A30 (MedicineBow, Slurm job
+  24696203, code `934da23`); published on 2026-10-20.
 - Docs reorganised: evidence under dated folders, English-only pages here,
   Korean material moved to [PythonFOAM-Korean](https://github.com/seungminyome/PythonFOAM-Korean).
 - CI: unit tests on Python 3.10 and 3.12; evidence files checked against their

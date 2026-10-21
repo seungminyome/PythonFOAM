@@ -33,11 +33,13 @@
 <tr><td>Delayed response (4 s deadline)</td><td>timeout stored, run continues</td><td class="n">45 / 45</td><td class="n">4.013 s</td></tr>
 </table>
 <p>On one saved state, all six paired answers (numbers only / numbers + image) gave a wrong maximum-speed location: 60.92 cm and 50.97 cm from the true cell.</p>
+<p>October 19 (code <code>934da23</code>, Slurm job 24696203): the same six paired requests sent to Gemma 4 12B QAT on one NVIDIA A30. Each answer took 2.0 to 3.3 s (E2B on the CPU: 13 to 56 s). All six said the location is unknown, so there is no position error to compare. <a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/results.md#same-replay-with-gemma-4-12b-on-a-gpu-2026-10-19">Details</a>.</p>
 <p>October 20 (code <code>9449085</code>, run <code>pod-llm-async.pp7agC</code>): requests can run asynchronously (the solver kept stepping; replies recorded 843 and 1071 steps after the request, written fields unchanged). Asked where the fastest flow is in one snapshot, the model was never within 10 % of the plotted range; asked how three snapshots change, it called the falling peak speed "increasing". <a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/results-20261020.md">Report</a>.</p>
 <ul>
 <li><a href="https://github.com/seungminyome/PythonFOAM#readme">Repository and summary</a></li>
 <li><a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/results-20261020.md">October 20 report</a> and <a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/evidence/2026-10-20/README.md">evidence</a></li>
 <li><a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/results.md">October 17 report</a> and <a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/evidence/2026-10-17/README.md">evidence</a></li>
+<li><a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/results.md#same-replay-with-gemma-4-12b-on-a-gpu-2026-10-19">12B replay</a> and <a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/evidence/2026-10-19-12b/README.md">evidence</a></li>
 <li><a href="https://seungminyome.github.io/PythonFOAM-Korean/">Illustrated results in Korean</a></li>
 </ul>
 </main>

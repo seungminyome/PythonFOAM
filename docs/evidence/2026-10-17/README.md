@@ -27,7 +27,9 @@ Records behind the [October 17 report](../../results.md). Solver run
 
 [ablation/](ablation/) holds the three paired replays, one `pair-*` folder per
 request with the body sent, the raw and parsed reply, result and metrics. These
-were sent after the solver run, from the saved step-5 state.
+were sent after the solver run, from the saved step-5 state. The same
+requests, with only the model name changed, were sent to Gemma 4 12B on a GPU
+node on October 19: [2026-10-19-12b](../2026-10-19-12b/README.md).
 
 ## Complete run
 

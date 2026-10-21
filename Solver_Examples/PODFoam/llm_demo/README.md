@@ -13,7 +13,8 @@ request modes exist: `observe` (numbers plus the same-step image, the original),
 `describe` (one image, a description and the positions of the extrema) and
 `sequence` (several images along the run, how the flow changes).
 Results: [October 17 report](../../../docs/results.md),
-[October 20 report](../../../docs/results-20261020.md).
+[October 20 report](../../../docs/results-20261020.md),
+[12B paired replay](../../../docs/results.md#same-replay-with-gemma-4-12b-on-a-gpu-2026-10-19).
 
 This extends the stock PODFoam example with an optional callback. Modules that
 only define `snapshot_func` and `svd_func` keep working as before.
@@ -188,7 +189,8 @@ recorded in `$POD_LLM_RUNTIME/server.pid`. If the server was started from a
 different runtime directory, point `POD_LLM_RUNTIME` at that directory.
 
 To repeat the measurements with Gemma 4 12B on a cluster GPU, see
-[hpc/README.md](hpc/README.md).
+[hpc/README.md](hpc/README.md). The paired replay has been run this way on an
+NVIDIA A30 ([records](../../../docs/evidence/2026-10-19-12b/README.md)).
 
 `run_demo.sh` builds the solver into `llm-demo-work/bin/` in the workspace,
 creates `pod-llm-demo.XXXXXX` and runs five cases, each for ten steps:
@@ -259,7 +261,8 @@ python3 ablation_runner.py \
 
 The October 17 [manifest](../../../docs/evidence/2026-10-17/ablation/manifest.json)
 records the original requests and order (seeds 20261017, 20261018, 20261019;
-the runner alternates which condition goes first). Keep the server build,
+the runner alternates which condition goes first). The October 19 12B replay
+used the same requests with only `model` changed. Keep the server build,
 weights, projector, thread count and context size fixed between runs and note
 them with `--server-note`.
 

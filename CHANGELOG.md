@@ -3,6 +3,50 @@
 Dates are when a run or change happened. Where a run is recorded, the code
 revision that produced it is given.
 
+## 2026-10-22, v2 pictures from the running solver, random windows, Qwen models (runs from `354caf9` with uncommitted changes; published in `dee7731`)
+
+- New in `llm_demo/`: `readable_request.py` (the v2 request builder, moved out
+  of `picture_test.py` and shared by the picture tests and the callback),
+  `run_live_sweep.py` (describe requests at several steps of a running
+  solver, each with its own random window) and `window_test.py` (picture sets
+  with the plotted window placed at random around the fastest cell). In
+  `llm_demo/hpc/`: `async_v2.slurm` (the asynchronous suite with v2 pictures
+  and the sweep, OpenFOAM in an Apptainer image, llama-server on the host
+  GPU) and `window_test.slurm`; four Qwen rows in `models.tsv`;
+  `start_server.sh` reads `LLM_IMAGE_TOKENS`.
+- `python_module.py`: `LLM_IMAGE_STYLE=v2` draws one picture per field for
+  `describe` and `sequence` requests, writes each frame (arrays, pictures,
+  metadata last) to its own folder and never overwrites or sends a frame left
+  by an earlier run; v2 requests send `max_tokens` 320, the picture-test seed
+  and no prompt cache; a v2 describe request keeps no SVD window.
+  `LLM_KILL_JOIN_S` sets how long a killed worker may take to be reaped. The
+  default (`v1`) is unchanged.
+- `run_async_cases.py`, `verify_async.py`: `LLM_LONG_START` starts every case
+  from a developed state (mesh and start files checked by hash); for v2 runs
+  the verifier checks that each request body equals the builder applied to
+  the frame on disk, byte for byte, that frame arrays equal the written
+  fields, and scores the answers. `run_demo.sh` and `validation/run_v2106.sh`
+  take the OpenFOAM version from `POD_OPENFOAM_VERSION` and the Python
+  library name from the interpreter. `pack_run.py` records the git state the
+  job script took on the host.
+- Tests: golden tests that rebuild two published picture-test requests from
+  their pictures byte for byte and pin five more by hash; v2 callback tests
+  (describe, sequence, refusals, reruns in the same folder); 92 in the suite.
+- Runs: the five asynchronous cases with v2 pictures and Gemma 4 12B from a
+  developed flow, and eleven sweep requests (job 24757460); random-window
+  tests for eleven models, three window seeds and a larger image-token limit
+  (jobs 24757344, 24757382 to 24757384); a developed flow with random windows
+  (job 24757459); four Qwen models on the 308 requests (job 24757327); the
+  flow runs 24757337 and 24757429. Report
+  [docs/results-20261022-live.md](docs/results-20261022-live.md), records in
+  [docs/evidence/2026-10-22-live-v2/](docs/evidence/2026-10-22-live-v2/README.md)
+  and [docs/evidence/2026-10-22-window-test/](docs/evidence/2026-10-22-window-test/README.md),
+  archives in the new `pod-insitu-v2-2026-10-22` release and the
+  `picture-test-2026-10-22` release.
+- README, evidence index, pages index, `llm_demo/README.md` and
+  `hpc/README.md` give the results; open problems and next steps updated.
+  `.gitignore` covers all `pod-*.out` job logs.
+
 ## 2026-10-22, picture-reading test (prepared 2026-10-21 in `58e00d9`, run as Slurm job 24756981)
 
 - New in `llm_demo/`: `readable_image.py` (one field per picture, axes in

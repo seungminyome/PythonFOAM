@@ -16,6 +16,8 @@ The paired replay has been run once, on MedicineBow (2026-10-19): see
 | `replay_12b.slurm` | Paired replay of the 2026-10-17 step-5 state: three pairs, numbers only vs numbers + image, seed 20261017. No OpenFOAM needed. |
 | `demo_12b.slurm` | Bridge validation, the five solver conditions, verification, and the paired replay of the new state. Needs OpenFOAM v2106 on the node. |
 | `picture_test.slurm`, `fetch_models.sh`, `models.tsv` | The picture-reading test for several model sizes (prepared 2026-10-21, run 2026-10-22); see [below](#picture-reading-test-run-2026-10-22). |
+| `window_test.slurm` | The random-window picture test (`window_test.py`) for the models in `MODELS`; see [below](#random-window-test-and-qwen-models-run-2026-10-22). |
+| `async_v2.slurm` | The asynchronous suite with v2 pictures from the running solver and Gemma 4 12B, started from a developed flow, then the describe sweep; OpenFOAM in an Apptainer image, llama-server on the host GPU; see [below](#v2-pictures-from-the-running-solver-async_v2slurm-run-2026-10-22). |
 | `build_llama_cuda.sh` | Fallback: build llama.cpp b11429 from source with CUDA if the prebuilt binary does not run (older glibc, other CUDA). |
 
 ## Getting the files onto the cluster
@@ -125,6 +127,10 @@ needs a token):
 | `12b` | `google/gemma-4-12B-it-qat-q4_0-gguf`, the files of 2026-10-19 | 7.2 GB |
 | `26b` | `google/gemma-4-26B-A4B-it-qat-q4_0-gguf`, BF16 projector | 15.6 GB |
 | `31b` | `google/gemma-4-31B-it-qat-q4_0-gguf`, BF16 projector | 18.9 GB |
+| `qwen3vl-8b` | `Qwen/Qwen3-VL-8B-Instruct-GGUF`, Q8_0 + F16 projector (added 2026-10-22) | 9.9 GB |
+| `qwen3vl-32b` | `Qwen/Qwen3-VL-32B-Instruct-GGUF`, Q8_0 + F16 projector | 36.0 GB |
+| `qwen35-27b` | `unsloth/Qwen3.5-27B-GGUF`, Q8_0 + BF16 projector (a third-party conversion) | 29.5 GB |
+| `qwen35-35b` | `ggml-org/Qwen3.5-35B-A3B-GGUF`, Q8_0 + Q8_0 projector | 37.5 GB |
 
 e2b against e2b-bf16 changes only the projector; e2b-qat has other weights
 and Google's own projector file (BF16, like the one of e2b-bf16). Every model gets the same server: context 4096 (a v2 sequence
@@ -161,14 +167,92 @@ runs `picture_test.py check`, which compares every request file and the answer
 key with the manifest.
 
 Run on 2026-10-22 as Slurm job 24756981, on one NVIDIA RTX A6000 (49,140
-MiB; the command above names mb-a30, and the records do not say which
-partition the job ran in): all seven models, 308 of 308 requests each; the
+MiB; submitted to the mb-a6000 partition, because the scheduler expected the
+mb-a30 queue to start it two weeks later): all seven models, 308 of 308 requests each; the
 seven model runs took 83 minutes, model loading included. With llama.cpp
 b11429 every model loaded and answered, 26B-A4B and 31B included; 31B had
 20,128 MiB of GPU memory in use when its server first reported ready. Whether
 31B fits in the 24 GB of an A30 was not tried. Results:
 [October 22 report](../../../../docs/results-20261022.md),
 [evidence](../../../../docs/evidence/2026-10-22-picture-test/README.md).
+
+## Random-window test and Qwen models (run 2026-10-22)
+
+In the flow states of the picture test the fastest flow and the lowest
+pressure sit at the step corner, so one fixed answer scores 24 of 24.
+`window_test.py` draws the same states with the plotted window placed at
+random around the fastest cell, so that the answer moves from picture to
+picture (see the [llm_demo README](../README.md#random-window-picture-test-window_testpy)).
+`window_test.slurm` runs a set like `picture_test.slurm` does; `LLM_CTX` and
+`LLM_IMAGE_TOKENS` (default 4096 and 256, read by `start_server.sh`) can be
+raised to test the image-token cap.
+
+```bash
+python3 Solver_Examples/PODFoam/llm_demo/window_test.py build --states <case> \
+    --centres docs/evidence/2026-10-20/pod-llm-async.pp7agC/async-no-llm/llm_observation/step-000250/fields.npz \
+    --old-manifest <picture-test-20261021/manifest.json> --output <set> [--seed N] [--first-step N --describe-every N --last-step N]
+export POD_LLM_RUNTIME=$PWD/llm-runtime-12b PICTURE_TEST_SET=<set>
+sbatch --export=ALL,MODELS="12b 26b 31b qwen35-35b" --account=<account> --partition=mb-a6000 \
+    Solver_Examples/PODFoam/llm_demo/hpc/window_test.slurm
+```
+
+Runs on 2026-10-22, all on one RTX A6000: the four Qwen models on the 308
+picture-test requests (job 24757327); the start-up states (a `pimpleFoam` run
+of 6000 steps of 5e-7 s in the v2212 image, job 24757337, states every 500
+steps) with four random windows each (96 requests) for eleven models (job
+24757344), the six largest again with two other window seeds (jobs 24757384,
+24757383) and with `LLM_IMAGE_TOKENS=1024 LLM_CTX=8192` (job 24757382); and a
+developed flow (below) with four windows on each of 35 states (280 requests,
+job 24757459). Results: [report](../../../../docs/results-20261022-live.md),
+[evidence](../../../../docs/evidence/2026-10-22-window-test/README.md).
+
+## v2 pictures from the running solver (`async_v2.slurm`, run 2026-10-22)
+
+MedicineBow has no OpenFOAM module, but OpenFOAM v2212 runs in an Apptainer
+image (the one used for solids4foam there). PODFoam builds in it unchanged
+against a conda Python 3.11 with numpy and matplotlib (the image has no
+Python), and its bridge validation passes there:
+
+```bash
+module load apptainer
+apptainer exec <of2212.sif> bash -c '
+    source /usr/lib/openfoam/openfoam2212/etc/bashrc
+    export LD_LIBRARY_PATH=<conda>/lib:$LD_LIBRARY_PATH POD_OPENFOAM_VERSION=v2212 PYTHON=<conda>/bin/python3
+    Solver_Examples/PODFoam/validation/run_v2106.sh'      # writes $POD_WORKSPACE/pod-v2212.XXXXXX
+```
+
+The image shares the host's network and process namespaces, so the solver's
+callback inside it reaches a llama-server started on the host GPU at
+127.0.0.1. `async_v2.slurm` starts the server (12B, context 4096, batch and
+ubatch 512, the picture-test settings), records the git state of the
+checkout on the host (the image has no git; `pack_run.py` copies it), and
+runs `run_demo.sh` with `POD_SUITE=async` and `LLM_IMAGE_STYLE=v2` in the
+image, then `run_live_sweep.py`.
+
+```bash
+# from the repository root, after a validation run and a developed run of the same mesh
+export POD_REFERENCE_RUN=<pod-v2212.XXXXXX> LLM_LONG_START=<developed case>/0.1
+sbatch --account=<account> --partition=mb-a6000 Solver_Examples/PODFoam/llm_demo/hpc/async_v2.slurm
+```
+
+Defaults: 6000 steps of 5e-6 s from the start state, written every 250
+steps, the describe request at step 250, sequence frames at 3000, 3250 and
+3750, the window x 0 to 0.12 m, y 0 to 0.04 m, then eleven sweep requests
+every 500 steps (`SWEEP_STEPS`, `SWEEP_PARALLEL`). `LLM_KILL_JOIN_S=0.2`:
+on these nodes a killed worker forked from the 0.5 GB solver takes about
+40 ms to be reaped, longer than the default 0.02 s. The developed state came
+from `pimpleFoam` in the same image on the validation run's `fixed-pimple`
+case with only `controlDict` changed: 100 ms with an adaptive time step
+(`maxCo 0.5`, `maxDeltaT 5e-6`), written every 1 ms (job 24757429). Run on
+2026-10-22 as Slurm job 24757460; results in the
+[report](../../../../docs/results-20261022-live.md), records in the
+[evidence](../../../../docs/evidence/2026-10-22-live-v2/README.md).
+
+On these nodes two timing unit tests (`test_image_rendered_when_request_disabled`,
+`test_timeout_is_detected_by_polling`) fail with the default `LLM_KILL_JOIN_S`
+for the same reason, also with the code before these changes, and pass with
+`LLM_KILL_JOIN_S=0.2`; `test_connection_refused_is_reported_without_a_stall`
+sometimes exceeds its 0.5 s bound by a few hundredths of a second.
 
 ## Tested on
 
@@ -208,7 +292,8 @@ isolated.
 
 ## Not checked here
 
-`demo_12b.slurm` (MedicineBow has no OpenFOAM module), the prebuilt CUDA
+`demo_12b.slurm` (the synchronous suite with OpenFOAM v2106 on the GPU node;
+the asynchronous suite ran in the v2212 image instead), the prebuilt CUDA
 binaries, `LLAMA_CUDA=13.4`, the L40S partition and the tarball layout of the
 12B scripts (`picture_test.slurm` ran from its own bundle with the same layout
 on 2026-10-22).

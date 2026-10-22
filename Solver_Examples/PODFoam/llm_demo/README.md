@@ -14,7 +14,9 @@ request modes exist: `observe` (numbers plus the same-step image, the original),
 `sequence` (several images along the run, how the flow changes).
 Results: [October 17 report](../../../docs/results.md),
 [October 20 report](../../../docs/results-20261020.md),
-[12B paired replay](../../../docs/results.md#same-replay-with-gemma-4-12b-on-a-gpu-2026-10-19).
+[12B paired replay](../../../docs/results.md#same-replay-with-gemma-4-12b-on-a-gpu-2026-10-19),
+[October 22 picture test](../../../docs/results-20261022.md),
+[October 22 v2 pictures from the running solver](../../../docs/results-20261022-live.md).
 
 This extends the stock PODFoam example with an optional callback. Modules that
 only define `snapshot_func` and `svd_func` keep working as before.
@@ -119,6 +121,82 @@ also checks the image hashes in the request body. `LLM_LONG_CASES=async-no-llm`
 runs only the baseline, which is a way to capture frames without a model
 request; the llama-server must still be running with the model loaded,
 because the runner checks it before the first case.
+
+## v2 pictures from the solver (`LLM_IMAGE_STYLE=v2`)
+
+`LLM_IMAGE_STYLE=v2` makes `describe` and `sequence` requests send the
+pictures of the 2026-10-22 picture-reading test instead of `state.png`: one
+1024×576 PNG per field (|U|, then p), both axes in percent of the plotted
+range with a grid line every 10 %, a colour bar labelled at five values
+(`readable_image.py`). The default is `v1`, which keeps the solver's
+behaviour of 2026-10-13 to 2026-10-20 byte for byte. `observe` always sends
+the v1 picture; `observe` with v2 is refused.
+
+- Every v2 frame is a folder `llm_observation/step-NNNNNN/` with
+  `fields.npz`, `U.png`, `p.png` and `readable-metadata.json`, written last;
+  the request step's frame too. A folder that is already there (a rerun in the
+  same case folder; step numbers restart with each solver process) is never
+  overwritten and never sent: the capture or the request is refused instead.
+- The request is built by `readable_request.py`, the same functions the
+  picture test uses: `describe_v2_payload` and, for sequences,
+  `sequence_v2_payload` with each image on its own colour scale (the v2own
+  prompt). A v2 sequence takes two or three steps (six images at most). The
+  requests always carry `max_tokens` 320, seed 20261021 and
+  `cache_prompt: false`; `LLM_MAX_TOKENS` must then be unset or 320.
+  `test_picture_test.GoldenV2RequestTests` pins the bytes of the published
+  2026-10-22 requests, and `verify_async.py` checks that each live body equals
+  the builder applied to the frame on disk, byte for byte.
+- A v2 describe request sends no SVD summary, so the callback keeps no
+  snapshot window and computes none; the request step can be late in a long
+  run without the worker slowing down.
+- The plotted range is `LLM_IMAGE_XRANGE`/`LLM_IMAGE_YRANGE` or the whole
+  domain. v2 needs a 2D case in the x-y plane with one polygon per cell (no
+  raster fallback).
+- Use a server context of 4096 tokens and batch/ubatch 512, as in the
+  picture test: a three-time v2 sequence has about 2,200 prompt tokens.
+
+`LLM_KILL_JOIN_S` (default 0.02 s, up to 2 s) is how long a killed worker
+may take to be reaped. Reaping takes longer the more memory the child maps:
+about 16 ms for 200 MB and 38 ms for 500 MB on the MedicineBow nodes, where a
+worker forked from a 0.5 GB solver is not reaped within 0.02 s; there the
+jobs use 0.2 s.
+
+### Starting from a developed flow
+
+`LLM_LONG_START=<time directory>` makes every case of the asynchronous suite
+start from that state of an earlier run on the same mesh (the mesh files are
+compared by hash) instead of t = 0: its fields are copied, `uniform/` is left
+out so the time index restarts, and the end time is the start time plus
+`LLM_LONG_STEPS` × `LLM_LONG_DT`. Step numbers in the callback count from the
+start. `LLM_LONG_FIXTURE_DEADLINE_S` (default 4) is the callback deadline of
+the refused and stalled cases. For such runs `verify_async.py` also checks
+that the start files are the recorded ones in every case and that the Courant
+number stays below 1.
+
+### Several describe requests in one study (`run_live_sweep.py`)
+
+The suite sends one describe request, in one plotted window. With a fixed
+window the answer is often in about the same place, so one fixed answer
+scores well. `run_live_sweep.py <suite run> <PODFoam> <output>` runs, after a
+v2 suite, one more case per request step R (every 500 steps by default), each
+from the same start state, with a describe request at R in a window placed at
+random around the fastest cell of the baseline's written state at R (the
+rule of `window_test.py`). It checks that each answer arrived while the solver
+kept stepping, that each request body is the tested builder applied to the
+frame, and that each frame's arrays equal the baseline's written fields at R;
+it scores the answers and the one fixed answer that would do best over all
+of them (`sweep-summary.json`).
+
+### Random-window picture test (`window_test.py`)
+
+`window_test.py build` draws saved states of a run (any time directories;
+`--first-step`, `--describe-every`, `--last-step` in steps of 5e-7 s) several
+times each, with the plotted window placed at random around the fastest cell:
+the cell at least 15 % from every edge, at least 200 cells inside, a height
+of 0.03 to 0.114 m and a width of 1.5 to 4 heights. It writes the
+`flow-window-v1` and `flow-window-v2` sets; `check`, `run` and `report` work
+as in `picture_test.py`, with the fixed-answer score taken as one answer for
+the whole set. `hpc/window_test.slurm` runs a set on a GPU node.
 
 ## Replaying saved frames (describe and sequence)
 

@@ -3,6 +3,33 @@
 Dates are when a run or change happened. Where a run is recorded, the code
 revision that produced it is given.
 
+## 2026-10-22, picture-reading test (prepared 2026-10-21 in `58e00d9`, run as Slurm job 24756981)
+
+- New in `llm_demo/`: `readable_image.py` (one field per picture, axes in
+  percent of the plotted range with a grid line every 10 %, colour bar
+  labelled with five values from the minimum to the maximum), `foam_fields.py` (reader for ASCII OpenFOAM fields
+  and the empty-patch polygons), `picture_test.py` (build, check, run and
+  report a fixed set of picture requests scored against a withheld key) and
+  `test_picture_test.py` (13 tests, 83 in the suite). In `llm_demo/hpc/`:
+  `models.tsv` (seven Gemma 4 models at pinned revisions and hashes),
+  `fetch_models.sh` and `picture_test.slurm`; `start_server.sh` and
+  `stop_server.sh` accept model, context, batch and state-folder overrides
+  and behave as before when they are unset.
+- Run: 308 requests to each of seven Gemma 4 models (E2B in three forms, E4B,
+  12B, 26B-A4B, 31B) on one NVIDIA RTX A6000. Report
+  [docs/results-20261022.md](docs/results-20261022.md), records with the
+  answer key and an independent re-scoring in
+  [docs/evidence/2026-10-22-picture-test/](docs/evidence/2026-10-22-picture-test/README.md),
+  both archives in the `picture-test-2026-10-22` release.
+- README, evidence index, `hpc/README.md`, `llm_demo/README.md` and the pages
+  index give the results; open problems and next steps updated. `hpc/README.md`
+  and the comment in `models.tsv` say that e2b-qat also has another projector
+  file (BF16, like e2b-bf16), and that in the saved flow the trend words, not
+  the flow, stay the same. `Makefile`: the tests take about 30 s.
+- The temporary pre-release `picture-test-input-20261021`, which carried the
+  input bundle to the cluster, was removed; the bundle is an asset of the new
+  release.
+
 ## 2026-10-20, 12B replay published (run of 2026-10-19, code `934da23`)
 
 - Records of the October 19 paired replay with Gemma 4 12B QAT on an NVIDIA A30

@@ -151,6 +151,39 @@ the answered trend words are compared with the trends of the saved extrema
 its position changes by more than 5 % of the plotted range). Reference values
 are written to `ground_truth.private.json` and never sent to the model.
 
+## Picture-reading test (several models, two picture styles)
+
+`picture_test.py` builds a fixed set of requests about saved pictures, sends
+it to one server and scores the answers against a key the model does not
+see. The pictures come in two styles: v1 as the callback draws them
+(`pod_image.py`) and v2 drawn by `readable_image.py` (one field per picture,
+axes in percent with a grid line every 10 %, colour bar labelled with five
+values from the minimum to the maximum). `foam_fields.py` reads the saved
+OpenFOAM states (ASCII only).
+
+```bash
+# from the repository root; --states is a PODFoam case run without model requests
+# (the arguments of the 2026-10-21 set, 308 requests; without --sequence no flow-sequence sets)
+python3 Solver_Examples/PODFoam/llm_demo/picture_test.py build --states <case> \
+    --centres docs/evidence/2026-10-20/pod-llm-async.pp7agC/async-no-llm/llm_observation/step-000250/fields.npz \
+    --oct17 docs/evidence/2026-10-17/ablation --oct20 docs/evidence/2026-10-20/replay \
+    --describe-every 500 --last-step 6000 \
+    --sequence 250,750,1250 --sequence 250,1250,2750 --sequence 1250,2250,3250 \
+    --sequence 2250,3250,4250 --sequence 3250,4250,5250 --sequence 4500,5250,6000 \
+    --sequence 5000,5500,6000 --output <test set>             # matplotlib needed
+cd Solver_Examples/PODFoam/llm_demo
+python3 picture_test.py check --test-set <test set>        # every request and the key against the manifest
+python3 picture_test.py run --test-set <test set> --model <alias> --endpoint <url> --output <run folder>
+python3 picture_test.py report <run folder> [<run folder> ...] --output report.md
+```
+
+The arguments of the 2026-10-21 build are recorded as `build_args` in its
+[manifest](../../../docs/evidence/2026-10-22-picture-test/test-set/manifest.json).
+
+The set of 2026-10-21, how it is built and the cluster job that ran it on
+seven models are described in [hpc/README.md](hpc/README.md#picture-reading-test-run-2026-10-22);
+the results are in the [October 22 report](../../../docs/results-20261022.md).
+
 ## Running it
 
 You need OpenFOAM v2106, Python 3 with numpy and matplotlib, a passed

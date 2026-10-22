@@ -15,7 +15,7 @@ The paired replay has been run once, on MedicineBow (2026-10-19): see
 | `start_server.sh` / `stop_server.sh` | llama-server on the node's GPU with the same settings as the E2B runs (context 2048, one slot, 256 image tokens requested, reasoning off), all layers on the GPU. Writes `server.pid`. With the 12B projector the server lowers the image-token limit to 128 because `--ubatch-size` is 128. |
 | `replay_12b.slurm` | Paired replay of the 2026-10-17 step-5 state: three pairs, numbers only vs numbers + image, seed 20261017. No OpenFOAM needed. |
 | `demo_12b.slurm` | Bridge validation, the five solver conditions, verification, and the paired replay of the new state. Needs OpenFOAM v2106 on the node. |
-| `picture_test.slurm`, `fetch_models.sh`, `models.tsv` | The picture-reading test of 2026-10-21 for several model sizes; see [below](#picture-reading-test-prepared-2026-10-21-not-yet-run). |
+| `picture_test.slurm`, `fetch_models.sh`, `models.tsv` | The picture-reading test for several model sizes (prepared 2026-10-21, run 2026-10-22); see [below](#picture-reading-test-run-2026-10-22). |
 | `build_llama_cuda.sh` | Fallback: build llama.cpp b11429 from source with CUDA if the prebuilt binary does not run (older glibc, other CUDA). |
 
 ## Getting the files onto the cluster
@@ -77,7 +77,7 @@ the replay on the new state).
 - `server_timings.cache_n` in each result: 0 or 1 means a cold prompt cache (0
   on a freshly started server, as in the 12B run).
 
-## Picture-reading test (prepared 2026-10-21, not yet run)
+## Picture-reading test (run 2026-10-22)
 
 `picture_test.slurm` sends one prepared set of 308 requests to each model in
 `MODELS`, one model after another on one GPU. The set is built on a
@@ -98,8 +98,8 @@ cluster; the job itself needs only Python 3 with numpy and no OpenFOAM.
 v1 is the picture the solver sends (`pod_image.py`: two panels, 640x360,
 colour range per picture). v2 is `readable_image.py`: one field per picture,
 1024x576, axes in percent of the plotted range with a grid line every 10 %,
-the colour bar labelled at both ends, and in sequences one colour range for
-all frames. v2own is v2 with each picture's own colour range; its prompt
+the colour bar labelled with five values from the minimum to the maximum, and
+in sequences one colour range for all frames. v2own is v2 with each picture's own colour range; its prompt
 differs from the v2 prompt only in the colour-scale sentence and in what the
 trends are judged from (colours or colour-bar numbers), so v2 against v2own
 isolates the shared colour range. v2 also sends about five times
@@ -107,8 +107,9 @@ the image tokens of v1. The new sets send `cache_prompt: false`, so every
 prompt is processed in full. The flow states come from a PODFoam run without
 model requests (6000 steps of 5e-7 s, written every 250 steps; the first 12
 written times are identical to the 2026-10-20 run). In every flow state the
-fastest flow and the lowest pressure are at the step corner and the flow
-trends hardly change, so each summary also gives the score of one fixed
+fastest flow and the lowest pressure are at the step corner and the trend
+words are the same in nearly every sequence, so each summary also gives the
+score of one fixed
 answer (`constant_answer_baseline`); the controls and planted sets are where
 reading can be told apart from a fixed answer.
 
@@ -125,8 +126,8 @@ needs a token):
 | `26b` | `google/gemma-4-26B-A4B-it-qat-q4_0-gguf`, BF16 projector | 15.6 GB |
 | `31b` | `google/gemma-4-31B-it-qat-q4_0-gguf`, BF16 projector | 18.9 GB |
 
-e2b against e2b-bf16 changes only the projector, e2b-bf16 against e2b-qat only
-the weights. Every model gets the same server: context 4096 (a v2 sequence
+e2b against e2b-bf16 changes only the projector; e2b-qat has other weights
+and Google's own projector file (BF16, like the one of e2b-bf16). Every model gets the same server: context 4096 (a v2 sequence
 with six images is about 2,200 prompt tokens), batch and ubatch 512 (so no
 projector lowers the 256-token image limit), all layers on the GPU, otherwise
 as `start_server.sh`. The job keeps its server's pid, log and stamp files in
@@ -159,10 +160,15 @@ another job uses the same `POD_LLM_RUNTIME`. Before any model starts, the job
 runs `picture_test.py check`, which compares every request file and the answer
 key with the manifest.
 
-Checked so far: the request path, with one v1 and one v2 position control and
-one v2 sequence sent to the E2B server on the workstation CPU. Not checked: the
-job on the cluster, the 26B-A4B and 31B models with llama.cpp b11429, the 31B
-model in 24 GB.
+Run on 2026-10-22 as Slurm job 24756981, on one NVIDIA RTX A6000 (49,140
+MiB; the command above names mb-a30, and the records do not say which
+partition the job ran in): all seven models, 308 of 308 requests each; the
+seven model runs took 83 minutes, model loading included. With llama.cpp
+b11429 every model loaded and answered, 26B-A4B and 31B included; 31B had
+20,128 MiB of GPU memory in use when its server first reported ready. Whether
+31B fits in the 24 GB of an A30 was not tried. Results:
+[October 22 report](../../../../docs/results-20261022.md),
+[evidence](../../../../docs/evidence/2026-10-22-picture-test/README.md).
 
 ## Tested on
 
@@ -203,6 +209,8 @@ isolated.
 ## Not checked here
 
 `demo_12b.slurm` (MedicineBow has no OpenFOAM module), the prebuilt CUDA
-binaries, `LLAMA_CUDA=13.4`, the L40S partition and the tarball layout.
+binaries, `LLAMA_CUDA=13.4`, the L40S partition and the tarball layout of the
+12B scripts (`picture_test.slurm` ran from its own bundle with the same layout
+on 2026-10-22).
 `start_server.sh` fails fast if the server does not answer `/health` within ten
 minutes; the log is in `llm-runtime-12b/server-*.log`.

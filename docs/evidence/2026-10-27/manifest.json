@@ -1,0 +1,60 @@
+{
+ "scope": "2026-10-27 tests (in progress): job scripts and first small results",
+ "files": [
+  {
+   "path": "README.md",
+   "bytes": 970,
+   "sha256": "7dd4c3fd0340cc0da960f8cf086654de7166d1b7613536b16ab620a66c678ed7"
+  },
+  {
+   "path": "jobs/mpi_test.sbatch",
+   "bytes": 4098,
+   "sha256": "3511ab8412335bf057854e35c32ebd9ef7baa2445935c53c98ec26e472af2cf5"
+  },
+  {
+   "path": "jobs/poddiff.sbatch",
+   "bytes": 3172,
+   "sha256": "c932b07a62eb13e0645394dfb4a8ce677f2dae08d4dd64e60dec190a93e02a30"
+  },
+  {
+   "path": "jobs/run_cylinder.sbatch",
+   "bytes": 809,
+   "sha256": "994c954135d753fd14410f98ad8c6bc4bc233a5c47ae56a2191cca78b63780ac"
+  },
+  {
+   "path": "jobs/run_cylinder_fine.sbatch",
+   "bytes": 819,
+   "sha256": "c09a782f66cd483e5d61e5803e881f3f1a4bd6e1219f0b4d457be688200e0816"
+  },
+  {
+   "path": "jobs/run_cylinder_fine_pod.sbatch",
+   "bytes": 1197,
+   "sha256": "89c439b517d3ebc00a5e7aca772cf0f57a030805b4616d82e7c16613e2f31952"
+  },
+  {
+   "path": "jobs/run_cylinder_pod.sbatch",
+   "bytes": 1182,
+   "sha256": "652c27fa8d60725b72737623093141f50227712eb189bd913c497acfa2045ea6"
+  },
+  {
+   "path": "jobs/run_unstable.sbatch",
+   "bytes": 784,
+   "sha256": "26afd613d613163026d57ca18f5068bfc85630f4ef7d2c5527a42d3a458f0e71"
+  },
+  {
+   "path": "results/mpi-24903786-frame-comparison.json",
+   "bytes": 236,
+   "sha256": "477bfd739bad7fda584904d1be397c27f0d654e13afa26e321e1b12349e35d80"
+  },
+  {
+   "path": "results/periodic-24903264-summary.json",
+   "bytes": 227131,
+   "sha256": "c012037218ae0c66c5355706ef5fec2ec63950e5a151731358d69d14dd5fe3d7"
+  },
+  {
+   "path": "results/poddiff-24903065-comparison.json",
+   "bytes": 1008,
+   "sha256": "02673ffb1e8f94b2d26a5bc310deb0b99525ad76204208902e2ca6d342166eb0"
+  }
+ ]
+}

@@ -17,7 +17,10 @@ set -euo pipefail
 #   module load arcc/1.0 gcc/14.2.0 cuda-toolkit/12.8.0
 #   export PATH=<python 3 with numpy>/bin:$PATH
 # Account and partition go on the command line: sbatch --account=... --partition=...
+# POD_HOST_MODULES="arcc/1.0 gcc/14.2.0 cuda-toolkit/12.8.0" loads what the source-built
+# llama-server needs; PATH must hold a python3 with numpy.
 # -------------------------------------------------------------------------
+if [[ -n ${POD_HOST_MODULES:-} ]]; then module load $POD_HOST_MODULES; fi
 root="${SLURM_SUBMIT_DIR:-$PWD}"
 pod="${POD_SOURCE:-$root/PODFoam}"                       # tarball layout
 [[ -d $pod ]] || pod="$root/Solver_Examples/PODFoam"      # git clone layout

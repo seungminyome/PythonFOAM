@@ -1145,15 +1145,20 @@ def analysis_func(state):
     KeyboardInterrupt and SystemExit are intentional process-level interrupts
     and are not swallowed. Snapshot/SVD callbacks retain their existing API.
     """
-    global _attempted, _last_callback_outcome, _latest_pressure, _sequence_sent, _periodic_refused
+    global _attempted, _last_callback_outcome, _latest_pressure, _latest_velocity, _sequence_sent, _periodic_refused
     start = time.monotonic()
     try:
-        # p_cells is the one big array; keep it out of the history
+        # p_cells and u_cells are the big arrays; keep them out of the history
         if isinstance(state, dict):
             state = dict(state)  # never remove fields from the solver's dictionary
         pressure = state.pop("p_cells", None) if isinstance(state, dict) else None
         if pressure is not None:
             _latest_pressure = np.array(pressure, dtype=float, copy=True)
+        velocity = state.pop("u_cells", None) if isinstance(state, dict) else None
+        if velocity is not None:
+            # the whole mesh's U (gathered to the master in a parallel run); in a serial
+            # run the same values snapshot_func received
+            _latest_velocity = np.array(velocity, dtype=float, copy=True)
         state = copy.deepcopy(state)
         _history.append(state)
         step = int(state["step"])

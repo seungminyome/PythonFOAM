@@ -187,6 +187,43 @@ frame, and that each frame's arrays equal the baseline's written fields at R;
 it scores the answers and the one fixed answer that would do best over all
 of them (`sweep-summary.json`).
 
+### A request every N steps (`LLM_ANALYSIS_EVERY`)
+
+`LLM_ANALYSIS_EVERY=N` (describe with v2 pictures) sends a describe request
+at `LLM_ANALYSIS_STEP` and every N steps after it, as long as fewer than
+`LLM_ASYNC_MAX_PENDING` requests are pending; a step that finds the limit
+reached is skipped and recorded. Each request writes the usual files
+(`llm_request.json`, `llm_request_body.json`, `llm_response.json`,
+`llm_result.json`, the raw reply) in its own `llm_requests/step-NNNNNN/`, and
+the last step writes `llm_requests/index.json` (step, status, arrival step,
+model time, solver stall). `run_periodic.py <suite run> <PODFoam> <output>`
+runs such a case and its twin without requests from a v2 suite's baseline
+staging, compares every written file, checks each body against the builder
+and each frame against the written fields, scores the answers and records
+wall time, memory (RSS and PSS of the solver tree, sampled every 0.5 s) and
+the bytes each request moved over the worker pipe (`ipc_bytes_received` in
+the result); `hpc/periodic_v2.slurm` runs it on a GPU node.
+
+### Trend test on a developed flow (`sequence_test.py`)
+
+`sequence_test.py build --states <case> --centres <fields.npz> --old-manifest
+... --output <set>` takes triples of saved states (gaps of 2000, 4000 and
+6000 steps by default), places one random window around the fastest cells of
+each triple (the window rule above, every fastest cell inside the margin) and
+keeps `--count` triples so that the nine (speed trend, pressure trend)
+classes of the answer key are as evenly filled as the states allow. Five sets
+of the same triples: `dev-sequence-v1` (the solver's two-panel pictures, the
+2026-10-20 prompt), `dev-sequence-v2own` (one picture per field, each on its
+own colour scale, the 2026-10-22 prompt), `dev-sequence-v2own-t` (the same
+with the answer key's thresholds stated in the prompt: 2 % for the trends,
+5 % of the plotted range for the spot), `dev-sequence-v2own-tn` (the same
+plus each time's maximum |U| and minimum p from the arrays in the note) and
+`dev-sequence-numbers` (that note and the fastest cell's position, no
+pictures). `readable_request.sequence_v2_payload(..., thresholds=True,
+numbers=..., images=False)` builds them; with the defaults it still gives the
+2026-10-22 bodies byte for byte. `--dt` (here and in `window_test.py`) is
+the time step the state names are divided by, for runs with another step.
+
 ### Random-window picture test (`window_test.py`)
 
 `window_test.py build` draws saved states of a run (any time directories;

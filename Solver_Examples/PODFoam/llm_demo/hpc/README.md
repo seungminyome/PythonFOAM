@@ -18,6 +18,7 @@ The paired replay has been run once, on MedicineBow (2026-10-19): see
 | `picture_test.slurm`, `fetch_models.sh`, `models.tsv` | The picture-reading test for several model sizes (prepared 2026-10-21, run 2026-10-22); see [below](#picture-reading-test-run-2026-10-22). |
 | `window_test.slurm` | The random-window picture test (`window_test.py`) for the models in `MODELS`; see [below](#random-window-test-and-qwen-models-run-2026-10-22). |
 | `async_v2.slurm` | The asynchronous suite with v2 pictures from the running solver and Gemma 4 12B, started from a developed flow, then the describe sweep; OpenFOAM in an Apptainer image, llama-server on the host GPU; see [below](#v2-pictures-from-the-running-solver-async_v2slurm-run-2026-10-22). |
+| `periodic_v2.slurm` | A long run with a v2 describe request every N steps and its twin without requests (`run_periodic.py`), from the baseline staging of an `async_v2.slurm` run; cost, memory and pipe traffic. |
 | `build_llama_cuda.sh` | Fallback: build llama.cpp b11429 from source with CUDA if the prebuilt binary does not run (older glibc, other CUDA). |
 
 ## Getting the files onto the cluster
@@ -131,6 +132,9 @@ needs a token):
 | `qwen3vl-32b` | `Qwen/Qwen3-VL-32B-Instruct-GGUF`, Q8_0 + F16 projector | 36.0 GB |
 | `qwen35-27b` | `unsloth/Qwen3.5-27B-GGUF`, Q8_0 + BF16 projector (a third-party conversion) | 29.5 GB |
 | `qwen35-35b` | `ggml-org/Qwen3.5-35B-A3B-GGUF`, Q8_0 + Q8_0 projector | 37.5 GB |
+| `qwen3vl-32b-q4` | the same repository, Q4_K_M + F16 projector (added 2026-10-27, same weight precision as the Gemma QAT files) | 21.0 GB |
+| `qwen35-27b-q4` | `unsloth/Qwen3.5-27B-GGUF`, Q4_K_M + BF16 projector | 17.7 GB |
+| `qwen35-35b-q4` | `unsloth/Qwen3.5-35B-A3B-GGUF`, Q4_K_M + BF16 projector | 22.9 GB |
 
 e2b against e2b-bf16 changes only the projector; e2b-qat has other weights
 and Google's own projector file (BF16, like the one of e2b-bf16). Every model gets the same server: context 4096 (a v2 sequence
@@ -185,7 +189,10 @@ random around the fastest cell, so that the answer moves from picture to
 picture (see the [llm_demo README](../README.md#random-window-picture-test-window_testpy)).
 `window_test.slurm` runs a set like `picture_test.slurm` does; `LLM_CTX` and
 `LLM_IMAGE_TOKENS` (default 4096 and 256, read by `start_server.sh`) can be
-raised to test the image-token cap.
+raised to test the image-token cap, and `LLM_IMAGE_MIN_TOKENS` passes
+`--image-min-tokens` (the 1024 that llama.cpp suggests for Qwen-VL).
+`PICTURE_TEST_SCRIPT=sequence_test.py` runs a trend set built by
+`sequence_test.py` instead.
 
 ```bash
 python3 Solver_Examples/PODFoam/llm_demo/window_test.py build --states <case> \

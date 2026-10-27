@@ -40,7 +40,6 @@ TEST_NAME = "developed-flow trend test 2026-10-27"
 SEED = 20261027
 MARGIN = window_test.MARGIN
 MIN_CELLS = window_test.MIN_CELLS
-Y_SPAN_M = window_test.Y_SPAN_M
 ASPECT = window_test.ASPECT
 
 
@@ -50,7 +49,7 @@ def place_window_around(rng, points, domain, cells_xy, tries=500):
     points = np.asarray(points, dtype=float)
     low, high = points.min(axis=0), points.max(axis=0)
     for _ in range(tries):
-        y_span = rng.uniform(*Y_SPAN_M)
+        y_span = rng.uniform(*window_test.Y_SPAN_M)
         x_span = y_span * rng.uniform(*ASPECT)
         if (high - low)[0] > (1 - 2 * MARGIN) * x_span or (high - low)[1] > (1 - 2 * MARGIN) * y_span:
             continue
@@ -186,7 +185,7 @@ def build(args):
                                   states.parent.name + "/": "the folder of the pimpleFoam run"},
                 "mesh": builder.rel(mesh.sources), "domain_m": domain,
                 "window_rule": {"peak_margin_fraction": MARGIN, "min_cells": MIN_CELLS,
-                                "y_span_m": list(Y_SPAN_M), "aspect_x_over_y": list(ASPECT),
+                                "y_span_m": list(window_test.Y_SPAN_M), "aspect_x_over_y": list(ASPECT),
                                 "note": "one window per triple, placed at random so that the fastest cell of "
                                         "every frame is at least the margin from each edge"},
                 "trend_tolerances": {"relative_change": snapshot_runner.TREND_TOLERANCE,
@@ -224,9 +223,16 @@ def main(argv=None):
         parser.add_argument("--last-step", type=int, default=200000)
         parser.add_argument("--gaps", default="2000,4000,6000", help="steps between the frames of a triple")
         parser.add_argument("--count", type=int, default=45, help="triples kept")
+        parser.add_argument("--y-span", default=f"{window_test.Y_SPAN_M[0]},{window_test.Y_SPAN_M[1]}",
+                            help="window height range in metres (the step case: 0.03,0.114)")
+        parser.add_argument("--dt", type=float, default=pt.DELTA_T_S,
+                            help="time step the state names are divided by (step = time / dt)")
         parser.add_argument("--seed", type=int, default=SEED)
         parser.add_argument("--output", required=True, help="new directory")
-        return build(parser.parse_args(argv))
+        args = parser.parse_args(argv)
+        pt.DELTA_T_S = args.dt
+        window_test.Y_SPAN_M = tuple(float(v) for v in args.y_span.split(","))
+        return build(args)
     return pt.main(argv)
 
 

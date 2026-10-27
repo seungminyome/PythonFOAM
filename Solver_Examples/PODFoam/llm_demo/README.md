@@ -155,7 +155,7 @@ the v1 picture; `observe` with v2 is refused.
 - Use a server context of 4096 tokens and batch/ubatch 512, as in the
   picture test: a three-time v2 sequence has about 2,200 prompt tokens.
 
-`LLM_KILL_JOIN_S` (default 0.02 s, up to 2 s) is how long a killed worker
+`LLM_KILL_JOIN_S` (default 0.1 s since 2026-10-27, before 0.02 s; up to 2 s) is how long a killed worker
 may take to be reaped. Reaping takes longer the more memory the child maps:
 about 16 ms for 200 MB and 38 ms for 500 MB on the MedicineBow nodes, where a
 worker forked from a 0.5 GB solver is not reaped within 0.02 s; there the

@@ -117,8 +117,10 @@ for name in CASES:
     log = (case/'log.PODFoam').read_text()
     assert re.search(r'^End$', log, re.M) and 'Python finalized successfully' in log
     assert not re.search(r'(?i)\b(nan|inf)\b|FOAM FATAL', log)
-    # a leftover .tmp means the final telemetry write was killed at its deadline
+    # telemetry.jsonl exists only complete: a leftover .tmp, or no file at all, means the
+    # telemetry did not complete; llm_errors.jsonl and the solver log say why
     assert not (case/'telemetry.jsonl.tmp').exists(), (name, 'final telemetry write did not complete')
+    assert (case/'telemetry.jsonl').exists(), (name, 'no telemetry.jsonl: the telemetry did not complete')
     states = [json.loads(line) for line in (case/'telemetry.jsonl').read_text().splitlines()]
     assert len(states) == STEPS, (name, len(states))
     assert all('p_cells' not in s for s in states)

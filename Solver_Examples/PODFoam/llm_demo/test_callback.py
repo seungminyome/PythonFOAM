@@ -17,8 +17,30 @@ import numpy as np
 
 
 SOURCE = Path(__file__).resolve().parent
-# python_module.py of main at 2ed6da2, the last callback that kept every state for telemetry.jsonl
+# python_module.py of main at 2ed6da2, the last callback that kept every state for telemetry.jsonl,
+# kept with the evidence of 2026-10-28. The tests that compare with it are skipped in a copy of the
+# code without the repository's docs/; in a checkout with docs/ a missing copy is an error.
 MAIN_CALLBACK = SOURCE.parents[2] / "docs/evidence/2026-10-28-callback/callback-main/python_module.py"
+needs_main = unittest.skipUnless(MAIN_CALLBACK.exists() or (SOURCE.parents[2] / "docs").is_dir(),
+                                 f"main's callback for the comparison is not here: {MAIN_CALLBACK}")
+
+
+@contextmanager
+def file_descriptor_1():
+    """The lines this process and its forked children write to file descriptor 1."""
+    sys.stdout.flush()
+    saved = os.dup(1)
+    lines = []
+    with tempfile.TemporaryFile() as sink:
+        os.dup2(sink.fileno(), 1)
+        try:
+            yield lines
+        finally:
+            sys.stdout.flush()
+            os.dup2(saved, 1)
+            os.close(saved)
+            sink.seek(0)
+            lines.extend(sink.read().decode("utf-8").splitlines())
 
 
 def load_module(name, path):
@@ -99,8 +121,9 @@ class CallbackTests(unittest.TestCase):
                     actual_wall = time.monotonic() - callback_start
                     limit = deadline + 0.2 + 0.02 + 0.05 if step == 5 else 0.27
                     self.assertLess(actual_wall, limit)
-            audit = np.load(case / "python_svd_audit.npz")
-            self.assertEqual(audit["snapshots"].shape, (20, 3, 10))
+            # closed before the folder is removed (an open file stops that on NFS)
+            with np.load(case / "python_svd_audit.npz") as audit:
+                self.assertEqual(audit["snapshots"].shape, (20, 3, 10))
             telemetry = (case / "telemetry.jsonl").read_text().splitlines()
             self.assertEqual(len(telemetry), 10)
             self.assertEqual(json.loads(telemetry[0])["residuals"]["Ux"]["initial_first"],
@@ -529,6 +552,7 @@ class TelemetryTests(unittest.TestCase):
                 pass   # a state that cannot be encoded; main leaves the lines before it in the .tmp
         return old, case
 
+    @needs_main
     def test_bytes_equal_main_over_many_steps_and_any_batch_size(self):
         steps = 2345
         states = [telemetry_state(step, steps) for step in range(1, steps + 1)]
@@ -559,6 +583,7 @@ class TelemetryTests(unittest.TestCase):
         self.assertEqual(summary_new["residuals"]["p"]["recent_initial_first"],
                          [float(format(s["residuals"]["p"]["initial_first"], ".6g")) for s in states[-3:]])
 
+    @needs_main
     def test_telemetry_jsonl_appears_complete_at_the_last_step_only(self):
         steps = 120
         states = [telemetry_state(step, steps) for step in range(1, steps + 1)]
@@ -574,6 +599,7 @@ class TelemetryTests(unittest.TestCase):
         self.assertEqual((case / "telemetry.jsonl").read_bytes(), b"".join(expected))
         self.assertFalse((case / "telemetry.jsonl.tmp").exists())
 
+    @needs_main
     def test_memory_stays_flat_over_a_long_run(self):
         steps = 6000
         states = [telemetry_state(step, steps) for step in range(1, steps + 1)]
@@ -597,6 +623,7 @@ class TelemetryTests(unittest.TestCase):
         self.assertGreater(grown["main"], 4 << 20)
         self.assertLess(grown["new"], 1 << 20)
 
+    @needs_main
     def test_a_killed_or_failed_append_is_written_again(self):
         steps = 400
         states = [telemetry_state(step, steps) for step in range(1, steps + 1)]
@@ -646,17 +673,84 @@ class TelemetryTests(unittest.TestCase):
             module._write_telemetry = fail
 
         new, case = self.load(SOURCE / "python_module.py", "new", prepare)
-        self.drive(new, states, steps)
+        with file_descriptor_1() as printed:
+            self.drive(new, states, steps)
         self.assertEqual(new._recent_states[-1]["step"], steps)
         # attempts at 10, 20, 30 and 40 pending lines; then the 40 lines are dropped
         self.assertEqual(new._telemetry.failed_appends, 4)
         self.assertEqual((new._telemetry.lines, new._telemetry.pending_lines), (40, 0))
         self.assertFalse((case / "telemetry.jsonl").exists())
+        self.assertFalse((case / "telemetry.jsonl.tmp").exists())
+        # reported once, at the step that gave up; the last step adds no second entry
         errors = [json.loads(line) for line in (case / "llm_errors.jsonl").read_text().splitlines()]
         self.assertEqual(len(errors), 1)
         self.assertIn("telemetry.jsonl will not be written", errors[0]["error"])
         self.assertEqual(errors[0]["step"], 40)
+        # the last step had nothing to write or rename: no append counted, and no file named
+        self.assertEqual(new._telemetry.appends, 0)
+        self.assertEqual([line for line in printed if line.startswith("PYTHON LLM telemetry")],
+                         ["PYTHON LLM telemetry lines=40 appends=0 failed_appends=4 file=none incomplete: "
+                          "4 appends failed and 40 lines were pending; they were dropped"])
 
+    def test_a_last_append_that_fails_is_reported_once(self):
+        """The last step's append killed at its deadline, or failing: no telemetry.jsonl, one
+        entry in llm_errors.jsonl with the last step, and the step held only for the two
+        bounded children (the append and the report)."""
+        steps = 25
+        states = [telemetry_state(step, steps) for step in range(1, steps + 1)]
+
+        def killed(module):   # the only append, at the last step, outlives its 0.2 s deadline
+            real = module._write_telemetry
+
+            def slow(data, offset, finish):
+                if finish:
+                    time.sleep(2)   # before the file is opened
+                return real(data, offset, finish)
+
+            module._write_telemetry = slow
+
+        def failed(module):   # appends at steps 10 and 20, then the last one fails
+            module._telemetry.BATCH_LINES = 10
+            real = module._write_telemetry
+
+            def fail(data, offset, finish):
+                if finish:
+                    raise OSError("disk full")
+                return real(data, offset, finish)
+
+            module._write_telemetry = fail
+
+        cases = (
+            (killed, None, 0,
+             "the last append (25 lines, then the rename) did not report back before its deadline", []),
+            (failed, 20, 2,
+             "the last append (5 lines, then the rename) failed (the PYTHON LLM telemetry line gives the error)",
+             ["PYTHON LLM telemetry lines=25 appends=2 failed_appends=1 "
+              "file=telemetry.jsonl.tmp incomplete: OSError: disk full"]))
+        for prepare, tmp_lines, appends, reason, telemetry_line in cases:
+            with self.subTest(case=prepare.__name__):
+                new, case = self.load(SOURCE / "python_module.py", prepare.__name__, prepare)
+                with file_descriptor_1() as printed:
+                    self.drive(new, states, steps, until=steps - 1)
+                    start = time.monotonic()
+                    self.drive(new, states[steps - 1:], steps)
+                    last_step_s = time.monotonic() - start
+                # two bounded children: 0.2 s each, plus 0.1 s each to reap a killed one
+                self.assertLess(last_step_s, 0.8)
+                self.assertFalse((case / "telemetry.jsonl").exists())
+                tmp = case / "telemetry.jsonl.tmp"
+                self.assertEqual(len(tmp.read_bytes().splitlines()) if tmp.exists() else None, tmp_lines)
+                self.assertEqual((new._telemetry.appends, new._telemetry.failed_appends), (appends, 1))
+                errors = [json.loads(line) for line in (case / "llm_errors.jsonl").read_text().splitlines()]
+                self.assertEqual(len(errors), 1)
+                self.assertEqual((errors[0]["step"], errors[0]["status"]), (steps, "callback_error"))
+                self.assertEqual(errors[0]["error"],
+                                 f"RuntimeError: telemetry.jsonl will not be written: {reason}")
+                self.assertIn("PYTHON LLM callback failed open: " + errors[0]["error"], printed)
+                self.assertEqual([line for line in printed if line.startswith("PYTHON LLM telemetry")],
+                                 telemetry_line)
+
+    @needs_main
     def test_a_state_that_cannot_be_encoded_ends_the_telemetry_as_main_did(self):
         steps = 30
         states = [telemetry_state(step, steps) for step in range(1, steps + 1)]
@@ -674,6 +768,7 @@ class TelemetryTests(unittest.TestCase):
         self.assertEqual(len(errors), 1)
         self.assertIn("line 12 could not be encoded", errors[0])
 
+    @needs_main
     def test_lines_are_also_appended_after_batch_seconds(self):
         steps = 30
         states = [telemetry_state(step, steps) for step in range(1, steps + 1)]

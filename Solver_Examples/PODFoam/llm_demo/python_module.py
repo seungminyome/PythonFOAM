@@ -46,7 +46,9 @@ lines (or 60 s) at a time; the last step appends the rest and renames the file
 to telemetry.jsonl. Only the first state and the last three are kept (the SVD
 summary's window start and residual trend), so neither the memory nor the last
 step's write grows with the run. The file's bytes are those of the earlier
-writer, which kept every state until the last step.
+writer, which kept every state until the last step. telemetry.jsonl exists only
+complete; when the telemetry cannot be completed (also when the last append
+fails), llm_errors.jsonl says why.
 
 Computed trends (2026-10-28, v2 sequences): the three trend words of the
 picture tests' answer key, computed from the frames' arrays inside the plotted
@@ -639,31 +641,36 @@ def _write_telemetry(data, offset, finish):
 
 
 def _telemetry_child(data, offset, rename, report, done_fd, parent_fd):
-    """Body of the telemetry child. Writes one status byte to done_fd: bit 0 the lines
-    were written (and, with rename, telemetry.jsonl is in place), bit 1 the request index
-    was written. report (the last step only): write the request index and print a line."""
+    """Body of the telemetry child. Writes one status byte to done_fd as soon as the lines
+    are written: 1 when they were (and, with rename, telemetry.jsonl is in place), 0 when
+    the write failed. report (the last step only): then write the request index and print
+    a line that names the file holding the telemetry (telemetry.jsonl when complete, else
+    telemetry.jsonl.tmp, or none when neither exists) and why it is incomplete."""
     os.close(parent_fd)
     status, problem = 0, None
     try:
         if data or rename:
             _write_telemetry(data, offset, rename)
-        status |= 1
+        status = 1
     except Exception as error:
         problem = f"{type(error).__name__}: {error}"
+    # before the request index, so a slow index write cannot make written lines look failed
+    os.write(done_fd, bytes([status]))
     if report is not None:
         try:
             _write_request_index()
-            status |= 2
         except Exception:
             pass
-    os.write(done_fd, bytes([status]))
-    if report is not None:
-        done = bool(status & 1)
-        problem = report["problem"] or problem
+        problem = report["problem"] or problem   # rename is False exactly when report["problem"] is set
+        if problem:
+            left = "telemetry.jsonl.tmp" if (_case / "telemetry.jsonl.tmp").exists() else "none"
+            where = f"file={left} incomplete: {problem}"
+        else:
+            where = "file=telemetry.jsonl"
+        # a last step with nothing to write or rename is not an append
         print(f"PYTHON LLM telemetry lines={report['lines']} "
-              f"appends={report['appends'] + done} failed_appends={report['failed_appends'] + (not done)} "
-              + (f"file=telemetry.jsonl.tmp incomplete: {problem}" if problem or not rename
-                 else "file=telemetry.jsonl"), flush=True)
+              f"appends={report['appends'] + (status and bool(data or rename))} "
+              f"failed_appends={report['failed_appends'] + (not status)} {where}", flush=True)
 
 
 def _bounded_child_status(target, args, deadline_at):
@@ -697,15 +704,17 @@ class _Telemetry:
     earlier writer made from its history of all states at the last step, and kept
     until a forked child with a deadline appends the pending lines to
     telemetry.jsonl.tmp: every BATCH_LINES lines or BATCH_S seconds. The last step
-    appends the rest and renames the file, so telemetry.jsonl is complete or absent,
-    and a telemetry.jsonl.tmp left after a run means the telemetry did not complete
-    (verify_async.py checks this). Lines count as written only when the child says so
-    through a pipe; otherwise they stay pending and the next child writes them again
-    at the same offset, so a killed or failed append leaves no gap and no partial line
-    in the finished file. A retry waits for another batch. With appends failing and
-    more than MAX_PENDING_LINES pending, the lines are dropped and telemetry.jsonl is
-    not written; that, and a state that cannot be encoded, is reported once in
-    llm_errors.jsonl. Nothing here raises into the solver.
+    appends the rest and renames the file, so telemetry.jsonl is complete or absent:
+    no telemetry.jsonl after the last step, or a telemetry.jsonl.tmp left after a run,
+    means the telemetry did not complete (verify_async.py and verify_demo.py check
+    both). Lines count as written only when the child says so through a pipe;
+    otherwise they stay pending and the next child writes them again at the same
+    offset, so a killed or failed append leaves no gap and no partial line in the
+    finished file. A retry waits for another batch. With appends failing and more
+    than MAX_PENDING_LINES pending, the lines are dropped and telemetry.jsonl is not
+    written; that, a state that cannot be encoded and a last append that fails are
+    reported once in llm_errors.jsonl. A run that stops before its last step leaves
+    only the .tmp and reports nothing. Nothing here raises into the solver.
     """
     BATCH_LINES = 500
     BATCH_S = 60.0
@@ -748,20 +757,24 @@ class _Telemetry:
 
     def append(self, finish=False):
         """Append the pending lines in a bounded child; at the last step also rename the
-        file and write the request index. The budget scales with the pending lines only."""
+        file and write the request index. The budget scales with the pending lines only.
+        Returns the child's status byte (1: written, and renamed at the last step; 0: the
+        write failed), or None when the child did not report back before its deadline."""
         self.last_attempt = time.monotonic()
+        rename = finish and self.problem is None
         report = None
         if finish:
             report = {"lines": self.lines, "appends": self.appends,
                       "failed_appends": self.failed_appends, "problem": self.problem}
         status = _bounded_child_status(
-            _telemetry_child, (self.pending, self.written, finish and self.problem is None, report),
+            _telemetry_child, (self.pending, self.written, rename, report),
             self.last_attempt + max(0.2, 1e-4 * self.pending_lines))
         if status is not None and status & 1:
+            if self.pending or rename:   # a last step with nothing to write or rename is no append
+                self.appends += 1
             self.written += len(self.pending)
             self.pending = bytearray()
             self.pending_lines = 0
-            self.appends += 1
             self.failed_streak = 0
         else:
             self.failed_appends += 1
@@ -773,6 +786,7 @@ class _Telemetry:
                 self.pending_lines = 0
         if finish:
             self.finished = True
+        return status
 
     def step(self, state):
         """This step's line, and an append when one is due; never raises."""
@@ -786,15 +800,25 @@ class _Telemetry:
         if self.problem and not known:
             _report_telemetry_problem(state, self.problem)
 
-    def finish(self):
-        """The last step: the rest of the lines, telemetry.jsonl, the request index."""
+    def finish(self, state):
+        """The last step: the rest of the lines, telemetry.jsonl, the request index; never
+        raises. A last append that fails is reported once in llm_errors.jsonl (with this
+        step), as the problems of earlier steps are; one known before is not repeated."""
         if self.finished:
             return
+        known = self.problem
+        lines = self.pending_lines
         try:
-            self.append(finish=True)
+            status = self.append(finish=True)
+            if not (status is not None and status & 1) and self.problem is None:
+                self.problem = (f"the last append ({lines} lines, then the rename) "
+                                + ("failed (the PYTHON LLM telemetry line gives the error)"
+                                   if status is not None else "did not report back before its deadline"))
         except Exception as error:
             self.problem = self.problem or f"{type(error).__name__}: {error}"
         self.finished = True
+        if self.problem and not known:
+            _report_telemetry_problem(state, self.problem)
 
 
 def _report_telemetry_problem(state, problem):
@@ -1539,8 +1563,9 @@ def analysis_func(state):
             if _pending:
                 _finish_pending_at_end(step)
             # the lines since the last append (at most _Telemetry.BATCH_LINES unless appends
-            # failed), not the whole run: the budget is 0.2 s however long the run was
-            _telemetry.finish()
+            # failed), not the whole run: the budget is 0.2 s however long the run was, and
+            # 0.2 s more to report a last append that failed
+            _telemetry.finish(state)
     except Exception as error:
         _last_callback_outcome = {
             "status": "callback_error", "error": f"{type(error).__name__}: {error}"}

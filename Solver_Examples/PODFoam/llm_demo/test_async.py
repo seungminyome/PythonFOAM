@@ -701,8 +701,10 @@ class ComputedTrendTests(unittest.TestCase):
             self.assertEqual(json.loads(json.dumps(ours)), json.loads(json.dumps(key)))
 
         rng = np.random.default_rng(20261028)
-        compared = 0
-        for case in range(400):
+        compared = drawn = 0
+        while compared < 400:   # 400 seeded cases with at least one cell inside the window
+            case, drawn = drawn, drawn + 1
+            self.assertLess(drawn, 1000)   # about one window in four holds no cell
             cells = int(rng.integers(3, 80))
             centres = np.column_stack([rng.uniform(-1, 1, cells), rng.uniform(0, 0.2, cells), np.zeros(cells)])
             plotted = ([[-1.0, 1.0], [0.0, 0.2]] if case % 3 == 0 else
@@ -710,7 +712,7 @@ class ComputedTrendTests(unittest.TestCase):
             inside = ((centres[:, 0] >= plotted[0][0]) & (centres[:, 0] <= plotted[0][1])
                       & (centres[:, 1] >= plotted[1][0]) & (centres[:, 1] <= plotted[1][1]))
             if not inside.any():
-                continue
+                continue   # the key has nothing to compare; draw another case
             offset = 50.0 if case % 4 == 0 else 0.0   # some sequences with positive pressures only
             fields = [(rng.normal(size=(cells, 3)) * rng.uniform(0.5, 2.0),
                        np.abs(rng.normal(size=cells)) * 10 + offset if offset else rng.normal(size=cells) * 100)
@@ -726,7 +728,7 @@ class ComputedTrendTests(unittest.TestCase):
                       "fastest_flow_region": ("same_place", "moves", "cannot_tell")[case % 3]}
             same(callback._trend_agreement(answer, ours), snapshot_runner.score_sequence(answer, key))
             compared += 1
-        self.assertGreater(compared, 300)
+        self.assertEqual(compared, 400)
         # values at the thresholds: 2 % relative change, 5 % of the plotted range
         for first, last in ((1.0, 1.02), (0.98, 1.0), (1.0, 0.98), (-1.0, -1.02), (0.0, 0.0), (-3.0, 3.0)):
             self.assertEqual(callback._trend(first, last), snapshot_runner.trend(first, last))

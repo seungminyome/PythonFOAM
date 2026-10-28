@@ -79,10 +79,10 @@ appends them to `telemetry.jsonl.tmp` every 500 lines or 60 s; the last step
 appends the rest and renames the file to `telemetry.jsonl` and prints one
 line, `PYTHON LLM telemetry lines=... appends=... failed_appends=...
 file=telemetry.jsonl`. So `telemetry.jsonl` appears only at the last step and
-complete, and a `telemetry.jsonl.tmp` left after a run means the telemetry did
-not complete (`verify_async.py` checks for it). Of the states the callback
-keeps the first (the SVD summary's window start) and the last three (its
-residual trend).
+complete. No `telemetry.jsonl` after a run, or a `telemetry.jsonl.tmp` left,
+means the telemetry did not complete; `verify_async.py` and `verify_demo.py`
+check both. Of the states the callback keeps the first (the SVD summary's
+window start) and the last three (its residual trend).
 
 Until 2026-10-27 the callback kept every state until the last step (about
 1.35 KiB per step with Python 3.11) and then rewrote the whole file, with a
@@ -91,11 +91,13 @@ request step. The finished file has the same bytes:
 `test_callback.TelemetryTests` compares it with main's callback over 2,345
 steps, and the [October 28 check](../../../docs/evidence/2026-10-28-callback/README.md)
 compares it in PODFoam runs and over the 24,000 states of the October 27
-periodic run, where the Python heap after the last state was 0.067 MiB
-instead of 31.7 MiB and the last step took 0.023 s instead of 0.699 s. The
-cost moved to every step: in PODFoam on a CPU node the callback's median
-time per step was 0.163 to 0.217 ms instead of 0.079 to 0.107 ms (encoding
-the line), and a step with an append took 13.7 to 22.0 ms.
+periodic run. There the Python heap stayed at most 0.515 MiB (tracemalloc's
+peak; it holds up to one batch of pending lines, and 0.067 MiB was left after
+the last state, which came right after an append) instead of growing to
+31.7 MiB, and the last step took 0.023 s instead of 0.699 s. The cost moved
+to every step: in PODFoam on a CPU node the callback's median time per step
+was 0.163 to 0.217 ms instead of 0.079 to 0.107 ms (encoding the line), and a
+step with an append took 13.7 to 22.0 ms.
 
 The child reports success through a pipe. Lines it may not have written stay
 pending and the next child writes them again at the same offset, one batch
@@ -103,11 +105,18 @@ later, so a killed or failed append leaves no gap or partial line in the
 finished file. With more than 10,000 lines pending the callback drops them,
 writes no `telemetry.jsonl`, and reports it once in `llm_errors.jsonl`, as it
 does for a state that cannot be encoded (the earlier lines stay in the
-`.tmp`, as before). A failed or slow telemetry write never stops the
-solver; it holds that step at most until the child's deadline. Steps after the
-last step, which can happen only with `LLM_FINAL_STEP` set before the end of
-the run, get no line; before, a request after it rewrote the file with them.
-Not tested: a real disk failure or a full disk during a run.
+`.tmp`, as before) and for a last append that fails or does not report back
+before its deadline (main's final write was not reported). The last line then
+reads `file=telemetry.jsonl.tmp incomplete: <reason>`, or `file=none` with
+the reason when no `.tmp` exists; a last child killed at its deadline prints
+no line, and the entry in `llm_errors.jsonl` (also printed as `PYTHON LLM
+callback failed open: ...`) is the record. A run that stops before its last
+step leaves only the `.tmp` and reports nothing. A failed or slow telemetry
+write never stops the solver; it holds that step at most until the child's
+deadline, and the last step up to 0.2 s more when it reports a failure. Steps
+after the last step, which can happen only with `LLM_FINAL_STEP` set before
+the end of the run, get no line; before, a request after it rewrote the file
+with them. Not tested: a real disk failure or a full disk during a run.
 
 ## Request modes
 
@@ -210,7 +219,8 @@ the v1 picture; `observe` with v2 is refused.
   `snapshot_runner.score_sequence`). They are not sent and not in
   `llm_request.json`; a request that times out still records them.
   `test_async.ComputedTrendTests` checks them against the picture tests'
-  functions on 400 random cases and at the thresholds.
+  functions on 400 seeded random cases (a drawn window that holds no cell is
+  replaced by the next draw) and at the thresholds.
 - `LLM_SEQUENCE_PROMPT` (v2 sequences): `own` (default) sends the 2026-10-22
   request byte for byte; `t` states the answer key's thresholds in the prompt;
   `tn` also gives each time's largest |U| and lowest p inside the plotted
@@ -442,7 +452,11 @@ cd Solver_Examples/PODFoam/llm_demo
 python3 -m unittest test_llm_client test_callback test_ablation_runner test_async test_picture_test -v
 ```
 
-107 tests on 2026-10-28 (Python 3.11, numpy and matplotlib needed).
+108 tests on 2026-10-28 (Python 3.11, numpy and matplotlib needed), with
+`TMPDIR` on a node's local disk and on NFS. Six of `test_callback.TelemetryTests`
+compare with main's callback of 2026-10-27, kept at
+[docs/evidence/2026-10-28-callback/callback-main/python_module.py](../../../docs/evidence/2026-10-28-callback/callback-main/python_module.py);
+in a copy of the code without the repository's `docs/` they are skipped.
 
 ## Replaying a saved state with and without the image
 

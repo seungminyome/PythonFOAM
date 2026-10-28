@@ -13,11 +13,12 @@ revision that produced it is given.
   before. The callback keeps the first state and the last three (the SVD
   summary's window start and residual trend); the request worker no longer
   writes the telemetry. Over the 24,000 recorded states of the October 27
-  periodic run the Python heap after the last state was 0.067 MiB instead of
-  31.7 MiB, and the last step took 0.023 s instead of 0.699 s; each step now
-  encodes its line (in PODFoam the callback's median time per step rose from
-  0.079 to 0.107 ms to 0.163 to 0.217 ms), and a step with an append took
-  13.7 to 22.0 ms.
+  periodic run the Python heap stayed at most 0.515 MiB (tracemalloc's peak;
+  0.067 MiB after the last state, which came right after an append) instead
+  of growing to 31.7 MiB, and the last step took 0.023 s instead of 0.699 s;
+  each step now encodes its line (in PODFoam the callback's median time per
+  step rose from 0.079 to 0.107 ms to 0.163 to 0.217 ms), and a step with an
+  append took 13.7 to 22.0 ms.
 - v2 sequences: `llm_result.json` records `computed_trends`, the answer key's
   three trend words from the frames' arrays inside the plotted range, and
   `computed_trends_agreement` against the model's words; nothing new is

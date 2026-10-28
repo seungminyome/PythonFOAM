@@ -240,6 +240,36 @@ of 0.03 to 0.114 m and a width of 1.5 to 4 heights. It writes the
 as in `picture_test.py`, with the fixed-answer score taken as one answer for
 the whole set. `hpc/window_test.slurm` runs a set on a GPU node.
 
+### Instability test (`instability_test.py`)
+
+`instability_test.py build --design <design.json> --centres <fields.npz>
+--output <set>` takes pimpleFoam runs: case folders with `log.pimpleFoam`
+and the written time directories, all on one mesh. A run whose log has no
+`End` line crashed in its last logged step. Its triples ending 1 to
+`--within` (default 10) steps before the crash are labelled `unstable` and
+scored; the design's `early_steps_to_crash` add triples further back, not
+scored, to show how early an answer turns. A run that ended gives `stable`
+triples spread over the run, each ending at least `--margin` (default 100)
+steps before its end. Each triple is one `instability-v2own` request: three
+v2 frames (|U| and p, each on its own colour scale) in the design's window
+(default the solver's x 0 to 0.12 m, y 0 to 0.04 m), with
+`readable_request.STABILITY_V2OWN_SYSTEM_PROMPT` (signs of numerical
+instability, for example cell-to-cell oscillation, a checkerboard pattern or
+extremes growing without a physical cause) and the `stability` reply schema
+of `llm_client.py` (`reason`, at most 300 characters, then `stable`,
+`unstable` or `cannot_tell`). The solver callback does not send this
+request: `LLM_MODE` has no such value. `check` and `run` work as in
+`picture_test.py`. `report` gives the balanced score, `unstable` answers by
+steps before the crash, answers by run, the fixed answer and two baselines
+from the arrays (growth of the peak |U| and of the largest cell-to-cell |U|
+jump in the window, first to last frame). `hpc/window_test.slurm` runs it
+with `PICTURE_TEST_SCRIPT=instability_test.py`. Tests:
+`test_instability_test.py`. Run on 2026-10-28
+([evidence](../../../docs/evidence/2026-10-28-instability/README.md)): four
+models said `unstable` only where the peak |U| had grown by 30.8 % or more,
+mostly in the frame where the field had already blown up, and never for a
+run that did not crash; a rule on the peak |U| alone scored as well.
+
 ## Replaying saved frames (describe and sequence)
 
 `snapshot_runner.py` sends saved frames (directories with `state.png`,

@@ -11,18 +11,24 @@ run is going numerically unstable?
 build:  python3 instability_test.py build --design <design.json> --centres <fields.npz> \
             --output <new dir> [--within N] [--margin N] [--seed N]
         The design names the runs (case folders with system/, constant/polyMesh, log.pimpleFoam
-        and the written time directories). A run whose log has no 'End' line crashed in its
-        last logged step. Its triples end 1 to --within steps (default 10) before that step
-        (key 'unstable', scored), or at the design's early_steps_to_crash ('unstable', not in
-        the balanced score: they show how early an answer turns). A run that ended gives
-        stable_items 'stable' triples of written states, spread over the run, each ending at
-        least --margin steps (default 100) before the run's last step. States are named
-        step = time / 5e-7 as in picture_test; the key keeps each run's own step numbers.
+        and the written time directories). A run whose log has 'End' ended. A run whose log
+        has a floating point exception trace (Foam::sigFpe) and no 'End' crashed in its last
+        logged step. Any other log (a run still going, or stopped by a time limit, by hand or
+        by another error) is refused. The triples of a run that crashed end 1 to --within
+        steps (default 10) before the crash (key 'unstable', scored), or at the design's
+        early_steps_to_crash ('unstable', not in the balanced score: they show how early an
+        answer turns). A run that ended gives stable_items 'stable' triples of written
+        states, spread over the run, each ending at least --margin steps (default 100) before
+        the run's last step. States are named step = time / 5e-7 as in picture_test; the key
+        keeps each run's own step numbers. The note, the captions and the picture titles give
+        each frame's step and time, so the time between frames is visible to the model: on
+        the set of 2026-10-28 it alone separates the two classes.
 check / run: as picture_test.py, with this set.
 report: the stability tables from one or more run folders: the balanced score, how early
         'unstable' is said, false alarms by run, the fixed answer and two numeric baselines
         computed from the arrays (growth of the peak |U| and of the largest cell-to-cell |U|
-        jump in the window from the first to the last frame).
+        jump in the window from the first to the last frame). All run folders must use one
+        answer key, the one each was run with (truth_sha256 in run.json).
 """
 import argparse
 import json
@@ -55,15 +61,17 @@ BY_RUN_RULES = (2, len(SPEED_RULES) + 1)    # peak |U| grows > 20 %, largest jum
 
 _TIME = re.compile(r"^Time = (\S+)\s*$")
 _COURANT = re.compile(r"^Courant Number mean: \S+ max: (\S+)")
+_FPE = re.compile(r"Foam::sigFpe::sigHandler")     # the stack trace of a floating point exception
 
 
 # ---------------------------------------------------------------- runs
 
 def read_log(path):
-    """Steps of a pimpleFoam log: [(time name, largest Courant number printed before the step)]
-    and whether the run reached 'End'. The Courant number printed before step j is computed
-    from the state written at the end of step j - 1."""
-    steps, courant, ended = [], None, False
+    """Steps of a pimpleFoam log: [(time name, largest Courant number printed before the step)],
+    whether the run reached 'End' and whether it stopped with a floating point exception. The
+    Courant number printed before step j is computed from the state written at the end of
+    step j - 1."""
+    steps, courant, ended, crashed = [], None, False, False
     for line in Path(path).read_text(errors="replace").splitlines():
         match = _COURANT.match(line)
         if match:
@@ -74,7 +82,9 @@ def read_log(path):
             steps.append((match.group(1), courant))
         elif line.strip() == "End":
             ended = True
-    return {"steps": steps, "ended": ended}
+        elif _FPE.search(line):
+            crashed = True
+    return {"steps": steps, "ended": ended, "crashed": crashed}
 
 
 def _dict_value(text, key):
@@ -88,6 +98,10 @@ def read_run(name, case):
     control = (case / "system" / "controlDict").read_text()
     schemes = re.sub(r"//[^\n]*", "", (case / "system" / "fvSchemes").read_text())
     log = read_log(case / "log.pimpleFoam")
+    if log["ended"] == log["crashed"]:
+        raise ValueError(f"{case / 'log.pimpleFoam'}: " + (
+            "both 'End' and a floating point exception" if log["ended"] else
+            "neither 'End' nor a floating point exception (still running, or stopped another way)"))
     index = {time: j + 1 for j, (time, _) in enumerate(log["steps"])}
     start = float(_dict_value(control, "startTime"))
     states = []
@@ -295,8 +309,9 @@ def build(args):
                 "mesh": builder.rel(mesh.sources), "plotted_range_m": {"x": window[0], "y": window[1]},
                 "label_rule": {"unstable_within_steps": args.within, "stable_margin_steps": args.margin,
                                "crashed_gaps_steps": list(CRASHED_GAPS), "stable_gaps_written_states": list(STABLE_GAPS),
-                               "note": "a run crashed when its log has no 'End' line; it crashed in its last "
-                                       "logged step. Triples from a run that crashed are 'unstable'; those "
+                               "note": "a run crashed when its log has a floating point exception trace "
+                                       "(Foam::sigFpe) and no 'End' line; it crashed in its last logged "
+                                       "step. Triples from a run that crashed are 'unstable'; those "
                                        "ending more than unstable_within_steps steps before the crash are "
                                        "not scored in the balanced count. Runs that ended give 'stable' "
                                        "triples."},
@@ -393,11 +408,17 @@ def _cell(text):
 
 def report(args):
     test_set = Path(args.test_set) if args.test_set else None
-    models, incomplete = [], 0
+    models, incomplete, key_hashes = [], 0, set()
     for run_dir in args.runs:
         meta = json.loads((Path(run_dir) / "run.json").read_text())
         root = test_set or Path(meta["test_set"])
-        truth = json.loads((root / "truth.private.json").read_text())
+        data = (root / "truth.private.json").read_bytes()
+        key_hashes.add(pt.sha256(data))
+        if meta.get("truth_sha256") not in (None, pt.sha256(data)):
+            raise SystemExit(f"{run_dir}: {root / 'truth.private.json'} is not the answer key this run was made with")
+        if len(key_hashes) > 1:
+            raise SystemExit(f"{run_dir}: another answer key than the run folders before it; report them separately")
+        truth = json.loads(data)
         if not (Path(run_dir) / SET / "metrics.jsonl").exists():
             incomplete += 1
             models.append((meta["model"], None))
@@ -469,9 +490,19 @@ def report(args):
 
 
 def main(argv=None):
+    """picture_test's set lists hold only this set while the command runs (so 'run' without
+    --sets sends only this set) and are restored afterwards, also after an error, so other
+    code in the same process (other tests) keeps its own."""
     argv = sys.argv[1:] if argv is None else argv
-    pt.SETS = NEW_SETS
-    pt.PAIRED_SETS = ()
+    saved = pt.SETS, pt.PAIRED_SETS
+    pt.SETS, pt.PAIRED_SETS = NEW_SETS, ()
+    try:
+        return _command(argv)
+    finally:
+        pt.SETS, pt.PAIRED_SETS = saved
+
+
+def _command(argv):
     if argv and argv[0] == "build":
         parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
         parser.add_argument("command")

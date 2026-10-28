@@ -236,6 +236,18 @@
       "central-dt5e-6-steps02250-02300-02350": "The flow fields for both velocity magnitude and kinematic pressure show smooth transitions and consistent evolution of features (like the central vortex and boundary layer) across the three time steps. There are no signs of checkerboard patterns, high-frequency oscillations, or unphysical growth inि",
       "central-dt5e-6-steps02600-02650-02700": "The flow fields for both velocity magnitude and kinematic pressure show smooth, continuous transitions between time steps. There are no signs of high-frequency oscillations, checkerboard patterns, or unphysical growth in extreme values.",
       "central-dt5e-6-steps03300-03400-03500": "The flow fields for both velocity magnitude and kinematic pressure show smooth, continuous transitions and coherent structures (vortices) that evolve physically over time. There are no signs of checkerboard patterns, high-frequency oscillations between adjacent cells, or non-physical growth in the/a"
+     },
+     "reasons_giving_a_short_time_between_frames": {
+      "central-dt2e-5-steps00460-00462-00464": {
+       "answer": "unstable",
+       "interval_s": []
+      },
+      "central-dt2e-5-steps00461-00462-00463": {
+       "answer": "unstable",
+       "interval_s": [
+        4e-05
+       ]
+      }
      }
     },
     "gemma-4-26B-A4B-it-qat-q4_0-vision": {
@@ -463,6 +475,12 @@
       "central-dt5e-6-steps02250-02300-02350": "The velocity and pressure fields show smooth, continuous spatial distributions and consistent temporal evolution of features like vortices and pressure gradients without checkerboard patterns or unphysical oscillations.",
       "central-dt5e-6-steps02600-02650-02700": "The velocity and pressure fields show smooth, continuous spatial distributions and consistent temporal evolution of the flow structures without checkerboard patterns or unphysical oscillations.",
       "central-dt5e-6-steps03300-03400-03500": "The velocity and pressure fields show smooth, evolving structures (vortices and pressure gradients) consistent with unsteady flow. No checkerboard patterns, unphysical oscillations, or diverging extremes are visible across the three time steps."
+     },
+     "reasons_giving_a_short_time_between_frames": {
+      "central-dt4e-5-steps00003-00006-00009": {
+       "answer": "unstable",
+       "interval_s": []
+      }
      }
     },
     "gemma-4-31B-it-qat-q4_0-vision": {
@@ -693,6 +711,26 @@
       "central-dt5e-6-steps02250-02300-02350": "The velocity and pressure fields evolve smoothly over time without any evidence of high-frequency oscillations, checkerboard patterns, or non-physical growth in extrema.",
       "central-dt5e-6-steps02600-02650-02700": "The velocity and pressure fields evolve smoothly over time without any evidence of high-frequency spatial oscillations, checkerboard patterns, or non-physical growth of extrema.",
       "central-dt5e-6-steps03300-03400-03500": "The velocity and pressure fields evolve smoothly over time without any evidence of high-frequency oscillations, checkerboard patterns, or unphysical growth in extreme values."
+     },
+     "reasons_giving_a_short_time_between_frames": {
+      "central-dt2e-5-steps00460-00461-00462": {
+       "answer": "unstable",
+       "interval_s": [
+        4e-05
+       ]
+      },
+      "central-dt2e-5-steps00460-00462-00464": {
+       "answer": "unstable",
+       "interval_s": [
+        8e-05
+       ]
+      },
+      "central-dt2e-5-steps00461-00462-00463": {
+       "answer": "unstable",
+       "interval_s": [
+        4e-05
+       ]
+      }
      }
     }
    },
@@ -1655,6 +1693,20 @@
       "central-dt5e-6-steps02250-02300-02350": "Flow structures evolve smoothly; no checkerboard, oscillations, or unphysical extremes. Velocity max varies slightly (42.98→41.75→43.4), pressure min stable (~-785→-752.5→-773). No signs of instability.",
       "central-dt5e-6-steps02600-02650-02700": "Flow structures evolve smoothly; no checkerboard, oscillations, or unphysical extremes. Vortex motion is expected in unsteady flow.",
       "central-dt5e-6-steps03300-03400-03500": "Flow structures evolve smoothly; no checkerboard, oscillations, or unphysical extremes. Max |U| and p remain stable in magnitude across time steps."
+     },
+     "reasons_giving_a_short_time_between_frames": {
+      "central-dt2e-5-steps00460-00461-00462": {
+       "answer": "unstable",
+       "interval_s": [
+        4e-05
+       ]
+      },
+      "central-dt2e-5-steps00460-00462-00464": {
+       "answer": "unstable",
+       "interval_s": [
+        8e-05
+       ]
+      }
      }
     }
    },
@@ -2390,5 +2442,154 @@
   }
  },
  "checks": 1410,
- "differences": []
+ "differences": [],
+ "frame_spacing": {
+  "by_group": {
+   "scored unstable": {
+    "items": 27,
+    "time_between_frames_s": [
+     2e-05,
+     0.00012
+    ],
+    "note_steps_between_frames": [
+     40,
+     240
+    ]
+   },
+   "early unstable (not scored)": {
+    "items": 16,
+    "time_between_frames_s": [
+     2e-05,
+     9e-05
+    ],
+    "note_steps_between_frames": [
+     40,
+     180
+    ]
+   },
+   "stable": {
+    "items": 27,
+    "time_between_frames_s": [
+     0.0002,
+     0.002
+    ],
+    "note_steps_between_frames": [
+     400,
+     4000
+    ]
+   }
+  },
+  "by_run": {
+   "central-dt2e-5": [
+    2e-05,
+    4e-05,
+    6e-05
+   ],
+   "central-dt3e-5": [
+    3e-05,
+    6e-05,
+    9e-05
+   ],
+   "central-dt4e-5": [
+    4e-05,
+    8e-05,
+    0.00012
+   ],
+   "central-dt5e-6": [
+    0.00025,
+    0.0005
+   ],
+   "developed": [
+    0.001,
+    0.002
+   ],
+   "upwind-dt2e-5": [
+    0.0002,
+    0.0004
+   ],
+   "upwind-dt4e-5": [
+    0.0004,
+    0.0008
+   ]
+  },
+  "both_gaps_equal_in_every_item": true,
+  "rule_unstable_when_frames_closer_than": {
+   "threshold_s": 0.00016,
+   "right_scored": 54,
+   "scored_items": 54,
+   "right_all": 70,
+   "items": 70
+  }
+ },
+ "courant_of_frames": {
+  "by_run": {
+   "central-dt2e-5": {
+    "frames_2_or_more_steps_before_the_crash": 46,
+    "range": [
+     1.16060373305,
+     2.93849036978
+    ],
+    "last_state_before_the_crash": [
+     1.726427878e+38
+    ]
+   },
+   "central-dt3e-5": {
+    "frames_2_or_more_steps_before_the_crash": 22,
+    "range": [
+     1.71951603529,
+     2.67427598546
+    ],
+    "last_state_before_the_crash": [
+     4.61952204618
+    ]
+   },
+   "central-dt4e-5": {
+    "frames_2_or_more_steps_before_the_crash": 8,
+    "range": [
+     2.30058788428,
+     2.85634961514
+    ],
+    "last_state_before_the_crash": [
+     14487525.8257
+    ]
+   },
+   "central-dt5e-6": {
+    "frames": 18,
+    "range": [
+     0.378874342858,
+     0.907411255709
+    ]
+   },
+   "developed": {
+    "frames": 20,
+    "range": [
+     0.242624016007,
+     0.325681806991
+    ]
+   },
+   "upwind-dt2e-5": {
+    "frames": 21,
+    "range": [
+     0.941031180885,
+     1.26360809214
+    ]
+   },
+   "upwind-dt4e-5": {
+    "frames": 21,
+    "range": [
+     1.83898657561,
+     2.47901543377
+    ]
+   }
+  },
+  "largest_in_a_stable_frame": 2.47901543377,
+  "crashed_frames_2_or_more_steps_before_the_crash_at_or_below_it": [
+   62,
+   76
+  ],
+  "same_for_the_frames_of_scored_triples": [
+   20,
+   34
+  ]
+ }
 }

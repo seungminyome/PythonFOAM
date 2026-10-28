@@ -15,7 +15,10 @@ again from the per-frame numbers (not from the key's stored ratios, which it che
 thresholds the report uses, and the best single threshold. Then it compares each of these with
 the report's cells. It also writes numbers the README cites: how early each model first says
 unstable in each crashed run, the cannot_tell and invalid answers, and which items a model calls
-unstable that a numeric rule does not.
+unstable that a numeric rule does not. Beyond the reports: the time between frames that the
+requests state (each frame's time_s and step, in the note, the captions and the picture
+titles), by group and run, and how far a rule on it alone gets; which reasons give a short
+time between frames; and the Courant numbers of the frames by run.
 """
 import json
 import re
@@ -28,6 +31,9 @@ SPEED = (1.05, 1.1, 1.2, 1.5, 2.0)
 JUMP = (1.2, 1.5, 2.0, 3.0)
 BINS = ((1, 1), (2, 3), (4, 6), (7, 10), (11, 25), (26, 100), (101, 10 ** 9))
 MARK = {"unstable": "u", "stable": "s", "cannot_tell": "?", None: "-"}
+SHORT_TIME = re.compile(r"short time|time interval", re.I)
+SECONDS = re.compile(r"(?<![\d.])(\d+(?:\.\d+)?(?:[eE]-?\d+)?) ?s\b")   # '0.00004 s'; not 'm/s'
+INTERVAL_BELOW_S = 0.01      # a time in seconds below this is a time between frames (frame times are about 0.1 s)
 
 
 def rows(path):
@@ -54,8 +60,87 @@ def load_key():
         elif key["crash_step"] is not None or not key["scored"] or min(fr["steps_after_in_run"] for fr in f) < 100:
             problems.append(f"{item}: a stable item from a run that crashed, or within 100 steps of its end")
         keys[item] = {"truth": key["stability"], "scored": key["scored"], "run": key["run"],
-                      "stc": key["steps_to_crash_last"], "speed": speed, "jump": jump}
+                      "stc": key["steps_to_crash_last"], "speed": speed, "jump": jump,
+                      "times": [fr["time_s"] for fr in f], "note_steps": [fr["step"] for fr in f],
+                      "frames": [(fr["run_step"], fr["courant_max"], fr["steps_to_crash"]) for fr in f]}
     return keys, problems
+
+
+def frame_gaps(k):
+    return [round(b - a, 12) for a, b in zip(k["times"], k["times"][1:])]
+
+
+def frame_spacing(keys):
+    """The time between frames the requests state, by group and run, and a rule on it alone:
+    'unstable' when the first two frames are less than a threshold apart (the threshold with
+    the most right answers on the scored items, halfway between two observed gaps)."""
+    groups = {"scored unstable": lambda k: k["scored"] and k["truth"] == "unstable",
+              "early unstable (not scored)": lambda k: not k["scored"],
+              "stable": lambda k: k["truth"] == "stable"}
+    out = {"by_group": {}, "by_run": {}}
+    for label, pick in groups.items():
+        group = [k for k in keys.values() if pick(k)]
+        gaps = [g for k in group for g in frame_gaps(k)]
+        steps = [b - a for k in group for a, b in zip(k["note_steps"], k["note_steps"][1:])]
+        out["by_group"][label] = {"items": len(group), "time_between_frames_s": [min(gaps), max(gaps)],
+                                  "note_steps_between_frames": [min(steps), max(steps)]}
+    for run in sorted({k["run"] for k in keys.values()}):
+        out["by_run"][run] = sorted({g for k in keys.values() if k["run"] == run for g in frame_gaps(k)})
+    out["both_gaps_equal_in_every_item"] = all(len(set(frame_gaps(k))) == 1 for k in keys.values())
+    values = sorted({frame_gaps(k)[0] for k in keys.values()})
+    found = None
+    for a, b in zip(values, values[1:]):
+        right = sum((frame_gaps(k)[0] < (a + b) / 2) == (k["truth"] == "unstable") for k in keys.values() if k["scored"])
+        if found is None or right > found[1]:
+            found = ((a + b) / 2, right)
+    out["rule_unstable_when_frames_closer_than"] = {
+        "threshold_s": found[0], "right_scored": found[1], "scored_items": sum(k["scored"] for k in keys.values()),
+        "right_all": sum((frame_gaps(k)[0] < found[0]) == (k["truth"] == "unstable") for k in keys.values()),
+        "items": len(keys)}
+    return out
+
+
+def short_time_reasons(answers, reasons):
+    """Items whose reason gives a short time between frames: the words 'short time' or 'time
+    interval', or a time in seconds below INTERVAL_BELOW_S (the frames' own times are about
+    0.1 s). With the answer word and the times in seconds the reason gives."""
+    out = {}
+    for name, reason in sorted(reasons.items()):
+        seconds = [float(v) for v in SECONDS.findall(reason)]
+        interval = [s for s in seconds if s < INTERVAL_BELOW_S]
+        if SHORT_TIME.search(reason) or interval:
+            out[name] = {"answer": answers.get(name), "interval_s": interval}
+    return out
+
+
+def courant_of_frames(keys):
+    """Largest Courant number computed from each frame's state (printed before the next step),
+    over the distinct frames of each run: for a run that crashed, the frames 2 or more steps
+    before the crash and, apart, the last state before it."""
+    frames = {}
+    for k in keys.values():
+        for run_step, courant, stc in k["frames"]:
+            frames[(k["run"], run_step)] = (k["truth"], courant, stc, k["scored"])
+    out = {"by_run": {}}
+    for run in sorted({r for r, _ in frames}):
+        mine = [v for (r, _), v in frames.items() if r == run]
+        if mine[0][0] == "stable":
+            out["by_run"][run] = {"frames": len(mine), "range": [min(v[1] for v in mine), max(v[1] for v in mine)]}
+        else:
+            before = [v[1] for v in mine if v[2] >= 2]
+            out["by_run"][run] = {"frames_2_or_more_steps_before_the_crash": len(before),
+                                  "range": [min(before), max(before)],
+                                  "last_state_before_the_crash": [v[1] for v in mine if v[2] == 1]}
+    top = max(v[1] for v in frames.values() if v[0] == "stable")
+    crashed = [v for v in frames.values() if v[0] == "unstable" and v[2] >= 2]
+    in_scored = {(k["run"], s) for k in keys.values() if k["truth"] == "unstable" and k["scored"]
+                 for s, _, stc in k["frames"] if stc >= 2}
+    out["largest_in_a_stable_frame"] = top
+    out["crashed_frames_2_or_more_steps_before_the_crash_at_or_below_it"] = [
+        sum(v[1] <= top for v in crashed), len(crashed)]
+    out["same_for_the_frames_of_scored_triples"] = [
+        sum(frames[f][1] <= top for f in in_scored), len(in_scored)]
+    return out
 
 
 def balanced(answers, keys):
@@ -207,7 +292,7 @@ def recount_job(job, keys):
             answer_words=dict(Counter(str(x) for x in a.values())),
             unstable_items_said_unstable_where_peak_rule_20_and_jump_rule_50_say_stable=flagged_not_by_numbers,
             false_alarms=sorted(n for n, k in keys.items() if k["truth"] == "stable" and a.get(n) == "unstable"),
-            reasons=v["reasons"])
+            reasons=v["reasons"], reasons_giving_a_short_time_between_frames=short_time_reasons(a, v["reasons"]))
     return out, checks, diffs
 
 
@@ -221,6 +306,8 @@ def main():
         result["jobs"][job_dir.name] = out
         result["checks"] += checks
         result["differences"] += diffs
+    result["frame_spacing"] = frame_spacing(keys)
+    result["courant_of_frames"] = courant_of_frames(keys)
     (HERE / "independent-recount.json").write_text(json.dumps(result, indent=1, ensure_ascii=False) + "\n")
     print(f"{len(keys)} items, key problems: {len(problems)}; {result['checks']} report cells checked, "
           f"{len(result['differences'])} differ")

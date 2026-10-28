@@ -3,6 +3,7 @@ pimpleFoam runs, choosing triples, the numbers from the arrays, the build, run a
 from collections import Counter
 import json
 from pathlib import Path
+import shutil
 import tempfile
 import unittest
 
@@ -21,9 +22,14 @@ START = 0.1
 DT = 1e-5
 
 
-def write_run(root, steps, written, ended, speed_of_step, scheme="Gauss linear"):
+FPE_TRACE = ["#0  Foam::error::printStack(Foam::Ostream&) in libOpenFOAM.so",
+             "#1  Foam::sigFpe::sigHandler(int) in libOpenFOAM.so"]
+
+
+def write_run(root, steps, written, ended, speed_of_step, scheme="Gauss linear", tail=None):
     """A pimpleFoam case on the row mesh: controlDict, fvSchemes, a log of `steps` steps (with
-    'End' when ended) and the states of the steps in `written` (|U| of cell 2 = speed_of_step(k))."""
+    'End' when ended, else a floating point exception trace, or the given tail lines) and the
+    states of the steps in `written` (|U| of cell 2 = speed_of_step(k))."""
     root = Path(root)
     row_case(root, CELLS)
     (root / "system").mkdir(parents=True)
@@ -38,7 +44,7 @@ def write_run(root, steps, written, ended, speed_of_step, scheme="Gauss linear")
     for k in range(1, steps + 1):
         lines += [f"Courant Number mean: 0.1 max: {0.5 + 0.01 * (k - 1)}", f"Time = {name(k)}", "",
                   "ExecutionTime = 0.1 s  ClockTime = 0 s"]
-    lines += ["End"] if ended else ["#0  Foam::error::printStack(Foam::Ostream&)"]
+    lines += ["End"] if ended else (FPE_TRACE if tail is None else tail)
     (root / "log.pimpleFoam").write_text("\n".join(lines) + "\n")
     for k in [0] + list(written):
         speeds = [1.0, 2.0, speed_of_step(k), 2.0, 1.0, 0.5]
@@ -124,9 +130,30 @@ class RunReadingTests(unittest.TestCase):
                        "Starting time loop\nCourant Number mean: 0.1 max: 1.7\nTime = 0.10003\n"
                        "ExecutionTime = 0.2 s  ClockTime = 0 s\nTime   : 15:56:56\n"
                        "Courant Number mean: 0.1 max: 2.5\ndeltaT = 3e-05\nTime = 0.10006\n")
-        self.assertEqual(it.read_log(log), {"steps": [("0.10003", 1.7), ("0.10006", 2.5)], "ended": False})
-        log.write_text(log.read_text() + "End\n")
-        self.assertTrue(it.read_log(log)["ended"])
+        self.assertEqual(it.read_log(log), {"steps": [("0.10003", 1.7), ("0.10006", 2.5)], "ended": False,
+                                            "crashed": False})
+        # the banner line about trapping is not a crash; the handler in a stack trace is
+        crash = self.root / "crash"
+        crash.write_text("sigFpe : Enabling floating point exception trapping (FOAM_SIGFPE).\n"
+                         + log.read_text() + "\n".join(FPE_TRACE) + "\n")
+        log.write_text("sigFpe : Enabling floating point exception trapping (FOAM_SIGFPE).\n" + log.read_text() + "End\n")
+        self.assertEqual((it.read_log(log)["ended"], it.read_log(log)["crashed"]), (True, False))
+        self.assertEqual((it.read_log(crash)["ended"], it.read_log(crash)["crashed"]), (False, True))
+        self.assertEqual(it.read_log(crash)["steps"], it.read_log(log)["steps"])
+
+    def test_a_log_without_end_or_floating_point_exception_is_refused(self):
+        stopped = {"time limit": [], "by hand": ["#0  Foam::error::printStack(Foam::Ostream&)",
+                                                "#1  Foam::sigInt::sigHandler(int)"]}
+        for label, tail in stopped.items():
+            with self.subTest(label):
+                case = write_run(self.root / label.replace(" ", "-"), steps=6, written=range(1, 6), ended=False,
+                                 speed_of_step=lambda k: 3.0, tail=tail)
+                with self.assertRaisesRegex(ValueError, "neither 'End' nor a floating point exception"):
+                    it.read_run(label, case)
+        both = write_run(self.root / "both", steps=4, written=range(1, 5), ended=True, speed_of_step=lambda k: 3.0)
+        (both / "log.pimpleFoam").write_text("\n".join(FPE_TRACE) + "\n" + (both / "log.pimpleFoam").read_text())
+        with self.assertRaisesRegex(ValueError, "both 'End' and a floating point exception"):
+            it.read_run("both", both)
 
     def test_run_states_crash_step_and_courant_of_each_state(self):
         case = write_run(self.root / "crash", steps=6, written=range(1, 6), ended=False, speed_of_step=lambda k: 3.0)
@@ -271,6 +298,34 @@ class BuildRunReportTests(unittest.TestCase):
         self.assertIn("| steady | stable | 2/2 |", text)
         self.assertEqual(pt.main(["report", str(out), "--output", str(self.root / "pt.md")]), 0)
         self.assertIn("| m | instability-v2own | stability | 6/6 | stability word 4/6 |", (self.root / "pt.md").read_text())
+        # a run folder made with another answer key is refused, alone or next to this one
+        other = self.root / "set-other"
+        shutil.copytree(self.set, other)
+        truth = json.loads((other / "truth.private.json").read_text())
+        next(iter(truth.values()))["stability"] = "stable"
+        llm_client.write_json(other / "truth.private.json", truth)
+        manifest = json.loads((other / "manifest.json").read_text())
+        manifest["truth_sha256"] = pt.file_sha256(other / "truth.private.json")
+        llm_client.write_json(other / "manifest.json", manifest)
+        moved = self.root / "run-m-other"
+        shutil.copytree(out, moved)
+        meta = json.loads((moved / "run.json").read_text())
+        llm_client.write_json(moved / "run.json", dict(meta, test_set=str(other),
+                                                       truth_sha256=manifest["truth_sha256"]))
+        self.assertEqual(it.main(["report", str(moved)]), 0)               # its own key: fine
+        with self.assertRaisesRegex(SystemExit, "another answer key"):
+            it.main(["report", str(out), str(moved)])
+        with self.assertRaisesRegex(SystemExit, "not the answer key this run was made with"):
+            it.main(["report", str(out), "--test-set", str(other)])
+
+    def test_main_restores_the_set_lists_of_picture_test(self):
+        before = (pt.SETS, pt.PAIRED_SETS)
+        self.assertNotIn(it.SET, pt.SETS)                  # setUpClass ran the build through main
+        self.assertEqual(it.main(["check", "--test-set", str(self.set)]), 0)
+        self.assertEqual((pt.SETS, pt.PAIRED_SETS), before)
+        with self.assertRaises(FileNotFoundError):
+            it.main(["check", "--test-set", str(self.root / "missing")])
+        self.assertEqual((pt.SETS, pt.PAIRED_SETS), before)
 
 
 if __name__ == "__main__":

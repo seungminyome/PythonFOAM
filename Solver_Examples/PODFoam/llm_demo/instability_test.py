@@ -51,6 +51,7 @@ STABLE_GAPS = (1, 2)            # written states between the frames of a triple 
 EARLY_BINS = ((1, 1), (2, 3), (4, 6), (7, 10), (11, 25), (26, 100), (101, 10 ** 9))
 SPEED_RULES = (1.05, 1.1, 1.2, 1.5, 2.0)    # peak |U| last / first above this: 'unstable'
 JUMP_RULES = (1.2, 1.5, 2.0, 3.0)           # largest cell-to-cell |U| jump last / first above this
+BY_RUN_RULES = (2, len(SPEED_RULES) + 1)    # peak |U| grows > 20 %, largest jump grows > 50 %
 
 _TIME = re.compile(r"^Time = (\S+)\s*$")
 _COURANT = re.compile(r"^Courant Number mean: \S+ max: (\S+)")
@@ -368,18 +369,26 @@ def by_run(answers, keys, word):
                   sum(1 for k in keys.values() if k["run"] == run and k["scored"])] for run in runs}
 
 
-def best_threshold(keys, measure):
+def best_threshold(keys, measure, above=None):
     """The threshold (between two observed ratios) with the most right answers on the scored
-    items: an optimistic bound, since it is chosen on the same items."""
+    items: an optimistic bound, since it is chosen on the same items. above: only thresholds
+    above this value (1: growth only)."""
     scored = [k for k in keys.values() if k["scored"]]
     values = sorted({k["numeric"][measure] for k in scored})
     best = None
     for a, b in zip([0.0] + values, values + [values[-1] * 2]):
         cut = (a + b) / 2
+        if above is not None and cut <= above:
+            continue
         right = sum((k["numeric"][measure] > cut) == (k["stability"] == "unstable") for k in scored)
         if best is None or right > best[1]:
             best = (cut, right)
     return {"threshold": best[0], "right": best[1], "items": len(scored)}
+
+
+def _cell(text):
+    """Table cell text: a pipe (as in |U|) written as \\| so the Markdown table stays whole."""
+    return str(text).replace("|", "\\|")
 
 
 def report(args):
@@ -413,18 +422,19 @@ def report(args):
     for label, answers in [(m, a) for m, a in columns] + rules:
         s = score(answers, keys)
         u, t = s["unstable_said"], s["stable_said"]
-        lines.append(f"| {label} | {s['answered']}/{s['items']} | {s['right']}/{s['items']} | "
+        lines.append(f"| {_cell(label)} | {s['answered']}/{s['items']} | {s['right']}/{s['items']} | "
                      f"{u['unstable']}/{s['unstable_items']} | {u['stable']} | {u['cannot_tell']} | "
                      f"{t['stable']}/{s['stable_items']} | {t['unstable']} | {t['cannot_tell']} |")
     for model, answers in models:
         if answers is None:
             lines.append(f"| {model} | no metrics (run incomplete) | | | | | | | |")
     for measure, label in (("max_speed_last_over_first", "peak |U|"), ("max_jump_speed_last_over_first", "largest |U| jump")):
-        best = best_threshold(keys, measure)
+        best, grows = best_threshold(keys, measure), best_threshold(keys, measure, above=1.0)
         lines.append(f"\nBest single threshold on the {label} ratio (last / first frame), chosen on these items: "
-                     f"{best['threshold']:.4g}, {best['right']}/{best['items']} right.")
-    header = "| last frame, steps before the crash | items | " + " | ".join(m for m, _ in columns) + \
-             " | " + " | ".join(label for label, _ in rules) + " |"
+                     f"{best['threshold']:.4g}, {best['right']}/{best['items']} right; above 1 (growth) only: "
+                     f"{grows['threshold']:.4g}, {grows['right']}/{grows['items']} right.")
+    header = "| last frame, steps before the crash | items | " + " | ".join(_cell(m) for m, _ in columns) + \
+             " | " + " | ".join(_cell(label) for label, _ in rules) + " |"
     lines += ["", "How early 'unstable' is said: items from the runs that crashed (scored and early), "
               "said unstable / items.", "", header,
               "|---|---:|" + "---:|" * (len(columns) + len(rules))]
@@ -432,15 +442,17 @@ def report(args):
     for b, row in enumerate(tables[0] if tables else []):
         lines.append(f"| {row['bin']} | {row['items']} | " + " | ".join(str(t[b]["said_unstable"]) for t in tables) + " |")
     lines += ["", "Said unstable / scored items, by run.", "",
-              "| run | truth | " + " | ".join(m for m, _ in columns) + " | " + rules[2][0] + " |",
-              "|---|---|" + "---:|" * (len(columns) + 1)]
+              "| run | truth | " + " | ".join(_cell(m) for m, _ in columns) + " | "
+              + " | ".join(_cell(rules[i][0]) for i in BY_RUN_RULES) + " |",
+              "|---|---|" + "---:|" * (len(columns) + len(BY_RUN_RULES))]
     for word in ("unstable", "stable"):
-        tables = [by_run(a, keys, word) for _, a in columns] + [by_run(rules[2][1], keys, word)]
+        tables = [by_run(a, keys, word) for _, a in columns] + [by_run(rules[i][1], keys, word) for i in BY_RUN_RULES]
         for run in tables[0]:
             lines.append(f"| {run} | {word} | " + " | ".join(f"{t[run][0]}/{t[run][1]}" for t in tables) + " |")
     lines += ["", "Every item: steps from the last frame to the crash (blank: a run that ended), the two "
               "numeric ratios and each answer (u unstable, s stable, ? cannot_tell, - no answer).", "",
-              "| item | truth | scored | steps to crash | peak |U| ratio | jump ratio | " + " | ".join(m for m, _ in columns) + " |",
+              "| item | truth | scored | steps to crash | peak \\|U\\| ratio | jump ratio | "
+              + " | ".join(_cell(m) for m, _ in columns) + " |",
               "|---|---|---|---:|---:|---:|" + "---|" * len(columns)]
     mark = {"unstable": "u", "stable": "s", "cannot_tell": "?", None: "-"}
     for name, key in sorted(keys.items(), key=lambda kv: (kv[1]["stability"] != "unstable", kv[1]["run"],

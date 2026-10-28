@@ -65,7 +65,8 @@ one comes from the state written at the end of the step before
   crashed in step 467. Its first 150 steps are byte for byte those of
   October 27: U, p and phi were compared at t = 0.10002, 0.1015 and 0.103 s
   (`flow/run-central-long-24929408.out`). A second copy that writes every
-  10th step crashed in the same step, with the same Courant numbers. Over the
+  10th step crashed in the same step with the same last Courant number (same
+  output file). Over the
   run its largest Courant number rose to 1.89 (step 45), fell to 1.07
   (step 111) and rose again before the last six steps.
 - The two upwind runs and `central-dt5e-6` ran 400 steps on October 27. Run
@@ -312,6 +313,8 @@ none different. It does not check the token and time columns.
   with `c9a1ba1`, which changes only the report.
 - Six of 12B's and five of Qwen's reasons stop at the 300-character limit of
   the schema. The answer word still follows them.
+- `flow/run-central-long-24929408.out` ends with "0.13/U differs between the
+  cases". Neither copy reached t = 0.13 s, so there was no file to compare.
 - `truth.private.json` means withheld from the model input, not private
   personal information.
 - The records contain cluster paths and server process ids as provenance.

@@ -17,12 +17,19 @@ par2-describe-main / par2-describe-new. For each pair:
 Also: sequence-new's computed_trends against snapshot_runner.sequence_truth of its three frames, and
 sequence-tn-new's body against readable_request.sequence_v2_payload(..., thresholds=True,
 numbers=...) of its frames, whose bytes must equal sequence-new's frames.
+
+On 2 ranks both processes print to one log, in an order that changes from run to run, so there
+the solver lines are compared as sorted lists (the in-order result is recorded too); and the test's
+POD module (pod_svd.py with its rank check removed, as in the 2026-10-27 MPI test) has both ranks
+write python_svd_audit.npz at the same path, so that file is recorded (readable or not, hash) and
+not compared.
 """
 import hashlib
 import json
 from pathlib import Path
 import re
 import sys
+import zipfile
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parents[2] / "Solver_Examples" / "PODFoam" / "llm_demo"))
@@ -119,9 +126,25 @@ def walls(case, steps):
             "at_steps_s": {str(s): found.get(s) for s in steps}}
 
 
+def npz_state(path):
+    """Whether an npz file reads back whole (every member's CRC), and its hash."""
+    try:
+        with zipfile.ZipFile(path) as archive:
+            readable = archive.testzip() is None
+    except zipfile.BadZipFile:
+        readable = False
+    return {"readable": readable, "sha256": sha(path)}
+
+
 def compare_pair(run, name):
     a_case, b_case = run / f"{name}-main", run / f"{name}-new"
+    parallel = name.startswith("par2")
     a_files, b_files = files(a_case), files(b_case)
+    if parallel:
+        report_audit = {side: npz_state(case / "python_svd_audit.npz") for side, case in
+                        (("main", a_case), ("branch", b_case))}
+        for listing in (a_files, b_files):
+            listing.pop("python_svd_audit.npz", None)
     report = {"callback_sources_sha256": {side: {p.name: sha(p) for p in sorted(case.glob("*.py"))}
                                           for side, case in (("main", a_case), ("branch", b_case))},
               "only_main": sorted(set(a_files) - set(b_files)), "only_branch": sorted(set(b_files) - set(a_files)),
@@ -137,7 +160,13 @@ def compare_pair(run, name):
                            "identical": telemetry[0].read_bytes() == telemetry[1].read_bytes(),
                            "tmp_left": [(case / "telemetry.jsonl.tmp").exists() for case in (a_case, b_case)]}
     lines = [solver_lines(case) for case in (a_case, b_case)]
-    report["solver_log_lines"] = {"compared": len(lines[0]), "identical": lines[0] == lines[1]}
+    report["solver_log_lines"] = {"compared": len(lines[0]), "identical_in_order": lines[0] == lines[1]}
+    if parallel:
+        report["solver_log_lines"]["identical_as_sorted_lists"] = sorted(lines[0]) == sorted(lines[1])
+        report["solver_log_lines"]["identical"] = report["solver_log_lines"]["identical_as_sorted_lists"]
+        report["python_svd_audit_npz_not_compared"] = report_audit
+    else:
+        report["solver_log_lines"]["identical"] = lines[0] == lines[1]
     report["records"] = {record: compare_record(record, a_case, b_case) for record in RECORDS}
     log = (b_case / "log.PODFoam").read_text()
     report["branch_telemetry_line"] = next((l for l in log.splitlines() if l.startswith("PYTHON LLM telemetry")), None)

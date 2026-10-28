@@ -3,6 +3,43 @@
 Dates are when a run or change happened. Where a run is recorded, the code
 revision that produced it is given.
 
+## 2026-10-28, callback: telemetry without a history of all states, computed trend words (`16d665e`)
+
+- `python_module.py`: `telemetry.jsonl` is no longer rewritten at the last
+  step from a history of every state. Each step's line is encoded when the
+  step arrives; a forked child with a deadline appends the pending lines to
+  `telemetry.jsonl.tmp` every 500 lines or 60 s, and the last step appends
+  the rest and renames the file. The finished file has the same bytes as
+  before. The callback keeps the first state and the last three (the SVD
+  summary's window start and residual trend); the request worker no longer
+  writes the telemetry. Over the 24,000 recorded states of the October 27
+  periodic run the Python heap after the last state was 0.067 MiB instead of
+  31.7 MiB, and the last step took 0.023 s instead of 0.699 s; each step now
+  encodes its line (in PODFoam the callback's median time per step rose from
+  0.079 to 0.107 ms to 0.163 to 0.217 ms), and a step with an append took
+  13.7 to 22.0 ms.
+- v2 sequences: `llm_result.json` records `computed_trends`, the answer key's
+  three trend words from the frames' arrays inside the plotted range, and
+  `computed_trends_agreement` against the model's words; nothing new is
+  sent. `LLM_SEQUENCE_PROMPT=t` or `tn` sends the `-t` or `-tn` form of the
+  October 27 trend test; the default request is unchanged byte for byte.
+- `verify_async.py` checks `computed_trends` and the `t`/`tn` bodies when a
+  run has them.
+- Tests: telemetry against main's callback (2,345 steps, two batch sizes),
+  memory over 6,000 steps, killed, failed and abandoned appends, a state that
+  cannot be encoded, the time trigger; computed trends against the picture
+  tests' functions, the `t` and `tn` bodies, refusals; 107 in the suite.
+- Run: Slurm job 24929555 (CPU, mbcpu-010): main's and this callback on the
+  staged step case, 1,250 steps with LLM_ENABLED=0, describe at step 100,
+  sequence at steps 100, 150 and 200, the `tn` form, and the describe case on
+  2 MPI ranks. Every written file, `telemetry.jsonl` (1,250 lines) and the
+  request bodies identical between main and the branch; the records differ
+  only in run-dependent values and the new `computed_trends`; the `tn` body
+  equals the tested builder. On 2 ranks the log lines match only as sorted
+  lists and the POD audit file is unreadable in both runs (both ranks write
+  it); the comparison was rerun with that handled (job 24929607). Records in
+  [docs/evidence/2026-10-28-callback/](docs/evidence/2026-10-28-callback/README.md).
+
 ## 2026-10-27, reading change, 4-bit Qwen, a cylinder flow, requests every 250 steps, MPI (`6afbdeb`, `df72c24`, `ab6b943`)
 
 - `readable_request.py`: sequence prompts that state the answer key's

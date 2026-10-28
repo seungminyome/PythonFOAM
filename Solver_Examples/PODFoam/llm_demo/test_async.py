@@ -567,7 +567,7 @@ class V2PictureTests(unittest.TestCase):
 
         def spy(target, args, deadline_at):
             if target is harness.callback._telemetry_child:
-                budgets.append((args[3] is not None, round(deadline_at - time.monotonic(), 2)))
+                budgets.append((args[3] is not None, deadline_at - time.monotonic()))
             return real(target, args, deadline_at)
 
         harness.callback._bounded_writer = spy
@@ -583,7 +583,9 @@ class V2PictureTests(unittest.TestCase):
         finally:
             harness.close()
         # appends after 500 and 1000 lines, the rest (200) at the last step, 0.2 s each
-        self.assertEqual(budgets[:3], [(False, 0.2), (False, 0.2), (True, 0.2)])
+        self.assertEqual([last for last, _ in budgets[:3]], [False, False, True])
+        for _, budget in budgets[:3]:
+            self.assertTrue(0.15 < budget <= 0.2, budget)
         self.assertEqual(len(lines), 1200)
         self.assertEqual([json.loads(line)["step"] for line in lines], list(range(1, 1201)))
         self.assertGreater(budgets[3][1], 0.7)

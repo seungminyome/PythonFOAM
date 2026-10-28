@@ -43,8 +43,9 @@ snapshot and SVD stay per rank as before. Tested on 2 ranks on 2026-10-27
 `llm_demo/python_module.py` is the callback. At one chosen step (default 5)
 it forks a worker that:
 
-1. Writes the telemetry and computes a componentwise SVD summary of the
-   snapshots collected so far.
+1. Computes a componentwise SVD summary of the snapshots collected so far
+   (until 2026-10-27 the worker also rewrote `telemetry.jsonl` here; see
+   [below](#telemetryjsonl)).
 2. Renders `llm_observation/state.png` (640×360, |U| on top, p below). For 2D
    cases, the C++ side passes faces of the `empty` patch, so each cell is
    drawn as a polygon without interpolation. The underlying arrays go to
@@ -66,6 +67,47 @@ scipy. matplotlib is imported once at startup inside `mesh_func`, not in the
 time loop. `LLM_IMAGE_XRANGE="x0,x1"` (and `LLM_IMAGE_YRANGE`) plot only that
 window in metres; the colour range then spans the cells inside the window and
 the request says which range was plotted.
+
+### telemetry.jsonl
+
+`telemetry.jsonl` has one line per step: the state the solver passed
+(without `p_cells` and `u_cells`), non-finite values as `null` listed in
+`feature_issues`, and `run_id`. Since 2026-10-28 the callback encodes each
+step's line when the step arrives and keeps only the lines not yet on disk.
+A forked child with a deadline (0.2 s, or 1e-4 s per pending line if more)
+appends them to `telemetry.jsonl.tmp` every 500 lines or 60 s; the last step
+appends the rest and renames the file to `telemetry.jsonl` and prints one
+line, `PYTHON LLM telemetry lines=... appends=... failed_appends=...
+file=telemetry.jsonl`. So `telemetry.jsonl` appears only at the last step and
+complete, and a `telemetry.jsonl.tmp` left after a run means the telemetry did
+not complete (`verify_async.py` checks for it). Of the states the callback
+keeps the first (the SVD summary's window start) and the last three (its
+residual trend).
+
+Until 2026-10-27 the callback kept every state until the last step (about
+1.35 KiB per step with Python 3.11) and then rewrote the whole file, with a
+deadline of 1e-4 s per state; the request worker also rewrote it at the
+request step. The finished file has the same bytes:
+`test_callback.TelemetryTests` compares it with main's callback over 2,345
+steps, and the [October 28 check](../../../docs/evidence/2026-10-28-callback/README.md)
+compares it in PODFoam runs and over the 24,000 states of the October 27
+periodic run, where the Python heap after the last state was 0.067 MiB
+instead of 31.7 MiB and the last step took 0.023 s instead of 0.699 s. The
+cost moved to every step: in PODFoam on a CPU node the callback's median
+time per step was 0.163 to 0.217 ms instead of 0.079 to 0.107 ms (encoding
+the line), and a step with an append took 13.7 to 22.0 ms.
+
+The child reports success through a pipe. Lines it may not have written stay
+pending and the next child writes them again at the same offset, one batch
+later, so a killed or failed append leaves no gap or partial line in the
+finished file. With more than 10,000 lines pending the callback drops them,
+writes no `telemetry.jsonl`, and reports it once in `llm_errors.jsonl`, as it
+does for a state that cannot be encoded (the earlier lines stay in the
+`.tmp`, as before). A failed or slow telemetry write never stops the
+solver; it holds that step at most until the child's deadline. Steps after the
+last step, which can happen only with `LLM_FINAL_STEP` set before the end of
+the run, get no line; before, a request after it rewrote the file with them.
+Not tested: a real disk failure or a full disk during a run.
 
 ## Request modes
 
@@ -120,7 +162,10 @@ the baseline, that the frames' arrays equal the written fields and the
 baseline's frames, that the request step took under 0.5 s, that every step
 other than the request, arrival and last steps took under 1 s, and that the
 reply (or error) was recorded with its arrival step. For the sequence case it
-also checks the image hashes in the request body. `LLM_LONG_CASES=async-no-llm`
+also checks the image hashes in the request body, and, for v2 runs since
+2026-10-28, that `computed_trends` and `computed_trends_agreement` equal its
+own answer key and score, and that a `t` or `tn` body is that form of the
+builder. `LLM_LONG_CASES=async-no-llm`
 runs only the baseline, which is a way to capture frames without a model
 request; the llama-server must still be running with the model loaded,
 because the runner checks it before the first case.
@@ -152,6 +197,28 @@ the v1 picture; `observe` with v2 is refused.
 - A v2 describe request sends no SVD summary, so the callback keeps no
   snapshot window and computes none; the request step can be late in a long
   run without the worker slowing down.
+- Computed trend words (2026-10-28). For a v2 sequence the worker also
+  computes the three trend words from the frames' arrays, among the cells
+  inside the plotted range, with the picture tests' answer key
+  (`snapshot_runner.py`: the largest |U| and the lowest p are roughly
+  constant when the last differs from the first by at most 2 % of the
+  larger magnitude; the fastest cell is in the same place when it moved at
+  most 5 % of the plotted range). `llm_result.json` gets them as
+  `computed_trends` (the dictionary `snapshot_runner.sequence_truth` gives
+  for those frames, with each time's extrema) and, when the model answered,
+  `computed_trends_agreement`, the model's words against them (as
+  `snapshot_runner.score_sequence`). They are not sent and not in
+  `llm_request.json`; a request that times out still records them.
+  `test_async.ComputedTrendTests` checks them against the picture tests'
+  functions on 400 random cases and at the thresholds.
+- `LLM_SEQUENCE_PROMPT` (v2 sequences): `own` (default) sends the 2026-10-22
+  request byte for byte; `t` states the answer key's thresholds in the prompt;
+  `tn` also gives each time's largest |U| and lowest p inside the plotted
+  range in the note. These are the `dev-sequence-v2own-t` and `-tn` forms of
+  the [October 27 trend test](../../../docs/results-20261027.md#reading-change-between-snapshots),
+  built by the same `readable_request.sequence_v2_payload`; the result
+  records `sequence_prompt`. Other values, and `t` or `tn` with v1 pictures,
+  are refused before any frame is drawn.
 - The plotted range is `LLM_IMAGE_XRANGE`/`LLM_IMAGE_YRANGE` or the whole
   domain. v2 needs a 2D case in the x-y plane with one polygon per cell (no
   raster fallback).
@@ -325,7 +392,7 @@ Environment variables: `OPENFOAM_BASHRC`, `PYTHON`, `POD_WORKSPACE`,
 checkout), `POD_LLM_PORT` (8088), `POD_REFERENCE_RUN` (newest passed
 validation run by default), `LLM_ANALYSIS_STEP`, `LLM_IMAGE_INPUT` (1/0),
 `LLM_CALLBACK_DEADLINE_S`, `LLM_CONNECT_TIMEOUT_S`, `LLM_READ_TIMEOUT_S`,
-`LLM_MAX_TOKENS` (up to 192 for `observe`, 320 for the other modes), `LLM_MODE`, `LLM_ASYNC`, `LLM_SEQUENCE_STEPS`, `LLM_ASYNC_MAX_PENDING` (1 to 8), `LLM_ASYNC_END`, `LLM_FINAL_STEP`, `LLM_IMAGE_XRANGE`, `LLM_IMAGE_YRANGE`, `POD_SUITE` (`async` for the long asynchronous suite), and for that suite `LLM_LONG_STEPS`, `LLM_LONG_DT`, `LLM_LONG_WRITE`, `LLM_LONG_STEP`, `LLM_LONG_SEQUENCE_STEPS`, `LLM_LONG_CASES`.
+`LLM_MAX_TOKENS` (up to 192 for `observe`, 320 for the other modes), `LLM_MODE`, `LLM_ASYNC`, `LLM_SEQUENCE_STEPS`, `LLM_SEQUENCE_PROMPT` (`own`, `t`, `tn`; v2), `LLM_ASYNC_MAX_PENDING` (1 to 8), `LLM_ASYNC_END`, `LLM_FINAL_STEP`, `LLM_IMAGE_XRANGE`, `LLM_IMAGE_YRANGE`, `POD_SUITE` (`async` for the long asynchronous suite), and for that suite `LLM_LONG_STEPS`, `LLM_LONG_DT`, `LLM_LONG_WRITE`, `LLM_LONG_STEP`, `LLM_LONG_SEQUENCE_STEPS`, `LLM_LONG_CASES`.
 
 `run_demo.sh` sets `LLM_MAX_TOKENS=192` for every mode unless it is already
 set, so the October 20 in-solver describe and sequence requests used 192 (the
@@ -372,8 +439,10 @@ Unit tests (no model needed):
 
 ```bash
 cd Solver_Examples/PODFoam/llm_demo
-python3 -m unittest test_llm_client test_callback test_ablation_runner test_async -v
+python3 -m unittest test_llm_client test_callback test_ablation_runner test_async test_picture_test -v
 ```
+
+107 tests on 2026-10-28 (Python 3.11, numpy and matplotlib needed).
 
 ## Replaying a saved state with and without the image
 

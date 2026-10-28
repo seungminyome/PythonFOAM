@@ -39,7 +39,25 @@ LLM_ASYNC_MAX_PENDING requests are in flight (default 1). At the last step
 (end_time_s from the solver, or LLM_FINAL_STEP) a pending request is waited
 for until its own deadline (LLM_ASYNC_END=wait) or left running
 (LLM_ASYNC_END=detach).
+
+telemetry.jsonl (2026-10-28): each step's line is encoded when the step arrives
+and appended to telemetry.jsonl.tmp by a forked child with a deadline, 500
+lines (or 60 s) at a time; the last step appends the rest and renames the file
+to telemetry.jsonl. Only the first state and the last three are kept (the SVD
+summary's window start and residual trend), so neither the memory nor the last
+step's write grows with the run. The file's bytes are those of the earlier
+writer, which kept every state until the last step.
+
+Computed trends (2026-10-28, v2 sequences): the three trend words of the
+picture tests' answer key, computed from the frames' arrays inside the plotted
+range, go to llm_result.json as computed_trends (never into the request), and
+computed_trends_agreement compares them with the model's words when it
+answered. LLM_SEQUENCE_PROMPT=t states the key's thresholds in the prompt, tn
+also gives each time's largest |U| and lowest p in the note (the -t and -tn
+forms of the 2026-10-27 trend test); the default (own) sends the 2026-10-22
+request byte for byte.
 """
+import collections
 import json
 import copy
 from datetime import datetime, timezone
@@ -60,7 +78,8 @@ from llm_client import (DEFAULT_ENDPOINT, DEFAULT_MODEL, MODES, build_request,
 
 _case = Path(__file__).resolve().parent
 _snapshots = []
-_history = []
+_first_state = None    # the first step's state: the SVD summary's window starts at its time
+_recent_states = collections.deque(maxlen=3)   # the last three states, for the residual trend
 _attempted = False
 _last_callback_outcome = None
 _geometry = None
@@ -159,6 +178,18 @@ def _sequence_steps():
         if len(steps) > readable_request.MAX_FRAMES:
             raise ValueError("a v2 sequence takes at most 3 steps (two pictures per step)")
     return steps
+
+
+def _sequence_prompt():
+    """LLM_SEQUENCE_PROMPT of a v2 sequence: own (default, the 2026-10-22 request), t (the
+    answer key's thresholds stated in the prompt) or tn (also each time's largest |U| and
+    lowest p inside the plotted range in the note)."""
+    value = os.environ.get("LLM_SEQUENCE_PROMPT", "own")
+    if value not in ("own", "t", "tn"):
+        raise ValueError("LLM_SEQUENCE_PROMPT must be own, t or tn")
+    if value != "own" and _image_style() != "v2":
+        raise ValueError("LLM_SEQUENCE_PROMPT=t or tn needs LLM_IMAGE_STYLE=v2")
+    return value
 
 
 def _is_final_step(state):
@@ -288,18 +319,19 @@ def svd_func(rank):
 
 def _residual_summary(state):
     answer = {}
+    recent = list(_recent_states)   # the last is this step's state
     for name in ("Ux", "Uy", "p"):
         record = dict(state["residuals"][name])
         current = float(record["initial_first"])
-        previous = (float(_history[-2]["residuals"][name]["initial_first"])
-                    if len(_history) > 1 else None)
+        previous = (float(recent[-2]["residuals"][name]["initial_first"])
+                    if len(recent) > 1 else None)
         record["initial_first_change"] = (
             current - previous if previous is not None else None)
         record["initial_first_relative_change"] = (
             (current - previous) / abs(previous)
             if previous is not None and previous != 0 else None)
         record["recent_initial_first"] = [
-            item["residuals"][name]["initial_first"] for item in _history[-3:]]
+            item["residuals"][name]["initial_first"] for item in recent[-3:]]
         answer[name] = record
     return answer
 
@@ -341,7 +373,7 @@ def _summarize(state):
             "method": "uncentered; separate component matrices (cells, snapshots)",
             "mean_removed": False,
             "window_snapshots": len(_snapshots),
-            "window_start_time_s": _history[0]["time_s"],
+            "window_start_time_s": _first_state["time_s"],
             "window_end_time_s": state["time_s"],
             "components": components,
         },
@@ -464,6 +496,90 @@ def _v2_frame_record(frame, metadata):
                        for image in metadata["images"]}}
 
 
+# The answer key of the picture tests, for the frames of a v2 sequence. The case folder
+# has only the callback's modules, so the rules are repeated here from snapshot_runner.py
+# (TREND_TOLERANCE, REGION_TOLERANCE_PCT, trend, sequence_truth, score_sequence) and
+# picture_test.py (truth_from_arrays); test_async.ComputedTrendTests checks that both
+# give the same result.
+TREND_TOLERANCE = 0.02        # relative change of the first and last value below this: roughly_constant
+REGION_TOLERANCE_PCT = 5.0    # fastest cell moving at most this (percent of the plotted range): same_place
+
+
+def _frame_extrema(centres, velocity, pressure, plotted, step, time_s):
+    """Largest |U|, lowest p and the fastest cell's place, among the cells whose centres lie in
+    the plotted range [[x0, x1], [y0, y1]] (picture_test.truth_from_arrays)."""
+    (x0, x1), (y0, y1) = plotted
+    x, y = centres[:, 0], centres[:, 1]
+    inside = (x >= x0) & (x <= x1) & (y >= y0) & (y <= y1)
+    speed = np.linalg.norm(velocity, axis=1)
+    index = np.flatnonzero(inside)
+    fastest = index[np.argmax(speed[index])]
+    return {"step": int(step), "time_s": float(time_s),
+            "max_speed_m_per_s": float(speed[index].max()),
+            "min_pressure_m2_per_s2": float(pressure[index].min()),
+            "fastest_flow_percent": [float(100.0 * (x[fastest] - x0) / (x1 - x0)),
+                                     float(100.0 * (y[fastest] - y0) / (y1 - y0))]}
+
+
+def _sequence_extrema(directories):
+    """_frame_extrema of each v2 frame folder, from its arrays (every hash checked)."""
+    import readable_request
+    out = []
+    for directory in directories:
+        _, meta, fields = readable_request.load_frame(directory)
+        plotted = [meta["plotted_range_m"]["x"], meta["plotted_range_m"]["y"]]
+        out.append(_frame_extrema(fields["centres"], fields["U"], fields["p"], plotted,
+                                  meta["step"], meta["time_s"]))
+    return out
+
+
+def _trend(first, last, tolerance=TREND_TOLERANCE):
+    scale = max(abs(first), abs(last), 1e-300)
+    change = (last - first) / scale
+    if change > tolerance:
+        return "increasing", change
+    if change < -tolerance:
+        return "decreasing", change
+    return "roughly_constant", change
+
+
+def _sequence_trends(extrema):
+    """The three trend words from the first and last time (snapshot_runner.sequence_truth)."""
+    first, last = extrema[0], extrema[-1]
+    speed_trend, speed_change = _trend(first["max_speed_m_per_s"], last["max_speed_m_per_s"])
+    pressure_word, pressure_change = _trend(first["min_pressure_m2_per_s2"],
+                                            last["min_pressure_m2_per_s2"])
+    # for the pressure minimum the vocabulary is about the sign direction
+    pressure_trend = {"increasing": "less_negative", "decreasing": "more_negative",
+                      "roughly_constant": "roughly_constant"}[pressure_word]
+    if first["min_pressure_m2_per_s2"] >= 0 and last["min_pressure_m2_per_s2"] >= 0:
+        pressure_trend = "roughly_constant" if pressure_word == "roughly_constant" else (
+            "more_negative" if pressure_word == "decreasing" else "less_negative")
+    moved = math.hypot(last["fastest_flow_percent"][0] - first["fastest_flow_percent"][0],
+                       last["fastest_flow_percent"][1] - first["fastest_flow_percent"][1])
+    return {"max_speed_trend": speed_trend, "max_speed_relative_change": speed_change,
+            "max_speed_first_last": [first["max_speed_m_per_s"], last["max_speed_m_per_s"]],
+            "min_pressure_trend": pressure_trend, "min_pressure_relative_change": pressure_change,
+            "min_pressure_first_last": [first["min_pressure_m2_per_s2"], last["min_pressure_m2_per_s2"]],
+            "fastest_flow_region": "same_place" if moved <= REGION_TOLERANCE_PCT else "moves",
+            "fastest_flow_moved_percent": moved,
+            "tolerances": {"relative_change": TREND_TOLERANCE, "region_percent": REGION_TOLERANCE_PCT},
+            "frames": [{key: item[key] for key in ("step", "time_s", "max_speed_m_per_s",
+                                                   "min_pressure_m2_per_s2", "fastest_flow_percent")}
+                       for item in extrema]}
+
+
+def _trend_agreement(structured, computed):
+    """The model's trend words against the computed ones (snapshot_runner.score_sequence)."""
+    out = {}
+    for name in ("max_speed_trend", "min_pressure_trend", "fastest_flow_region"):
+        out[name] = {"answer": structured[name], "truth": computed[name],
+                     "match": structured[name] == computed[name],
+                     "cannot_tell": structured[name] == "cannot_tell"}
+    out["matches"] = sum(v["match"] for v in out.values() if isinstance(v, dict))
+    return out
+
+
 def _record_callback_error(state, error):
     record = {"status": "callback_error", "step": state.get("step"),
               "time_s": state.get("time_s"),
@@ -494,20 +610,210 @@ def _marker(event, context, timestamp, **extra):
     return timestamp
 
 
-def _dump_telemetry():
+def _write_request_index():
+    """llm_requests/index.json of the periodic mode (LLM_ANALYSIS_EVERY), once it has entries."""
+    if _request_log:
+        write_json(_case / "llm_requests" / "index.json",
+                   {"every": _periodic_every(), "requests": list(_request_log)})
+
+
+def _write_telemetry(data, offset, finish):
+    """Write data at offset in telemetry.jsonl.tmp; with finish, end the file there and
+    rename it to telemetry.jsonl. The first append (offset 0) empties a file left by an
+    earlier run. Runs in a forked child."""
     temporary = _case / "telemetry.jsonl.tmp"
-    with temporary.open("w", encoding="utf-8") as stream:
-        for state in _history:
+    fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | (os.O_TRUNC if offset == 0 else 0), 0o666)
+    try:
+        if os.fstat(fd).st_size < offset:
+            raise OSError(f"{temporary.name} holds fewer than the {offset} bytes appended before")
+        view = memoryview(data)
+        while view:
+            done = os.pwrite(fd, view, offset)
+            view, offset = view[done:], offset + done
+        if finish:
+            os.ftruncate(fd, offset)
+    finally:
+        os.close(fd)
+    if finish:
+        temporary.replace(_case / "telemetry.jsonl")
+
+
+def _telemetry_child(data, offset, rename, report, done_fd, parent_fd):
+    """Body of the telemetry child. Writes one status byte to done_fd: bit 0 the lines
+    were written (and, with rename, telemetry.jsonl is in place), bit 1 the request index
+    was written. report (the last step only): write the request index and print a line."""
+    os.close(parent_fd)
+    status, problem = 0, None
+    try:
+        if data or rename:
+            _write_telemetry(data, offset, rename)
+        status |= 1
+    except Exception as error:
+        problem = f"{type(error).__name__}: {error}"
+    if report is not None:
+        try:
+            _write_request_index()
+            status |= 2
+        except Exception:
+            pass
+    os.write(done_fd, bytes([status]))
+    if report is not None:
+        done = bool(status & 1)
+        problem = report["problem"] or problem
+        print(f"PYTHON LLM telemetry lines={report['lines']} "
+              f"appends={report['appends'] + done} failed_appends={report['failed_appends'] + (not done)} "
+              + (f"file=telemetry.jsonl.tmp incomplete: {problem}" if problem or not rename
+                 else "file=telemetry.jsonl"), flush=True)
+
+
+def _bounded_child_status(target, args, deadline_at):
+    """_bounded_writer that returns the byte the child wrote to a pipe, or None.
+
+    The byte also arrives when another SIGCHLD handler has reaped the child, in which
+    case the exit status alone would make a child that finished look failed."""
+    read_fd = write_fd = None
+    try:
+        read_fd, write_fd = os.pipe()
+        _bounded_writer(target, tuple(args) + (write_fd, read_fd), deadline_at)
+        os.close(write_fd)
+        write_fd = None
+        os.set_blocking(read_fd, False)
+        try:
+            data = os.read(read_fd, 1)
+        except BlockingIOError:
+            return None   # a child that was not reaped still holds the pipe
+        return data[0] if data else None
+    except OSError:
+        return None
+    finally:
+        _close_fd(read_fd)
+        _close_fd(write_fd)
+
+
+class _Telemetry:
+    """telemetry.jsonl without keeping the states (2026-10-28).
+
+    Each step's line is encoded when the step arrives, byte for byte the line the
+    earlier writer made from its history of all states at the last step, and kept
+    until a forked child with a deadline appends the pending lines to
+    telemetry.jsonl.tmp: every BATCH_LINES lines or BATCH_S seconds. The last step
+    appends the rest and renames the file, so telemetry.jsonl is complete or absent,
+    and a telemetry.jsonl.tmp left after a run means the telemetry did not complete
+    (verify_async.py checks this). Lines count as written only when the child says so
+    through a pipe; otherwise they stay pending and the next child writes them again
+    at the same offset, so a killed or failed append leaves no gap and no partial line
+    in the finished file. A retry waits for another batch. With appends failing and
+    more than MAX_PENDING_LINES pending, the lines are dropped and telemetry.jsonl is
+    not written; that, and a state that cannot be encoded, is reported once in
+    llm_errors.jsonl. Nothing here raises into the solver.
+    """
+    BATCH_LINES = 500
+    BATCH_S = 60.0
+    MAX_PENDING_LINES = 10_000
+
+    def __init__(self):
+        self.pending = bytearray()   # encoded lines not yet known to be on disk
+        self.pending_lines = 0
+        self.written = 0             # bytes of telemetry.jsonl.tmp that hold appended lines
+        self.lines = 0               # lines encoded
+        self.appends = 0             # appends the child reported done
+        self.failed_appends = 0
+        self.failed_streak = 0
+        self.last_attempt = time.monotonic()
+        self.problem = None          # why telemetry.jsonl will not be written
+        self.finished = False
+
+    def add(self, state):
+        if self.finished or self.problem:
+            return
+        try:
             telemetry, issues = _finite_features(state)
             telemetry["run_id"] = os.environ.get("LLM_RUN_ID", _case.name)
             if issues:
                 telemetry["feature_status"] = "partial_nonfinite"
                 telemetry["feature_issues"] = issues
-            stream.write(encode_json(telemetry).decode("utf-8") + "\n")
-    temporary.replace(_case / "telemetry.jsonl")
-    if _request_log:
-        write_json(_case / "llm_requests" / "index.json",
-                   {"every": _periodic_every(), "requests": list(_request_log)})
+            line = encode_json(telemetry) + b"\n"
+        except Exception as error:
+            self.problem = (f"line {self.lines + 1} could not be encoded ({type(error).__name__}: "
+                            f"{error}); telemetry.jsonl.tmp keeps the lines before it")
+            return
+        self.pending += line
+        self.pending_lines += 1
+        self.lines += 1
+
+    def due(self):
+        return self.pending_lines > 0 and (
+            self.pending_lines >= self.BATCH_LINES * (1 + self.failed_streak)
+            or time.monotonic() - self.last_attempt >= self.BATCH_S)
+
+    def append(self, finish=False):
+        """Append the pending lines in a bounded child; at the last step also rename the
+        file and write the request index. The budget scales with the pending lines only."""
+        self.last_attempt = time.monotonic()
+        report = None
+        if finish:
+            report = {"lines": self.lines, "appends": self.appends,
+                      "failed_appends": self.failed_appends, "problem": self.problem}
+        status = _bounded_child_status(
+            _telemetry_child, (self.pending, self.written, finish and self.problem is None, report),
+            self.last_attempt + max(0.2, 1e-4 * self.pending_lines))
+        if status is not None and status & 1:
+            self.written += len(self.pending)
+            self.pending = bytearray()
+            self.pending_lines = 0
+            self.appends += 1
+            self.failed_streak = 0
+        else:
+            self.failed_appends += 1
+            self.failed_streak += 1
+            if self.pending_lines > self.MAX_PENDING_LINES and not self.problem:
+                self.problem = (f"{self.failed_appends} appends failed and {self.pending_lines} "
+                                "lines were pending; they were dropped")
+                self.pending = bytearray()
+                self.pending_lines = 0
+        if finish:
+            self.finished = True
+
+    def step(self, state):
+        """This step's line, and an append when one is due; never raises."""
+        known = self.problem
+        try:
+            self.add(state)
+            if not self.finished and self.due():
+                self.append()
+        except Exception as error:   # a fault here must not cost the step its request
+            self.problem = self.problem or f"{type(error).__name__}: {error}"
+        if self.problem and not known:
+            _report_telemetry_problem(state, self.problem)
+
+    def finish(self):
+        """The last step: the rest of the lines, telemetry.jsonl, the request index."""
+        if self.finished:
+            return
+        try:
+            self.append(finish=True)
+        except Exception as error:
+            self.problem = self.problem or f"{type(error).__name__}: {error}"
+        self.finished = True
+
+
+def _report_telemetry_problem(state, problem):
+    _bounded_writer(_record_callback_error,
+                    (state if isinstance(state, dict) else {},
+                     RuntimeError(f"telemetry.jsonl will not be written: {problem}")),
+                    time.monotonic() + 0.2)
+
+
+_telemetry = _Telemetry()
+
+
+def _keep(state):
+    """What later code needs of a state (the first one, the last three) and its telemetry line."""
+    global _first_state
+    if _first_state is None:
+        _first_state = state
+    _recent_states.append(state)
+    _telemetry.step(state)
 
 
 def _analysis_worker(state, context, events, ack_fd, parent_only_fds):
@@ -518,9 +824,11 @@ def _analysis_worker(state, context, events, ack_fd, parent_only_fds):
     enabled = os.environ.get("LLM_ENABLED", "1") == "1"
     result = {"status": "callback_error", "output_text": None,
               "inference_wall_s": None}
+    trends = {}   # v2 sequence: the answer key of its frames, recorded but never sent
     try:
         _marker("callback_start", context, context["callback_started_at"])
-        _dump_telemetry()
+        # telemetry.jsonl is the parent's (_Telemetry); the worker writes only the index
+        _write_request_index()
         endpoint = os.environ.get("LLM_ENDPOINT", DEFAULT_ENDPOINT)
         safe_state, issues = _finite_features(state)
         pending = {**context, "sent": False, "endpoint": endpoint,
@@ -584,7 +892,20 @@ def _analysis_worker(state, context, events, ack_fd, parent_only_fds):
                 context["frames"] = ([_v2_frame_record(*item) for item in collected]
                                      + [_v2_frame_record(image, image_meta)])
                 context["sequence_colour_range"] = "own"
-                request = readable_request.sequence_v2_payload(frames, model=model, own_ranges=True)
+                prompt = context.get("sequence_prompt", "own")
+                extrema = None
+                try:
+                    extrema = _sequence_extrema([frame["directory"] for frame in frames])
+                    trends = {"computed_trends": _sequence_trends(extrema)}
+                except Exception as error:
+                    if prompt == "tn":
+                        raise   # the note needs the numbers
+                    trends = {"computed_trends": None,
+                              "computed_trends_error": f"{type(error).__name__}: {error}"}
+                options = {"own": {}, "t": {"thresholds": True},
+                           "tn": {"thresholds": True, "numbers": extrema}}[prompt]
+                request = readable_request.sequence_v2_payload(frames, model=model, own_ranges=True,
+                                                               **options)
                 sent_input = {"frames": [{"step": f["step"], "time_s": f["time_s"],
                                           "image_sha256": f["image_sha256"]} for f in frames],
                               "text": [part["text"] for part in request["messages"][1]["content"]
@@ -624,8 +945,11 @@ def _analysis_worker(state, context, events, ack_fd, parent_only_fds):
         if mode != "observe":
             request_record["numeric_summary"] = summary
         write_json(rec / "llm_request.json", request_record)
+        # after llm_request.json, so the answer key is not in the request's record; sent to
+        # the parent now, so a request that times out still records it
+        context.update(trends)
         _send_event(events, {"event": "request_ready", "summary_wall_s": summary_wall,
-                             "image_input": context["image_input"]})
+                             "image_input": context["image_input"], **trends})
         if context.get("async"):
             # nobody is waiting on the other side; stamp the request time here
             request_before_at = _stamp()
@@ -650,6 +974,9 @@ def _analysis_worker(state, context, events, ack_fd, parent_only_fds):
             write_json(rec / "llm_request.json", request_record)
         else:
             result = {"status": "disabled", "inference_wall_s": 0.0, "output_text": None}
+        if trends.get("computed_trends") and result.get("status") == "ok":
+            result["computed_trends_agreement"] = _trend_agreement(
+                result["structured_output"], trends["computed_trends"])
     except BaseException as error:
         result.update(status="callback_error", error=f"{type(error).__name__}: {error}")
     try:
@@ -667,6 +994,13 @@ def _analysis_worker(state, context, events, ack_fd, parent_only_fds):
     finally:
         events.close()
         os.close(ack_fd)
+
+
+def _keep_computed_trends(context, message):
+    """A v2 sequence's answer key from the worker's request_ready event."""
+    for key in ("computed_trends", "computed_trends_error"):
+        if key in message:
+            context[key] = message[key]
 
 
 def _send_event(events, payload):
@@ -841,6 +1175,8 @@ def _new_context(state, mode, frames=None, asynchronous=False):
     }
     if asynchronous:
         context["async"] = True
+    if mode == "sequence" and _sequence_prompt() != "own":
+        context["sequence_prompt"] = _sequence_prompt()
     if _periodic_every() is not None:
         context["record_dir"] = str(_case / "llm_requests" / f"step-{int(state['step']):06d}")
     if frames is not None:
@@ -898,6 +1234,7 @@ def _observe(state, start, mode="observe", frames=None):
                 context["summary_wall_s"] = message["summary_wall_s"]
                 context["image_input"] = bool(message.get("image_input"))
                 context["text_input_only"] = not context["image_input"]
+                _keep_computed_trends(context, message)
                 context["request_before_at"] = _stamp()
                 request_started = time.monotonic()
                 frame = encode_json({"request_before_at": context["request_before_at"]})
@@ -973,6 +1310,7 @@ def _handle_message(job, message, step):
         context["summary_wall_s"] = message["summary_wall_s"]
         context["image_input"] = bool(message.get("image_input"))
         context["text_input_only"] = not context["image_input"]
+        _keep_computed_trends(context, message)
         job["request_started"] = time.monotonic()
         return False
     if message.get("event") == "complete":
@@ -1148,7 +1486,7 @@ def analysis_func(state):
     global _attempted, _last_callback_outcome, _latest_pressure, _latest_velocity, _sequence_sent, _periodic_refused
     start = time.monotonic()
     try:
-        # p_cells and u_cells are the big arrays; keep them out of the history
+        # p_cells and u_cells are the big arrays; keep them out of the kept states and telemetry
         if isinstance(state, dict):
             state = dict(state)  # never remove fields from the solver's dictionary
         pressure = state.pop("p_cells", None) if isinstance(state, dict) else None
@@ -1160,7 +1498,7 @@ def analysis_func(state):
             # run the same values snapshot_func received
             _latest_velocity = np.array(velocity, dtype=float, copy=True)
         state = copy.deepcopy(state)
-        _history.append(state)
+        _keep(state)
         step = int(state["step"])
         if _pending:
             _poll_pending(step)
@@ -1176,8 +1514,9 @@ def analysis_func(state):
             if not _sequence_sent:
                 try:
                     steps = _sequence_steps()
+                    _sequence_prompt()   # refused before any frame is drawn
                 except Exception:
-                    _sequence_sent = True   # report a refused LLM_SEQUENCE_STEPS once
+                    _sequence_sent = True   # report a refused LLM_SEQUENCE_STEPS/PROMPT once
                     raise
                 if step in steps:
                     if step != steps[-1]:
@@ -1199,8 +1538,9 @@ def analysis_func(state):
         if _is_final_step(state):
             if _pending:
                 _finish_pending_at_end(step)
-            # about 0.15 s for 6000 states on a login node; scale with the history
-            _bounded_writer(_dump_telemetry, (), time.monotonic() + max(0.2, 1e-4 * len(_history)))
+            # the lines since the last append (at most _Telemetry.BATCH_LINES unless appends
+            # failed), not the whole run: the budget is 0.2 s however long the run was
+            _telemetry.finish()
     except Exception as error:
         _last_callback_outcome = {
             "status": "callback_error", "error": f"{type(error).__name__}: {error}"}

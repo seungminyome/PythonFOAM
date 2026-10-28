@@ -121,6 +121,11 @@ if (analysis_func)
                     << (planeSlice.moved ? " moved off mesh points" : "")
                     << " mesh z range=(" << planeSlice.zMin << " " << planeSlice.zMax << ")"
                     << " cut cells=" << nCut << endl;
+                if (nCut == 0)
+                {
+                    WarningInFunction << "The observer's plane slice z=" << planeSlice.z
+                        << " cuts no cells; v2 pictures will be refused" << endl;
+                }
             }
         }
         // Gathered to the master in rank order; cell labels shifted by where
@@ -264,9 +269,13 @@ if (analysis_func)
                 << " solutionD=" << mesh.solutionD()
                 << " cellPolygons=" << nPolyFaces
                 << " ranks=" << Pstream::nProcs();
-            if (sliced)
+            if (sliced && planeSlice.ok)
             {
                 Info<< " slice z=" << planeSlice.z;
+            }
+            else if (sliced)
+            {
+                Info<< " slice none";
             }
             Info<< endl;
         }

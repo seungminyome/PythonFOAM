@@ -1,6 +1,8 @@
 # Evidence
 
-Recorded runs, one directory per test date (`2026-10-19-12b` holds that
+Recorded runs, one directory per test date (`2026-10-27-solver` and
+`2026-10-27-picture-tests` hold the solver runs and the picture tests of
+October 27, `2026-10-19-12b` holds that
 day's 12B replay on a GPU node, `2026-10-22-picture-test` the picture-reading
 test, `2026-10-22-window-test` the later picture tests, `2026-10-22-live-v2`
 the solver run with v2 pictures). Requests, responses, arrays and
@@ -9,6 +11,8 @@ are gzip copies); each directory has a hash manifest.
 
 | Directory | Run | Code | Report |
 |---|---|---|---|
+| [2026-10-27-solver/](2026-10-27-solver/README.md) | Slurm job 24903264: a describe request every 250 steps over 24,000 steps and its twin; jobs 24903298 and 24903263/24903755: two repeats of the October 22 suite and sweep; 24903786: MPI, 2 ranks; 24903065: POD mode files and BLAS threads; unstable-flow attempts; comparison and tracking scripts | `6afbdeb` with changes, `df72c24` (recorded per job) | [results-20261027.md](../results-20261027.md) |
+| [2026-10-27-picture-tests/](2026-10-27-picture-tests/README.md) | Slurm jobs 24903974 and 24903975 (trend test, four models), 24903976 and 24903977 (4-bit Qwen, recommended image tokens), 24903978 (cylinder flow); the cylinder flow runs; answer keys and a recount | `ab6b943` | [results-20261027.md](../results-20261027.md) |
 | [2026-10-22-live-v2/](2026-10-22-live-v2/README.md) | Slurm job 24757460: `pod-llm-async.UM1RyJ`, the five asynchronous cases with v2 pictures and Gemma 4 12B on an NVIDIA RTX A6000, from a developed flow; eleven describe requests with random windows; a trial run (job 24757458); check script | `354caf9` with uncommitted changes (recorded) | [results-20261022-live.md](../results-20261022-live.md) |
 | [2026-10-22-window-test/](2026-10-22-window-test/README.md) | Slurm jobs 24757327 (four Qwen models, the 308 requests), 24757344 and 24757382 to 24757384 (random windows, eleven models, three seeds, image-token limit 1024), 24757459 (developed flow, random windows); the developed flow run (job 24757429); answer keys and a recount | picture-test bundle (`58e00d9` + `window_test.py`); job 24757459 as job 24757460 | [results-20261022-live.md](../results-20261022-live.md) |
 | [2026-10-22-picture-test/](2026-10-22-picture-test/README.md) | Slurm job 24756981: the same 308 prepared requests to each of seven Gemma 4 models (E2B to 31B) on an NVIDIA RTX A6000 (MedicineBow); answer key and an independent re-scoring | `58e00d9` | [results-20261022.md](../results-20261022.md) |
@@ -18,7 +22,11 @@ are gzip copies); each directory has a hash manifest.
 | [2026-10-17/](2026-10-17/README.md) | `pod-llm-demo.LRfJBN`: five solver cases and the paired image/no-image replay | `23089bb` | [results.md](../results.md) |
 | [2026-10-13/](2026-10-13/README.md) | `pod-llm-demo.SwwR2e`: first five-case run with the image path | `9ae54d0` | [results-20261013.md](../results-20261013.md) |
 
-The picture tests' archives (the input bundles with all requests and answer
+The October 27 archives (the five picture jobs, the two new test sets, the
+cylinder runs, the periodic run without time directories, the MPI and
+POD-file runs, the unstable attempts) are assets of the
+[tests-2026-10-27](https://github.com/seungminyome/PythonFOAM/releases/tag/tests-2026-10-27)
+release. The picture tests' archives (the input bundles with all requests and answer
 keys, and each job's results with every raw reply) are assets of the
 [picture-test-2026-10-22](https://github.com/seungminyome/PythonFOAM/releases/tag/picture-test-2026-10-22)
 release; the v2 solver run's complete outputs, the trial run and the developed

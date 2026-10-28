@@ -34,8 +34,11 @@ PythonAnalysis.H each step  analysis_func(state)                                
 Ux, Uy, p), Courant and continuity values recomputed from the completed
 step's `phi`, and `p_cells`, a copy of the kinematic pressure. U of the same
 step already arrived through `snapshot_func`. All arrays are copies; Python
-never sees solver storage directly. The callback runs on rank 0 and is
-disabled for MPI runs.
+never sees solver storage directly. In a parallel run the mesh and the
+fields are gathered to the master rank (`PythonGather.H`, cells in rank
+order) and only the master calls `mesh_func` and `analysis_func`; the POD
+snapshot and SVD stay per rank as before. Tested on 2 ranks on 2026-10-27
+([report](../../../docs/results-20261027.md#mpi-and-the-pod-files)).
 
 `llm_demo/python_module.py` is the callback. At one chosen step (default 5)
 it forks a worker that:
@@ -222,7 +225,9 @@ plus each time's maximum |U| and minimum p from the arrays in the note) and
 pictures). `readable_request.sequence_v2_payload(..., thresholds=True,
 numbers=..., images=False)` builds them; with the defaults it still gives the
 2026-10-22 bodies byte for byte. `--dt` (here and in `window_test.py`) is
-the time step the state names are divided by, for runs with another step.
+the time step the state names are divided by, for runs with another step;
+`--y-span` sets the range of window heights in metres. Run on 2026-10-27
+([report](../../../docs/results-20261027.md#reading-change-between-snapshots)).
 
 ### Random-window picture test (`window_test.py`)
 

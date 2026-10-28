@@ -3,6 +3,41 @@
 Dates are when a run or change happened. Where a run is recorded, the code
 revision that produced it is given.
 
+## 2026-10-27, reading change, 4-bit Qwen, a cylinder flow, requests every 250 steps, MPI (`6afbdeb`, `df72c24`, `ab6b943`)
+
+- `readable_request.py`: sequence prompts that state the answer key's
+  thresholds (`thresholds=True`), add each time's extrema to the note
+  (`numbers=`) or send the note without pictures (`images=False`); with the
+  defaults the bodies are unchanged byte for byte. New `sequence_test.py`
+  builds trend sets from saved states in five forms; `window_test.py` and
+  `sequence_test.py` take `--dt` and `--y-span`.
+- `python_module.py`: `LLM_ANALYSIS_EVERY=N` sends a describe request every N
+  steps (v2 only), each recorded in `llm_requests/step-NNNNNN/` with an index;
+  the bytes moved over the worker pipe are recorded; `LLM_KILL_JOIN_S`
+  defaults to 0.1 s. New `run_periodic.py` and `hpc/periodic_v2.slurm` run a
+  long case with requests and its twin and compare them.
+- PODFoam: in a parallel run the mesh and the fields are gathered to the
+  master rank (`PythonGather.H`), which alone calls `mesh_func` and
+  `analysis_func`; the Python path includes the case root. `pod_image.py`
+  keeps one polygon per cell when a 2D patch lists both faces.
+- GPU scripts: 4-bit Qwen rows in `models.tsv`; `start_server.sh` passes
+  `LLM_IMAGE_MIN_TOKENS`; `window_test.slurm` runs `PICTURE_TEST_SCRIPT` and
+  loads `POD_HOST_MODULES`; `async_v2.slurm` runs only the sweep when
+  `POD_SUITE_RUN` is set. `pack_run.py` records sources changed since the
+  build instead of refusing to pack.
+- Tests: periodic requests, their records and refusals; 95 in the suite.
+- Runs: trend test (jobs 24903974, 24903975), 4-bit Qwen (24903976,
+  24903977), a cylinder flow (24903978 and the flow runs), a request every
+  250 steps over 24,000 steps (24903264), two repeats of the October 22
+  solver run (24903298, 24903263 with 24903755), MPI (24903786), POD files
+  (24903065), unstable-flow attempts. Report
+  [docs/results-20261027.md](docs/results-20261027.md), records in
+  [docs/evidence/2026-10-27-picture-tests/](docs/evidence/2026-10-27-picture-tests/README.md)
+  and [docs/evidence/2026-10-27-solver/](docs/evidence/2026-10-27-solver/README.md),
+  archives in the `tests-2026-10-27` release.
+- README, evidence index, pages index, `llm_demo/README.md` and
+  `hpc/README.md` give the results; open problems and next steps updated.
+
 ## 2026-10-22, v2 pictures from the running solver, random windows, Qwen models (runs from `354caf9` with uncommitted changes; published in `dee7731`)
 
 - New in `llm_demo/`: `readable_request.py` (the v2 request builder, moved out

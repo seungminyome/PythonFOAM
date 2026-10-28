@@ -247,7 +247,8 @@ steps, the describe request at step 250, sequence frames at 3000, 3250 and
 3750, the window x 0 to 0.12 m, y 0 to 0.04 m, then eleven sweep requests
 every 500 steps (`SWEEP_STEPS`, `SWEEP_PARALLEL`). `LLM_KILL_JOIN_S=0.2`:
 on these nodes a killed worker forked from the 0.5 GB solver takes about
-40 ms to be reaped, longer than the default 0.02 s. The developed state came
+40 ms to be reaped, longer than the default of then, 0.02 s (0.1 s since
+2026-10-27). The developed state came
 from `pimpleFoam` in the same image on the validation run's `fixed-pimple`
 case with only `controlDict` changed: 100 ms with an adaptive time step
 (`maxCo 0.5`, `maxDeltaT 5e-6`), written every 1 ms (job 24757429). Run on
@@ -260,6 +261,38 @@ On these nodes two timing unit tests (`test_image_rendered_when_request_disabled
 for the same reason, also with the code before these changes, and pass with
 `LLM_KILL_JOIN_S=0.2`; `test_connection_refused_is_reported_without_a_stall`
 sometimes exceeds its 0.5 s bound by a few hundredths of a second.
+
+## Runs of 2026-10-27
+
+From the repository root on MedicineBow, with the conda Python first on
+`PATH` (the system `python3` has no numpy) and the CUDA modules the
+source-built llama-server needs:
+
+```bash
+export PATH=<python 3 with numpy>/bin:$PATH POD_LLM_RUNTIME=$PWD/llm-runtime-12b
+export POD_HOST_MODULES="arcc/1.0 gcc/14.2.0 cuda-toolkit/12.8.0"
+# trend test (sequence_test.py set), Gemma and Qwen
+PICTURE_TEST_SET=<developed-sequence-test-20261027> PICTURE_TEST_SCRIPT=sequence_test.py \
+  sbatch --export=ALL,MODELS="12b 26b 31b" --account=<account> --partition=mb-a30 \
+  Solver_Examples/PODFoam/llm_demo/hpc/window_test.slurm
+# 4-bit Qwen with the recommended image tokens
+PICTURE_TEST_SET=<window set> LLM_IMAGE_TOKENS=1024 LLM_IMAGE_MIN_TOKENS=1024 LLM_CTX=8192 \
+  sbatch --export=ALL,MODELS="qwen3vl-32b-q4 qwen35-27b-q4 qwen35-35b-q4" --account=<account> \
+  --partition=mb-l40s Solver_Examples/PODFoam/llm_demo/hpc/window_test.slurm
+# a describe request every 250 steps, 24,000 steps, and its twin
+POD_SUITE_RUN=<pod-llm-async.XXXXXX of a PASSed async_v2.slurm run> \
+  sbatch --account=<account> --partition=mb-a30 Solver_Examples/PODFoam/llm_demo/hpc/periodic_v2.slurm
+```
+
+Jobs 24903974 to 24903978 (picture tests), 24903264 (periodic), 24903298 and
+24903263 (repeats of the October 22 suite with `async_v2.slurm`; with
+`POD_SUITE_RUN` set, `async_v2.slurm` runs only the sweep, as job 24903755
+did). The first two picture-test submissions that started stopped at once
+because `window_test.slurm` no longer loaded the CUDA module
+(`libcudart.so.12` not found); `POD_HOST_MODULES` was added for that. Results in the
+[report](../../../../docs/results-20261027.md), records in the
+[picture-test evidence](../../../../docs/evidence/2026-10-27-picture-tests/README.md)
+and the [solver evidence](../../../../docs/evidence/2026-10-27-solver/README.md).
 
 ## Tested on
 
@@ -301,7 +334,7 @@ isolated.
 
 `demo_12b.slurm` (the synchronous suite with OpenFOAM v2106 on the GPU node;
 the asynchronous suite ran in the v2212 image instead), the prebuilt CUDA
-binaries, `LLAMA_CUDA=13.4`, the L40S partition and the tarball layout of the
+binaries, `LLAMA_CUDA=13.4` and the tarball layout of the
 12B scripts (`picture_test.slurm` ran from its own bundle with the same layout
 on 2026-10-22).
 `start_server.sh` fails fast if the server does not answer `/health` within ten

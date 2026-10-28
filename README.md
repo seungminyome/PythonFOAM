@@ -6,7 +6,7 @@
 ![Python 3.10 | 3.12](https://img.shields.io/badge/python-3.10%20%7C%203.12-lightgrey)
 [![license](https://img.shields.io/badge/license-Argonne%20OSS-blue.svg)](LICENSE)
 
-[October 22, continued](docs/results-20261022-live.md) · [October 22 report](docs/results-20261022.md) · [October 20 report](docs/results-20261020.md) · [October 17 report](docs/results.md) · [Evidence](docs/evidence/README.md) · [How to run](Solver_Examples/PODFoam/llm_demo/README.md) · [Korean](https://github.com/seungminyome/PythonFOAM-Korean)
+[October 27](docs/results-20261027.md) · [October 22, continued](docs/results-20261022-live.md) · [October 22 report](docs/results-20261022.md) · [October 20 report](docs/results-20261020.md) · [October 17 report](docs/results.md) · [Evidence](docs/evidence/README.md) · [How to run](Solver_Examples/PODFoam/llm_demo/README.md) · [Korean](https://github.com/seungminyome/PythonFOAM-Korean)
 
 During a PODFoam run, a callback sends one step's numbers and a velocity/pressure
 image, or several images from along the run, to a vision-language model served
@@ -20,8 +20,14 @@ GPU node, eleven requests from a running solver, each with its own plotted
 window, placed the fastest flow within 10 % of the plotted range 9 times and
 the lowest pressure 10 times, where one fixed answer would be right 4 times;
 the written flow fields stayed identical to a run without requests
-([October 22, continued](docs/results-20261022-live.md)). How the flow
-changes over time is not read reliably yet.
+([October 22, continued](docs/results-20261022-live.md)). On October 27
+([report](docs/results-20261027.md)), with one picture per field on its own
+colour scale, 12B read whether the peak speed rose or fell in 29 of 30
+sequences with a clear change, where with the solver's old pictures no model
+did clearly better than one fixed answer; changes under 2 % are still
+misread. A describe request every 250 steps over 24,000 steps cost 0.7 % of
+run time on top of drawing the pictures, left every written file unchanged, and the answers followed the lowest-pressure spot as
+it moved between vortex cores (89 of 96 within 10 %). The observer also runs on 2 MPI ranks.
 
 <img src="docs/evidence/2026-10-17/pod-llm-demo.LRfJBN/fixed-pod/llm_observation/state.png" width="640" alt="|U| and p at step 5, the image sent to the model">
 
@@ -29,7 +35,7 @@ changes over time is not read reliably yet.
 
 ## Quick start
 
-Unit tests, no OpenFOAM or model needed (92 tests, about 45 s):
+Unit tests, no OpenFOAM or model needed (95 tests, about 50 s):
 
 ```bash
 pip install -r Solver_Examples/PODFoam/llm_demo/requirements.txt
@@ -103,13 +109,61 @@ sequenceDiagram
   developed flow state; `run_live_sweep.py` adds describe requests at several
   steps, each with its own random window; `window_test.py` builds picture sets
   with random windows.
+- `LLM_ANALYSIS_EVERY=N` sends a describe request every N steps (one in
+  flight at most), each recorded in its own folder. In an MPI run the mesh
+  and fields are gathered to the master rank, which alone calls the observer;
+  the POD snapshot and SVD stay per rank. `sequence_test.py` builds trend sets
+  from saved states, with the answer key's thresholds and the extrema in the
+  prompt if asked.
 - The October 17 measurements used revision `23089bb`; the October 20
   measurements used `9449085`, which added the modes, the asynchronous path
   and the plot window. The October 19 12B replay ran from `934da23`, whose
   request and scoring code equal `23089bb`. The October 22 picture test ran
   from `58e00d9`; the later October 22 runs from `354caf9` with uncommitted
   changes, published in `dee7731` with a review's fixes
-  ([records](docs/results-20261022-live.md#records)).
+  ([records](docs/results-20261022-live.md#records)). The October 27 runs used
+  `6afbdeb` to `ab6b943` ([records](docs/results-20261027.md#records)).
+
+## Measurements (2026-10-27, reading change, requests every 250 steps, MPI)
+
+Trend test: 45 three-time sequences of the developed flow, each with its own
+random window; right answers for the peak-speed / lowest-pressure trend
+(Slurm jobs 24903974 and 24903975):
+
+| Model | Solver's v1 pictures | v2, own colour scale per picture | v2 + extrema in the note | Extrema only, no pictures |
+|---|---:|---:|---:|---:|
+| Gemma 4 12B | 14 / 15 | 32 / 28 | 33 / 28 | 32 / 28 |
+| Gemma 4 26B-A4B | 16 / 19 | 31 / 36 | 33 / 33 | 36 / 37 |
+| Gemma 4 31B | 18 / 20 | 32 / 33 | 37 / 41 | 35 / 42 |
+| Qwen3.5-35B-A3B Q8_0 | 15 / 18 | 31 / 32 | 32 / 28 | 34 / 33 |
+| One fixed answer | 15 / 20 | 15 / 20 | 15 / 20 | 15 / 20 |
+
+Out of 45. On the 30 sequences whose peak speed changed by at least 2 %,
+12B with v2 pictures was right in 29; most errors are changes under 2 %.
+With the extrema in the note 31B read every clear speed change.
+
+A describe request every 250 steps, 24,000 steps of 5×10⁻⁶ s from the
+developed flow, Gemma 4 12B on an NVIDIA A30 (job 24903264): 96 of 96
+answered, 2,016 of 2,016 written files identical to the same run without
+requests (which drew the same pictures), 0.7 % more wall time per step, at
+most 0.017 s in the callback at a request step (the last step waits for the
+pending reply by design); lowest pressure within 10 % in 89 of 96 (one fixed answer 65),
+and the answered position follows the lowest-pressure spot as it moves
+between vortex cores (correlation 0.78 in x).
+
+- 4-bit Qwen with the image-token setting llama.cpp recommends:
+  Qwen3.5-35B-A3B and 27B placed the fastest flow of the developed flow in
+  133 and 128 of 140 pictures, Gemma 4 106 to 113 (October 22).
+- A cylinder flow (`offsetCylinder`, OpenFOAM-9 tutorial): the fastest flow
+  in 32 to 39 of 40 pictures for 12B, 26B-A4B and 31B; the lowest pressure,
+  a small spot beside a large dark wake, in 38 of 40 for 31B and 18 for 12B.
+- Two repeats of the October 22 solver run on one A30 node gave identical
+  answers to each other; against the first run on an RTX A6000 the request
+  bodies were identical and the answers differed in text and in some
+  positions, with the same counts within 10 %.
+- MPI, 2 ranks: the frame has the same cells as the serial run's, centres
+  equal to 4×10⁻¹⁷ m. The small POD mode-file differences of October 22 come
+  from the BLAS thread count (identical with one thread).
 
 ## Measurements (2026-10-22, v2 pictures from the running solver)
 
@@ -269,32 +323,32 @@ wrong.
 
 1. Answer accuracy. With E2B, the default model, the descriptions are not
    usable. With v2 pictures, 12B and larger models place the fastest flow and
-   the lowest pressure within 10 % in most pictures, also with random windows
-   and from a running solver (9 and 10 of 11). How the flow changes is not
-   read reliably: the live sequence answer had the pressure trend wrong, and
-   in replays 12B read the saved flow's pressure trend the wrong way round in
-   11 of 14 sequences. Two of eleven live positions were off where the picture
-   had two similar extremes or a near-uniform bright region.
-2. Cost measurement. Latencies depend on the server's prompt cache (26 to
-   33 s for one image with only the first 266 tokens cached, 14 to 18 s with
-   nearly all cached; 11 to 45 s for three), so the time cost of an image is
-   still not isolated.
-3. Scope. One serial 2D laminar case (a backward-facing step, from start-up
-   to a developed flow with shedding), one request in flight at a time, each
-   live case run once. MPI, 3D, other cases and the contribution of the SVD
-   summary have not been tested.
+   the lowest pressure within 10 % in most pictures, also from a running
+   solver and over a long run. With each picture on its own colour scale,
+   12B reads clear changes in peak speed (29 of 30) but misses most changes
+   under 2 %; the other models also miss clear changes (17 to 25 of 30), and
+   only 31B with the numbers alone read every clear change. A small extreme
+   next to a large region of similar colour (the cylinder's pressure) is
+   missed by 12B.
+2. Repeatability across hardware. The same request gives the same answer on
+   the same node; on another GPU the text and some positions change.
+3. Scope. 2D laminar cases (a backward-facing step, a cylinder), 2 MPI ranks
+   without a model request, one request in flight at a time. 3D, more ranks
+   and a run that goes unstable have not been tested.
+4. Memory. Over 24,000 steps the solver process grows by 70 to 85 MiB, with
+   or without requests; about 32 MiB is the callback's per-step history kept
+   for its telemetry file, the rest is not traced.
 
 ## Next steps
 
-1. Ask for trends with the 2 % threshold in the prompt, on sequences of the
-   developed flow, where the trend words vary.
-2. Allow more than one request in flight and a request every N steps, and
-   measure memory and the pipe traffic over a long run.
-3. Compare model families at equal settings (Qwen with its recommended image
-   tokens, 4-bit files for both).
-4. Prepare the callback hooks, the v2 pictures and request builder, the
-   asynchronous path and their tests as a contribution to PythonFOAM.
-5. Re-measure the time cost of the image under controlled cache conditions.
+1. Compute the trend words in the callback from the arrays and ask the model
+   only what the pictures add.
+2. A 3D case, more ranks, a parallel run with a request.
+3. Write the telemetry as the run goes instead of keeping every step's
+   state; trace the rest of the memory growth.
+4. A flow that goes wrong slowly, recorded, to test whether a model notices.
+5. Open the contribution to PythonFOAM: hooks, MPI gather, v2 pictures,
+   request builder, asynchronous and periodic paths, tests.
    Scripts for the GPU nodes are in [llm_demo/hpc/](Solver_Examples/PODFoam/llm_demo/hpc/README.md).
 
 ## Repository layout
@@ -303,9 +357,12 @@ wrong.
 Solver_Examples/PODFoam/      PODFoam solver (OpenFOAM v2106, also built in v2212) with the callback hooks
   validation/                 bridge check: ten steps, SVD round trip, verify.py
   llm_demo/                   callback module, llama-server client, v2 picture and request builder, five-case runners (sync and async),
-                              describe sweep, replay benchmarks (paired, describe, sequence), picture-reading and random-window tests,
-                              unit tests, requirements.txt
-  llm_demo/hpc/               Slurm scripts for GPU nodes: the 12B paired replay, the picture tests and the v2 solver run (all run on MedicineBow)
+                              describe sweep, requests every N steps, replay benchmarks (paired, describe, sequence), picture-reading,
+                              random-window and trend tests, unit tests, requirements.txt
+  llm_demo/hpc/               Slurm scripts for GPU nodes: the 12B paired replay, the picture tests, the v2 solver run and the periodic run (all run on MedicineBow)
+docs/results-20261027.md      October 27: trend test, 4-bit Qwen, a cylinder flow, requests every 250 steps, repeats, MPI, POD files
+docs/evidence/2026-10-27-picture-tests/  its picture tests (five Slurm jobs) and the cylinder runs: answers, keys, recount, hash manifest
+docs/evidence/2026-10-27-solver/         its solver runs: periodic run, repeats, MPI, POD files, unstable attempts, hash manifest
 docs/results-20261022-live.md October 22, continued: v2 pictures from the running solver, random windows, Qwen models
 docs/evidence/2026-10-22-live-v2/       its solver run (Slurm job 24757460): frames, bodies, replies, logs, check script, hash manifest
 docs/evidence/2026-10-22-window-test/   its picture tests (six Slurm jobs) and the developed flow: answers, keys, recount, hash manifest
@@ -329,12 +386,14 @@ Other directories (`APMOSFoam`, `AEFoam`, `PINNFoam`, `TurbulenceModel_Examples`
 
 ## More
 
+- [October 27](docs/results-20261027.md): reading change, 4-bit Qwen, a cylinder flow, a request every 250 steps, repeats, MPI
 - [October 22, continued](docs/results-20261022-live.md): v2 pictures from the running solver with 12B, random windows, a developed flow, Qwen models
 - [October 22 report](docs/results-20261022.md): picture-reading test, seven Gemma 4 models from E2B to 31B, two picture styles
 - [October 20 report](docs/results-20261020.md): asynchronous runs, one-snapshot and sequence replays, caveats
 - [October 17 report](docs/results.md): synchronous conditions, paired image/no-image replay
 - [12B replay](docs/results.md#same-replay-with-gemma-4-12b-on-a-gpu-2026-10-19): the October 17 paired requests, Gemma 4 12B on a GPU node
 - [Evidence](docs/evidence/README.md): raw requests and responses, logs, verification results, hash manifests
+- October 27 downloads: [tests-2026-10-27](https://github.com/seungminyome/PythonFOAM/releases/tag/tests-2026-10-27) (the five picture jobs and two new test sets, the cylinder runs, the periodic run's requests, replies and frames, the MPI and POD-file runs)
 - Picture test downloads: [October 22](https://github.com/seungminyome/PythonFOAM/releases/tag/picture-test-2026-10-22) (the 308 requests with their answer key, the random-window sets, and every reply of the seven jobs)
 - v2 solver run downloads: [October 22](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-v2-2026-10-22) (every written time directory of the five cases and the eleven sweep cases, the trial run, the developed flow and the job records)
 - Full run downloads: [October 20](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-async-2026-10-20), [October 17](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-tests-2026-10-17) (all saved results of the five-case runs and the executed sources, no model weights; the time directories of the October 20 windowed frame run are not included)

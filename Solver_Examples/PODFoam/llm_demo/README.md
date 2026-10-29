@@ -56,8 +56,16 @@ cell centres), U and p, plus `mesh_cells`, `polygon_points` and
 where it came from, whether it was moved, cells in the slice and in the mesh).
 The request is built as for 2D; neither the pictures nor the request say that
 they show a slice. An unreadable `LLM_SLICE_Z` or a plane that cuts no cells
-leaves the solver running and v2 requests refused with the reason. v1
-pictures of a 3D case keep the nearest-cell raster of all cells. Tested on
+leaves the solver running and v2 requests refused with the reason, and so
+do slice polygons that fail the checks of `pod_image.plane_slice`. v1
+pictures of a 3D case keep the nearest-cell raster of all cells. The slice
+shows the cut cells' own U and p (|U| includes Uz), not values interpolated
+to the plane; with `LLM_SLICE_Z=0.002` in the test case the cut cells'
+centres are at z = 0.00238 m. A 3D case needs the `python_module.py` of
+2026-10-28 or later: an older `mesh_func` takes seven arguments, fails on
+the eighth, and leaves the case without pictures. Wedge (axisymmetric)
+meshes and single-layer meshes bounded by symmetry or cyclic patches have no
+`empty` patch either and would be cut at mid z; they were not tried. Tested on
 the step case extruded to 8 cells in z, serially and on 2 ranks
 ([evidence](../../../docs/evidence/2026-10-28-3d/README.md)); not tested on
 other 3D meshes or with a model.

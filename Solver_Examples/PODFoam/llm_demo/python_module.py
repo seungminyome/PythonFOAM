@@ -270,8 +270,15 @@ def mesh_func(centres, volumes, solution_d, rank, poly_points=None, poly_offsets
         raise ValueError("mesh_func expects centres (cells,3) and volumes (cells,)")
     if not (np.isfinite(centres).all() and np.isfinite(volumes).all()):
         raise ValueError("nonfinite mesh geometry")
-    plane = (None if slice_plane is None else
-             pod_image.plane_slice(poly_points, poly_offsets, poly_cells, centres, slice_plane))
+    plane = None
+    if slice_plane is not None:
+        try:
+            plane = pod_image.plane_slice(poly_points, poly_offsets, poly_cells, centres, slice_plane)
+        except ValueError as error:
+            # polygons that fail the checks refuse v2 pictures only; v1 keeps its raster
+            unusable = {k: v for k, v in dict(slice_plane).items() if k != "normal"}
+            plane = pod_image.plane_slice(None, None, None, centres,
+                                          dict(unusable, z_m=None, error=f"slice polygons rejected: {error}"))
     backend = pod_image.prepare_backend(_case)
     _geometry = {"centres": centres, "volumes": volumes, "polygons": polygons,
                  "solution_d": [int(v) for v in solution_d], "rank": int(rank),

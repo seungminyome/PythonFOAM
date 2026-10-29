@@ -159,7 +159,22 @@ a slice; the frame metadata does.
 - Sequence mode and v1 pictures of a 3D case in the solver (sequence: unit
   test with synthetic geometry only; v1 keeps its raster, not run).
 - Other OpenFOAM versions than v2212 (the code was not compiled for v2106 or
-  openfoam.org), more than 2 ranks, more than one node.
+  openfoam.org; `PythonSlice.H` is included in every build, so a v2106
+  compile failure would also hit 2D cases), more than 2 ranks, more than one
+  node.
+- Wedge meshes and single-layer meshes bounded by symmetry or cyclic patches,
+  which have no `empty` patch and would be cut at mid z. On a graded or
+  unstructured mesh the plane is moved halfway to the nearest point plane
+  above once and not checked again.
+- A `python_module.py` older than this branch: its `mesh_func` takes seven
+  arguments and fails on the eighth, so such a 3D case gets no pictures (on
+  `main` before this branch it got the v1 raster).
+- A review on 2026-10-29 (jobs 24936879, 24936904 and 24936930) reran the
+  comparisons (same results) and ran 2-rank cases where one rank cuts no
+  cells (`LLM_SLICE_Z` 0.002 and 0.012 with a decomposition in z): correct
+  frames. It also found that PODFoam stops at the second SVD ("Expected SVD
+  shape") when fields are written more often than every 5 steps; this is on
+  `main` already and does not concern the runs here (written every 50).
 
 ## Files
 

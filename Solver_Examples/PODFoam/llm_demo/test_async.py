@@ -804,10 +804,17 @@ class PlaneSliceTests(unittest.TestCase):
 
     def test_a_3d_case_without_a_usable_slice_refuses_v2_pictures_and_runs_on(self):
         for plane, cut, message in ((dict(SLICE_PLANE, z_m=1.0), SLICE_CUT[:0], "cuts no cells"),
-                                    (None, None, "one polygon per cell")):
+                                    (None, None, "one polygon per cell"),
+                                    ("off-plane", SLICE_CUT, "slice polygons rejected")):
             harness = SliceHarness({"LLM_MODE": "describe", "LLM_ENABLED": "0"})
             try:
-                if plane is None:   # a solver that passes no slice (before 2026-10-28)
+                if plane == "off-plane":   # polygons that fail plane_slice's checks: no exception
+                    points, offsets = square_polygons(harness.centres[cut, :2], 0.002)
+                    count = harness.callback.mesh_func(harness.centres, np.full(40, 1e-9), (1, 1, 1), 0,
+                                                       points, offsets, cut, dict(SLICE_PLANE))
+                    self.assertEqual(count, 40)
+                    self.assertIn("do not lie in the plane", harness.callback._geometry["slice"]["reason"])
+                elif plane is None:   # a solver that passes no slice (before 2026-10-28)
                     harness.callback.mesh_func(harness.centres, np.full(40, 1e-9), (1, 1, 1), 0,
                                                np.zeros((0, 3)), np.zeros(1, dtype=np.int64),
                                                np.zeros(0, dtype=np.int64))

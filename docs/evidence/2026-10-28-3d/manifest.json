@@ -22,8 +22,8 @@
    "path": "README.md",
    "source": "written for this folder",
    "kind": "derived",
-   "bytes": 12020,
-   "sha256": "eb7d5cd0713b40f7328ea8b3a16b6206fee687d34c072d53fd107a4b92584ea1"
+   "bytes": 13028,
+   "sha256": "af60eeeb4f5038c79c9003dfb7f4f17bdbcd6b8d0d234ebe3e98feb3f32362b0"
   },
   {
    "path": "badz3d/llm_result.json",
@@ -77,7 +77,7 @@
   },
   {
    "path": "compare_3d.py",
-   "source": "run by the job script (Slurm 24929629; also 24929484 and 24929500)",
+   "source": "run by the job script (Slurm 24929629, also 24929500; job 24929484 ran an earlier version with a 1e-12 m tolerance)",
    "kind": "byte-preserved",
    "bytes": 12418,
    "sha256": "ffc2abec6d8404b09ac891803291d4ec78b9144fb8379fc62b9be94c945bb52b"
@@ -105,7 +105,7 @@
   },
   {
    "path": "make_case3d.py",
-   "source": "run by the job script (Slurm 24929629; also 24929484 and 24929500)",
+   "source": "run by the job script (Slurm 24929629, also 24929500; job 24929484 ran an earlier version with a 1e-12 m tolerance)",
    "kind": "byte-preserved",
    "bytes": 8027,
    "sha256": "c7b80efbc8d8c2da6a6c9ec22d2f32eb3debce42dfb9fe428b3b2aed631a8309"
@@ -271,14 +271,14 @@
   },
   {
    "path": "slice_test.sbatch",
-   "source": "the job script as submitted (Slurm 24929629; also 24929484 and 24929500)",
+   "source": "the job script as submitted (Slurm 24929629, also 24929500; job 24929484 ran an earlier version)",
    "kind": "byte-preserved",
    "bytes": 1806,
    "sha256": "00172fdce03b43f77f0515968fa9a945d773df9ef8b6c220d659b6ee99e976df"
   },
   {
    "path": "slice_test_inner.sh",
-   "source": "the job script as submitted (Slurm 24929629; also 24929484 and 24929500)",
+   "source": "the job script as submitted (Slurm 24929629, also 24929500; job 24929484 ran an earlier version)",
    "kind": "byte-preserved",
    "bytes": 5278,
    "sha256": "a4029bfef1c62561ac0c714660a0a6f540de6ca7ffd4673cf963d27cc8989a68"

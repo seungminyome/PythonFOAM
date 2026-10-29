@@ -71,6 +71,14 @@ hash) without comparing it, and was run again on the same folder (Slurm job
   memory.py's replay of recorded states, without a solver.
 - One run per case on one CPU node; append times on the GPU nodes of the
   earlier runs are not measured. Two ranks only.
+- The new checks in `verify_async.py` (computed trend words, their
+  agreement with the model, the `t` and `tn` request forms) have run only on
+  the October 22 suite, which has none of these, so they took the default
+  path there; `compare.py` made the equivalent checks on the runs above. The
+  `t` form and the synchronous v2 sequence path ran in unit tests only.
+- Unit tests after the evidence commit: 107 OK on `237bcdf` (Slurm 24929611);
+  108 OK on `b63c990` with TMPDIR on node-local disk (24929726) and on NFS
+  (24929736). Their outputs are not kept here.
 
 ## Files
 

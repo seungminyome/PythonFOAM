@@ -244,8 +244,11 @@ the whole set. `hpc/window_test.slurm` runs a set on a GPU node.
 
 `instability_test.py build --design <design.json> --centres <fields.npz>
 --output <set>` takes pimpleFoam runs: case folders with `log.pimpleFoam`
-and the written time directories, all on one mesh. A run whose log has no
-`End` line crashed in its last logged step. Its triples ending 1 to
+and the written time directories, all on one mesh. A run whose log has an
+`End` line ended. A run whose log has the stack trace of a floating point
+exception (`Foam::sigFpe`) and no `End` crashed in its last logged step. Any
+other log (a run still going, or stopped by a time limit, by hand or by
+another error) is refused. The triples of a crashed run ending 1 to
 `--within` (default 10) steps before the crash are labelled `unstable` and
 scored; the design's `early_steps_to_crash` add triples further back, not
 scored, to show how early an answer turns. A run that ended gives `stable`
@@ -262,13 +265,19 @@ request: `LLM_MODE` has no such value. `check` and `run` work as in
 `picture_test.py`. `report` gives the balanced score, `unstable` answers by
 steps before the crash, answers by run, the fixed answer and two baselines
 from the arrays (growth of the peak |U| and of the largest cell-to-cell |U|
-jump in the window, first to last frame). `hpc/window_test.slurm` runs it
+jump in the window, first to last frame). It refuses run folders made with
+different answer keys. `hpc/window_test.slurm` runs it
 with `PICTURE_TEST_SCRIPT=instability_test.py`. Tests:
 `test_instability_test.py`. Run on 2026-10-28
 ([evidence](../../../docs/evidence/2026-10-28-instability/README.md)): four
 models said `unstable` only where the peak |U| had grown by 30.8 % or more,
 mostly in the frame where the field had already blown up, and never for a
-run that did not crash; a rule on the peak |U| alone scored as well.
+run that did not crash; a rule on the peak |U| alone scored as well. That
+set has a flaw: each request states the frames' steps and times (note,
+captions, picture titles), and the frames of the crashed runs are 2×10⁻⁵ to
+1.2×10⁻⁴ s apart against 2×10⁻⁴ to 2×10⁻³ s in the runs that ended, so the
+stated times alone separate the classes. A new set should space the frames
+equally in both classes or leave the times out.
 
 ## Replaying saved frames (describe and sequence)
 

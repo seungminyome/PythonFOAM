@@ -4,21 +4,23 @@
   "window-test-24929533",
   "window-test-24929534",
   "build 24929495",
-  "flow runs 24929408, 24929449, 24929452 (and 24929300, 24903182, 24903082 used as they were)"
+  "flow runs 24929408, 24929449, 24929452 (and 24929300, 24903182, 24903082 used as they were)",
+  "checks after the review 24929764 (24929739 cancelled)"
  ],
  "notes": [
   "Sources are paths under /cluster/medbow/gscratch/syome/github_repos/ on MedicineBow, or 'written for this folder'.",
   "Files of kind gzip copy are gzip -9 copies (no name, mtime 0) of the named source; source_sha256 is the hash of the uncompressed bytes.",
   "pictures/ holds PNG bytes decoded from the base64 image_url parts of the named request body.",
-  "Every byte-preserved file with a named path was compared with its source when this manifest was written."
+  "Every byte-preserved file with a named path was compared with its source when this manifest was written.",
+  "Added after the review (commit after 660f8c4): flow/domain-max.json, job/review_checks_20261028.sbatch, job/review-checks-24929764.out and job/sacct.txt; independent-recount.py and .json and flow/domain_max.py changed or added in 660f8c4."
  ],
  "files": [
   {
    "path": "README.md",
    "source": "written for this folder",
    "kind": "derived",
-   "bytes": 20591,
-   "sha256": "7d27fb176bdcf2c6a0e0063ae294436bf96bb9b1deb83fdb6ebafd839f6d565c"
+   "bytes": 28833,
+   "sha256": "c1114c221b83d9f4c56d799239c5097afcbc29883b1ef947a1dc5a01aad62966"
   },
   {
    "path": "flow/cases/0.U",
@@ -117,6 +119,13 @@
    "kind": "byte-preserved",
    "bytes": 500,
    "sha256": "33e18fd05e6ba93ae66448b02b2aa89b5469ff7d7a92b0c80d0ab915a99a7ac0"
+  },
+  {
+   "path": "flow/domain-max.json",
+   "source": "flow/domain_max.py (job 24929764) applied to the U files named in test-set/manifest.json (extra.flow_states; their SHA-256 checked) and flow-states-20261022/long-100ms/0.1/U, with the mesh of flow-states-20261028/central-dt2e-5-long/constant/polyMesh and the cell centres named in test-set/manifest.json",
+   "kind": "derived",
+   "bytes": 89434,
+   "sha256": "7afcbaa25e72a8c571c85166ea3d33be68514dddf7432754abc85f5592d37966"
   },
   {
    "path": "flow/domain_max.py",
@@ -267,6 +276,27 @@
    "kind": "byte-preserved",
    "bytes": 1167,
    "sha256": "b7d6a805852077c41a581dd1f96ac54cedb199f735e34c756bb82dba12432f37"
+  },
+  {
+   "path": "job/review-checks-24929764.out",
+   "source": "picture-test-20261021/review-checks-24929764.out (Slurm output of job 24929764)",
+   "kind": "byte-preserved",
+   "bytes": 2711,
+   "sha256": "efa9588f43841be014501bc27f9ab3fe892d46e0f01abea027200d9ab64db576"
+  },
+  {
+   "path": "job/review_checks_20261028.sbatch",
+   "source": "picture-test-20261021/review_checks_20261028.sbatch (the script submitted as job 24929764; written for this folder)",
+   "kind": "byte-preserved",
+   "bytes": 4310,
+   "sha256": "593f3939ca5948a3be7a52d58a12689f4d07438bc4fce57c0e170286ea67e366"
+  },
+  {
+   "path": "job/sacct.txt",
+   "source": "sacct -X -j 24757429,24903082,24903182,24929300,24929408,24929449,24929452,24929495,24929533,24929534,24929739,24929764 --format=JobID,JobName%28,Account,Partition,NodeList%14,Start,End,State,ExitCode, run on the login node on 2026-10-28 after job 24929764 (times MDT)",
+   "kind": "derived",
+   "bytes": 1960,
+   "sha256": "09e36021e053515f0f55a0b13bbde6fa0e97653f54d23c95e2275329f1a383b9"
   },
   {
    "path": "job/window-test-24929533.out",

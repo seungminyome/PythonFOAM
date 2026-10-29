@@ -25,6 +25,13 @@ frame folder is never overwritten: rerunning in a case folder that already
 holds llm_observation/step-NNNNNN from an earlier run is refused rather than
 sending that earlier picture. observe always sends the v1 picture.
 
+v2 pictures of a 3D case (2026-10-28) show a plane slice: the solver cuts the
+mesh with the plane z = LLM_SLICE_Z (default the middle of the z range, moved
+off mesh points) and passes one polygon per cut cell. The v2 frame then holds
+the slice cells only (centres, U, p, polygons and their mesh cells) and its
+metadata records the slice ("slice": z, number of cells); the request is built
+as for 2D.
+
 LLM_ANALYSIS_EVERY=N (2026-10-27; describe with v2 pictures only) sends a
 describe request at LLM_ANALYSIS_STEP and every N steps after it, as long as
 fewer than LLM_ASYNC_MAX_PENDING requests are pending (otherwise that step is
@@ -276,29 +283,47 @@ def _finite_features(value):
 
 
 def mesh_func(centres, volumes, solution_d, rank, poly_points=None, poly_offsets=None,
-              poly_cells=None):
+              poly_cells=None, slice_plane=None):
     """Called once from PythonCreate.H with the mesh geometry.
 
     poly_* describe one polygon per cell for 2D cases (faces of the empty
-    patch); without them the renderer falls back to a raster. matplotlib is
+    patch); without them the renderer falls back to a raster. For a 3D case
+    the solver passes slice_plane, and poly_* are then the polygons of that
+    plane slice, one per cut cell (pod_image.plane_slice): v2 pictures show the
+    slice cells only, v1 pictures keep the raster of all cells. matplotlib is
     imported here so the import does not land inside the time loop.
     """
     global _geometry
     import pod_image
     centres = np.array(centres, dtype=float, copy=True)
     volumes = np.array(volumes, dtype=float, copy=True)
-    polygons = pod_image.cell_polygons(poly_points, poly_offsets, poly_cells, centres.shape[0])
+    polygons = (pod_image.cell_polygons(poly_points, poly_offsets, poly_cells, centres.shape[0])
+                if slice_plane is None else None)
     if centres.ndim != 2 or centres.shape[1] != 3 or volumes.shape != (centres.shape[0],):
         raise ValueError("mesh_func expects centres (cells,3) and volumes (cells,)")
     if not (np.isfinite(centres).all() and np.isfinite(volumes).all()):
         raise ValueError("nonfinite mesh geometry")
+    plane = None
+    if slice_plane is not None:
+        try:
+            plane = pod_image.plane_slice(poly_points, poly_offsets, poly_cells, centres, slice_plane)
+        except ValueError as error:
+            # polygons that fail the checks refuse v2 pictures only; v1 keeps its raster
+            unusable = {k: v for k, v in dict(slice_plane).items() if k != "normal"}
+            plane = pod_image.plane_slice(None, None, None, centres,
+                                          dict(unusable, z_m=None, error=f"slice polygons rejected: {error}"))
     backend = pod_image.prepare_backend(_case)
     _geometry = {"centres": centres, "volumes": volumes, "polygons": polygons,
                  "solution_d": [int(v) for v in solution_d], "rank": int(rank),
                  "backend": dict(backend)}
-    print(f"PYTHON LLM mesh geometry received: cells={centres.shape[0]} "
-          f"cell_polygons={0 if polygons is None else len(polygons['cells'])} "
-          f"solution_d={_geometry['solution_d']} backend_ready={backend['ready']} "
+    if plane is not None:
+        _geometry["slice"] = plane
+    line = (f"PYTHON LLM mesh geometry received: cells={centres.shape[0]} "
+            f"cell_polygons={0 if polygons is None else len(polygons['cells'])} ")
+    if plane is not None:
+        line += (f"slice_cells={plane['record']['cells']} slice_z_m={plane['record']['z_m']} "
+                 + (f"slice_unusable={plane['reason']!r} " if plane["reason"] else ""))
+    print(line + f"solution_d={_geometry['solution_d']} backend_ready={backend['ready']} "
           f"backend_import_wall_s={backend['import_wall_s']:.3f}", flush=True)
     return int(centres.shape[0])
 
@@ -453,11 +478,18 @@ def _frame_sentinel():
 
 
 def _v2_ranges():
-    """Plotted range and domain extent, [[x0, x1], [y0, y1]] in metres, of v2 pictures."""
+    """Plotted range and domain extent, [[x0, x1], [y0, y1]] in metres, of v2 pictures.
+
+    For a 3D case the domain is that of the slice cells (the slice lies in x-y).
+    """
     import pod_image
-    centres = _geometry["centres"]
-    if pod_image.projection_axes(centres, _geometry["solution_d"]) != [0, 1]:
-        raise ValueError("v2 pictures need a 2D case in the x-y plane")
+    plane = _geometry.get("slice")
+    if plane is not None:
+        centres = plane["centres"]
+    else:
+        centres = _geometry["centres"]
+        if pod_image.projection_axes(centres, _geometry["solution_d"]) != [0, 1]:
+            raise ValueError("v2 pictures need a 2D case in the x-y plane")
     domain = [[float(centres[:, 0].min()), float(centres[:, 0].max())],
               [float(centres[:, 1].min()), float(centres[:, 1].max())]]
     x_window = pod_image.parse_window(os.environ.get("LLM_IMAGE_XRANGE"))
@@ -466,36 +498,58 @@ def _v2_ranges():
 
 
 def _render_v2(state, directory):
-    """One v2 frame of this step (readable_request.render_frame); returns (frame, metadata)."""
+    """One v2 frame of this step (readable_request.render_frame); returns (frame, metadata).
+
+    A 3D case draws its plane slice: the frame holds the slice cells only (their
+    centres, U, p and polygons) and its metadata says where the slice is.
+    """
     import pod_image
     import readable_request
-    if _geometry is None or _geometry["polygons"] is None:
+    plane = None if _geometry is None else _geometry.get("slice")
+    if plane is not None and plane["reason"]:
+        raise ValueError("v2 pictures of a 3D case need a plane slice: " + plane["reason"])
+    if plane is None and (_geometry is None or _geometry["polygons"] is None):
         raise ValueError("v2 pictures need one polygon per cell (a 2D case with an empty patch)")
     if not pod_image._backend["ready"]:
         raise RuntimeError(f"matplotlib is not ready: {pod_image._backend['error']}")
     plotted, domain = _v2_ranges()
+    view = "full" if plotted == domain else "window"
+    if plane is None:
+        return readable_request.render_frame(
+            directory, _geometry["centres"], _geometry["polygons"], _latest_velocity,
+            _latest_pressure, plotted, int(state["step"]), float(state["time_s"]),
+            view=view, domain_extent=domain)
+    cells = _geometry["centres"].shape[0]
+    if _latest_velocity.shape != (cells, 3) or _latest_pressure.shape != (cells,):
+        raise ValueError(f"U {_latest_velocity.shape} and p {_latest_pressure.shape} are not "
+                         f"the {cells} cells of the mesh")
+    rows = plane["mesh_cells"]
     return readable_request.render_frame(
-        directory, _geometry["centres"], _geometry["polygons"], _latest_velocity,
-        _latest_pressure, plotted, int(state["step"]), float(state["time_s"]),
-        view="full" if plotted == domain else "window", domain_extent=domain)
+        directory, plane["centres"], plane["polygons"], _latest_velocity[rows],
+        _latest_pressure[rows], plotted, int(state["step"]), float(state["time_s"]),
+        view=view, domain_extent=domain,
+        plane_slice={"record": plane["record"], "mesh_cells": rows})
 
 
 def _v2_frame_record(frame, metadata):
     """What llm_request.json and llm_result.json keep about a v2 frame."""
     directory = Path(frame["directory"])
-    return {"style": metadata["style"], "view": metadata["view"], "directory": str(directory),
-            "step": metadata["step"], "time_s": metadata["time_s"], "cells": metadata["cells"],
-            "projection_axes": metadata["projection_axes"],
-            "plotted_range_m": metadata["plotted_range_m"],
-            "domain_extent_m": metadata["domain_extent_m"],
-            "fields_npz": str(directory / metadata["fields_npz"]),
-            "fields_sha256": metadata["fields_sha256"],
-            "images": {image["field"]: {"path": str(directory / image["path"]),
-                                        "sha256": image["sha256"], "bytes": image["bytes"],
-                                        "width": image["width"], "height": image["height"],
-                                        "colour_range": image["colour_range"],
-                                        "colour_range_shared": image["colour_range_shared"]}
-                       for image in metadata["images"]}}
+    record = {"style": metadata["style"], "view": metadata["view"], "directory": str(directory),
+              "step": metadata["step"], "time_s": metadata["time_s"], "cells": metadata["cells"],
+              "projection_axes": metadata["projection_axes"],
+              "plotted_range_m": metadata["plotted_range_m"],
+              "domain_extent_m": metadata["domain_extent_m"],
+              "fields_npz": str(directory / metadata["fields_npz"]),
+              "fields_sha256": metadata["fields_sha256"],
+              "images": {image["field"]: {"path": str(directory / image["path"]),
+                                          "sha256": image["sha256"], "bytes": image["bytes"],
+                                          "width": image["width"], "height": image["height"],
+                                          "colour_range": image["colour_range"],
+                                          "colour_range_shared": image["colour_range_shared"]}
+                         for image in metadata["images"]}}
+    if "slice" in metadata:
+        record["slice"] = metadata["slice"]
+    return record
 
 
 # The answer key of the picture tests, for the frames of a v2 sequence. The case folder
@@ -881,6 +935,8 @@ def _analysis_worker(state, context, events, ack_fd, parent_only_fds):
             summary["image"] = {k: image_meta[k] for k in (
                 "style", "view", "time_s", "step", "cells", "projection_axes",
                 "plotted_range_m", "domain_extent_m")}
+            if "slice" in image_meta:
+                summary["image"]["slice"] = image_meta["slice"]
         elif image is not None:
             context["image_input"] = True
             context["text_input_only"] = False

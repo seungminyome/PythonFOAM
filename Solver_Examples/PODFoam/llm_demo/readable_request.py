@@ -134,17 +134,28 @@ def frame_from_metadata(directory, meta):
 
 
 def render_frame(directory, centres, polygons, velocity, pressure, plotted, step, time_s, *,
-                 view, domain_extent, colour_ranges=None):
+                 view, domain_extent, colour_ranges=None, plane_slice=None):
     """Write one v2 frame (arrays, |U| and p pictures, metadata last); return (frame, meta).
 
     centres (cells, 3) with x and y as the plotted axes; plotted and domain_extent are
     [[x0, x1], [y0, y1]] in metres; colour_ranges maps 'U'/'p' to a shared [low, high],
     otherwise each picture uses its own minimum and maximum inside the plotted range.
+    plane_slice ({"record", "mesh_cells"}) marks the frame of a 3D case's plane slice:
+    the cells given are the slice cells, fields.npz also keeps their mesh cells and
+    polygons (mesh_cells, polygon_points, polygon_offsets) and the metadata gets
+    "slice" (the record). Without it the frame is written as before, byte for byte.
     """
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=False)
-    np.savez_compressed(directory / "fields.npz", centres=centres, U=velocity, p=pressure,
-                        time_s=np.array(float(time_s)), step=np.array(int(step)))
+    if plane_slice is None:
+        np.savez_compressed(directory / "fields.npz", centres=centres, U=velocity, p=pressure,
+                            time_s=np.array(float(time_s)), step=np.array(int(step)))
+    else:
+        np.savez_compressed(directory / "fields.npz", centres=centres, U=velocity, p=pressure,
+                            time_s=np.array(float(time_s)), step=np.array(int(step)),
+                            mesh_cells=np.asarray(plane_slice["mesh_cells"], dtype=np.int64),
+                            polygon_points=polygons["points"],
+                            polygon_offsets=polygons["offsets"])
     fields_sha = _file_sha256(directory / "fields.npz")
     speed = np.linalg.norm(velocity, axis=1)
     ranges = colour_ranges or {}
@@ -157,12 +168,18 @@ def render_frame(directory, centres, polygons, velocity, pressure, plotted, step
             "plotted_range_m": {"x": plotted[0], "y": plotted[1]},
             "domain_extent_m": {"x": domain_extent[0], "y": domain_extent[1]},
             "fields_npz": "fields.npz", "fields_sha256": fields_sha, "images": images}
+    if plane_slice is not None:
+        meta["slice"] = dict(plane_slice["record"])
     write_json(directory / METADATA, meta)
     return frame_from_metadata(directory, meta), meta
 
 
 def load_frame(directory):
-    """(frame, meta, arrays) of a v2 folder, with every hash checked."""
+    """(frame, meta, arrays) of a v2 folder, with every hash checked.
+
+    arrays: centres, U and p; for a plane-slice frame also mesh_cells, polygon_points
+    and polygon_offsets.
+    """
     directory = Path(directory)
     meta = json.loads((directory / METADATA).read_text())
     if _file_sha256(directory / "fields.npz") != meta["fields_sha256"]:
@@ -172,6 +189,9 @@ def load_frame(directory):
             raise ValueError(f"{directory}: {image['path']} differs from the metadata hash")
     with np.load(directory / "fields.npz", allow_pickle=False) as arrays:
         fields = {name: arrays[name] for name in ("centres", "U", "p")}
+        if "slice" in meta:
+            fields.update({name: arrays[name] for name in
+                           ("mesh_cells", "polygon_points", "polygon_offsets")})
     return frame_from_metadata(directory, meta), meta, fields
 
 

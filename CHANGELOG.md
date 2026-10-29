@@ -57,6 +57,7 @@ revision that produced it is given.
   lists and the POD audit file is unreadable in both runs (both ranks write
   it); the comparison was rerun with that handled (job 24929607). Records in
   [docs/evidence/2026-10-28-callback/](docs/evidence/2026-10-28-callback/README.md).
+
 ## 2026-10-28, instability test (`8d6a10a`, report `c9a1ba1`, review fixes `660f8c4`)
 
 - `readable_request.py`: `STABILITY_V2OWN_SYSTEM_PROMPT` and
@@ -93,6 +94,34 @@ revision that produced it is given.
   that the upwind runs overlap most, not all, of the crashed runs' Courant
   numbers, and where the central runs' largest |U| outside the window is
   (`flow/domain_max.py`).
+
+## 2026-10-28, v2 pictures of 3D cases through a plane slice (`07759b0`, `127a1dc`, review fixes `5706021`)
+
+- PODFoam: a 3D case (no `empty` patch) now gives the observer the polygons
+  of a plane slice (`PythonSlice.H`): OpenFOAM's `cuttingPlane` at
+  z = `LLM_SLICE_Z` (default the middle of the mesh's z range; a plane through
+  mesh points moves halfway to the next point plane above), normal (0 0 1),
+  not triangulated, one polygon per cut cell. They go through the existing
+  `mesh_func` arguments with the per-rank offsets and the gather to the
+  master; an eighth argument describes the plane. 2D cases get the same
+  seven-argument call as before. `Make/options`: surfMesh and fileFormats
+  includes, `-lsurfMesh`.
+- `python_module.py`, `pod_image.plane_slice`, `readable_request.py`: a v2
+  frame of a 3D case holds only the slice cells (centres, U, p, and in
+  `fields.npz` their mesh cells and polygons) and records the slice in its
+  metadata; requests are built as for 2D. v1 keeps its raster for 3D. 2D
+  frames are written as before, byte for byte.
+- Tests: four slice tests with synthetic geometry in `test_async.py`; 99 in
+  the suite.
+- Run: job 24929629 (and 24929500 with `07759b0`, identical files), the step
+  case extruded to 8 cells in z with walls front and back, no model. Serial
+  and 2-rank slice frames hold the same 20,540 cells, U within 2.5×10⁻³ m/s
+  and p within 0.036 m²/s²; the written fields of a run with the observer
+  equal those of a run without it (63 files); the 2D frame is identical to
+  that of 2026-10-27; the bridge validation passes. Records in
+  [docs/evidence/2026-10-28-3d/](docs/evidence/2026-10-28-3d/README.md).
+- `llm_demo/README.md`: 3D cases in "How it fits into the solver";
+  `LLM_SLICE_Z`. Evidence index: the new folder.
 
 ## 2026-10-27, reading change, 4-bit Qwen, a cylinder flow, requests every 250 steps, MPI (`6afbdeb`, `df72c24`, `ab6b943`)
 

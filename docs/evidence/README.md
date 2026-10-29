@@ -1,7 +1,8 @@
 # Evidence
 
-Recorded runs, one directory per test date (`2026-10-28-instability` holds
-the instability picture test of October 28, `2026-10-27-solver` and
+Recorded runs, one directory per test date (`2026-10-28-inflight`,
+`2026-10-28-callback`, `2026-10-28-3d` and `2026-10-28-instability` hold
+the tests of October 28, `2026-10-27-solver` and
 `2026-10-27-picture-tests` hold the solver runs and the picture tests of
 October 27, `2026-10-19-12b` holds that
 day's 12B replay on a GPU node, `2026-10-22-picture-test` the picture-reading
@@ -15,6 +16,7 @@ are gzip copies); each directory has a hash manifest.
 | [2026-10-28-inflight/](2026-10-28-inflight/README.md) | Slurm job 24929296: a describe request every 50 steps with two in flight and a two-slot server, 6,000 steps, and its twin; comparison with the one-in-flight run of October 27 | `2ed6da2` (summary rebuilt with `c85c79c`) | [results-20261028.md](../results-20261028.md) |
 | [2026-10-28-callback/](2026-10-28-callback/README.md) | Slurm job 24929555 (CPU): main's and the new callback on the step case, 1,250 steps without model requests (describe, sequence, the `tn` sequence form, 2 MPI ranks), every written file and `telemetry.jsonl` compared; the telemetry of 24,000 recorded states replayed under tracemalloc; comparison rerun in job 24929607 | `16d665e` (branch `callback-telemetry-trends`) against `2ed6da2` | this folder's README |
 | [2026-10-28-instability/](2026-10-28-instability/README.md) | Slurm jobs 24929533 and 24929534: can a model see a run going unstable? 70 three-frame requests from three crashed and four stable pimpleFoam runs, four models; jobs 24929408, 24929449, 24929452: the flow reruns; 24929495: the set's build; 24929764: checks after the review; answer key and a recount | `8d6a10a` (report `c9a1ba1`, review fixes `660f8c4`) | the folder's README |
+| [2026-10-28-3d/](2026-10-28-3d/README.md) | Slurm job 24929629 (and 24929500): v2 observer pictures of a 3D case through a plane slice; the step case extruded to 8 cells in z, serially and on 2 ranks, without the observer, with `LLM_SLICE_Z` set and refused, the 2D case and the bridge validation; no model | `c7a25d3` (`07759b0` for 24929500) | this folder's README |
 | [2026-10-27-solver/](2026-10-27-solver/README.md) | Slurm job 24903264: a describe request every 250 steps over 24,000 steps and its twin; jobs 24903298 and 24903263/24903755: two repeats of the October 22 suite and sweep; 24903786: MPI, 2 ranks; 24903065: POD mode files and BLAS threads; unstable-flow attempts; comparison and tracking scripts | `6afbdeb` with changes, `df72c24` (recorded per job) | [results-20261027.md](../results-20261027.md) |
 | [2026-10-27-picture-tests/](2026-10-27-picture-tests/README.md) | Slurm jobs 24903974 and 24903975 (trend test, four models), 24903976 and 24903977 (4-bit Qwen, recommended image tokens), 24903978 (cylinder flow); the cylinder flow runs; answer keys and a recount | `ab6b943` | [results-20261027.md](../results-20261027.md) |
 | [2026-10-22-live-v2/](2026-10-22-live-v2/README.md) | Slurm job 24757460: `pod-llm-async.UM1RyJ`, the five asynchronous cases with v2 pictures and Gemma 4 12B on an NVIDIA RTX A6000, from a developed flow; eleven describe requests with random windows; a trial run (job 24757458); check script | `354caf9` with uncommitted changes (recorded) | [results-20261022-live.md](../results-20261022-live.md) |

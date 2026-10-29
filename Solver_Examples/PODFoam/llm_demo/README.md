@@ -520,10 +520,11 @@ Unit tests (no model needed):
 
 ```bash
 cd Solver_Examples/PODFoam/llm_demo
-python3 -m unittest test_llm_client test_callback test_ablation_runner test_async test_picture_test -v
+python3 -m unittest test_llm_client test_callback test_ablation_runner test_async test_picture_test test_instability_test -v
 ```
 
-108 tests on 2026-10-28 (Python 3.11, numpy and matplotlib needed), with
+125 tests on 2026-10-29 (Python 3.11, numpy and matplotlib needed; 108 on
+2026-10-28 before the instability and slice tests were merged), with
 `TMPDIR` on a node's local disk and on NFS. Six of `test_callback.TelemetryTests`
 compare with main's callback of 2026-10-27, kept at
 [docs/evidence/2026-10-28-callback/callback-main/python_module.py](../../../docs/evidence/2026-10-28-callback/callback-main/python_module.py);

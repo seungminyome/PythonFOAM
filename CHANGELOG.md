@@ -3,6 +3,23 @@
 Dates are when a run or change happened. Where a run is recorded, the code
 revision that produced it is given.
 
+## 2026-10-28, two requests in flight (run from `2ed6da2`; `c85c79c`, `56646b9`)
+
+- `start_server.sh`: `LLM_PARALLEL` sets the server slots; `periodic_v2.slurm`
+  takes `LLM_CTX` and `PERIODIC_WRITE` from the environment (`289f72c`).
+- Run: a describe request every 50 steps with at most two pending and two
+  server slots, 6,000 steps, and its twin (job 24929296). The runner stopped
+  at its summary because one answered request had no `llm_result.json`: its
+  bounded writer was stopped at the 0.2 s cleanup budget.
+- `run_periodic.py --summary-only` rebuilds the summary of a finished run;
+  answered requests without a record are listed in `records_missing` and left
+  out of the scores; `max_requests_in_flight` (`c85c79c`).
+- `python_module.py`: the request index records `record_written` for every
+  request; new test with a writer slowed past its budget (`56646b9`, 2026-10-29).
+- Report [docs/results-20261028.md](docs/results-20261028.md), records in
+  [docs/evidence/2026-10-28-inflight/](docs/evidence/2026-10-28-inflight/README.md),
+  archives in the `tests-2026-10-28` release.
+
 ## 2026-10-28, callback: telemetry without a history of all states, computed trend words (`16d665e`)
 
 - `python_module.py`: `telemetry.jsonl` is no longer rewritten at the last

@@ -6,7 +6,7 @@
 ![Python 3.10 | 3.12](https://img.shields.io/badge/python-3.10%20%7C%203.12-lightgrey)
 [![license](https://img.shields.io/badge/license-Argonne%20OSS-blue.svg)](LICENSE)
 
-[October 27](docs/results-20261027.md) · [October 22, continued](docs/results-20261022-live.md) · [October 22 report](docs/results-20261022.md) · [October 20 report](docs/results-20261020.md) · [October 17 report](docs/results.md) · [Evidence](docs/evidence/README.md) · [How to run](Solver_Examples/PODFoam/llm_demo/README.md) · [Korean](https://github.com/seungminyome/PythonFOAM-Korean)
+[October 28](docs/results-20261028.md) · [October 27](docs/results-20261027.md) · [October 22, continued](docs/results-20261022-live.md) · [October 22 report](docs/results-20261022.md) · [October 20 report](docs/results-20261020.md) · [October 17 report](docs/results.md) · [Evidence](docs/evidence/README.md) · [How to run](Solver_Examples/PODFoam/llm_demo/README.md) · [Korean](https://github.com/seungminyome/PythonFOAM-Korean)
 
 During a PODFoam run, a callback sends one step's numbers and a velocity/pressure
 image, or several images from along the run, to a vision-language model served
@@ -28,6 +28,11 @@ did clearly better than one fixed answer; changes under 2 % are still
 misread. A describe request every 250 steps over 24,000 steps cost 0.7 % of
 run time on top of drawing the pictures, left every written file unchanged, and the answers followed the lowest-pressure spot as
 it moved between vortex cores (89 of 96 within 10 %). The observer also runs on 2 MPI ranks.
+On October 28 ([report](docs/results-20261028.md)) two requests ran side by
+side (about 0.1 s of solver time per request), the callback's memory stopped
+growing with the run, trend words are computed from the arrays, and 3D cases
+are drawn through a plane slice. Shown three frames of a run about to crash,
+the models said "unstable" only once the field had already blown up.
 
 <img src="docs/evidence/2026-10-17/pod-llm-demo.LRfJBN/fixed-pod/llm_observation/state.png" width="640" alt="|U| and p at step 5, the image sent to the model">
 
@@ -123,6 +128,27 @@ sequenceDiagram
   changes, published in `dee7731` with a review's fixes
   ([records](docs/results-20261022-live.md#records)). The October 27 runs used
   `6afbdeb` to `ab6b943` ([records](docs/results-20261027.md#records)).
+
+## Measurements (2026-10-28, two in flight, telemetry, 3D slice, instability test)
+
+- Two requests in flight (job 24929296, a request every 50 steps, two
+  server slots): 118 of 120 answered, 112 sent while another was pending,
+  2 skipped by the limit; 2,520 of 2,520 written files identical to the run
+  without requests; +3.2 % wall time, about 0.1 s per request as with one in
+  flight. One answered request's record was not written within the writer's
+  0.2 s budget; the index now says so (`record_written`).
+- Telemetry without a history (job 24929555): the Python heap over 24,000
+  replayed states stays at most 0.52 MiB instead of 31.7 MiB, the last step
+  takes 0.023 s instead of 0.699 s, and `telemetry.jsonl` is byte-identical.
+- 3D slice (job 24929629): the step case extruded to 8 cells in z is cut at
+  mid height; the 20,540 cut cells are drawn as polygons, the same on 2 ranks
+  as serially (centres equal to 4.2×10⁻¹⁷ m), and 2D frames are unchanged.
+- Instability test (jobs 24929533, 24929534): on 27 triples whose last frame
+  is 1 to 10 steps before a crash and 27 from runs that ended, the four
+  models were right on 30 to 33 of 54; a rule on the peak |U| growth gets
+  33 and one on the cell-to-cell jump 38. Every model saw the triples ending
+  one step before a crash, where the field has already blown up; none warned
+  more than 5 steps ahead.
 
 ## Measurements (2026-10-27, reading change, requests every 250 steps, MPI)
 
@@ -326,29 +352,28 @@ wrong.
    the lowest pressure within 10 % in most pictures, also from a running
    solver and over a long run. With each picture on its own colour scale,
    12B reads clear changes in peak speed (29 of 30) but misses most changes
-   under 2 %; the other models also miss clear changes (17 to 25 of 30), and
-   only 31B with the numbers alone read every clear change. A small extreme
-   next to a large region of similar colour (the cylinder's pressure) is
-   missed by 12B.
-2. Repeatability across hardware. The same request gives the same answer on
+   under 2 %; the other models also miss clear changes (17 to 25 of 30).
+   Trend words are now computed from the arrays in the callback. A small
+   extreme next to a large region of similar colour (the cylinder's
+   pressure) is missed by 12B.
+2. Warning. The models tested do not see a coming crash in the pictures;
+   simple numbers from the arrays (peak growth, cell-to-cell jumps) do as
+   well or better.
+3. Repeatability across hardware. The same request gives the same answer on
    the same node; on another GPU the text and some positions change.
-3. Scope. 2D laminar cases (a backward-facing step, a cylinder), 2 MPI ranks
-   without a model request, one request in flight at a time. 3D, more ranks
-   and a run that goes unstable have not been tested.
-4. Memory. Over 24,000 steps the solver process grows by 70 to 85 MiB, with
-   or without requests; about 32 MiB is the callback's per-step history kept
-   for its telemetry file, the rest is not traced.
+4. Scope. 2D laminar cases and one extruded 3D case (no model has read a
+   slice picture yet), 2 MPI ranks without a model request, up to two
+   requests in flight. A request record can be lost when its writer exceeds
+   its 0.2 s budget (1 of 118).
 
 ## Next steps
 
-1. Compute the trend words in the callback from the arrays and ask the model
-   only what the pictures add.
-2. A 3D case, more ranks, a parallel run with a request.
-3. Write the telemetry as the run goes instead of keeping every step's
-   state; trace the rest of the memory growth.
-4. A flow that goes wrong slowly, recorded, to test whether a model notices.
-5. Open the contribution to PythonFOAM: hooks, MPI gather, v2 pictures,
-   request builder, asynchronous and periodic paths, tests.
+1. A model on slice pictures of a developed 3D flow.
+2. The instability test without the stated frame times, and numeric
+   warnings computed in the callback next to the model's answer.
+3. A larger budget, or the worker itself, for writing request records.
+4. Open the contribution to PythonFOAM: hooks, MPI gather, 3D slice, v2
+   pictures, request builder, asynchronous and periodic paths, tests.
    Scripts for the GPU nodes are in [llm_demo/hpc/](Solver_Examples/PODFoam/llm_demo/hpc/README.md).
 
 ## Repository layout
@@ -360,6 +385,11 @@ Solver_Examples/PODFoam/      PODFoam solver (OpenFOAM v2106, also built in v221
                               describe sweep, requests every N steps, replay benchmarks (paired, describe, sequence), picture-reading,
                               random-window and trend tests, unit tests, requirements.txt
   llm_demo/hpc/               Slurm scripts for GPU nodes: the 12B paired replay, the picture tests, the v2 solver run and the periodic run (all run on MedicineBow)
+docs/results-20261028.md      October 28: two requests in flight, telemetry without a history, computed trend words, 3D slice, instability test
+docs/evidence/2026-10-28-inflight/       its two-in-flight run (Slurm job 24929296): summary, index, logs, comparison script, hash manifest
+docs/evidence/2026-10-28-callback/       its callback check (Slurm job 24929555): comparisons, memory replay, hash manifest
+docs/evidence/2026-10-28-3d/             its 3D slice test (Slurm job 24929629): case, frames, comparisons, hash manifest
+docs/evidence/2026-10-28-instability/    its instability test (Slurm jobs 24929533, 24929534): answers, key, recount, hash manifest
 docs/results-20261027.md      October 27: trend test, 4-bit Qwen, a cylinder flow, requests every 250 steps, repeats, MPI, POD files
 docs/evidence/2026-10-27-picture-tests/  its picture tests (five Slurm jobs) and the cylinder runs: answers, keys, recount, hash manifest
 docs/evidence/2026-10-27-solver/         its solver runs: periodic run, repeats, MPI, POD files, unstable attempts, hash manifest
@@ -386,6 +416,7 @@ Other directories (`APMOSFoam`, `AEFoam`, `PINNFoam`, `TurbulenceModel_Examples`
 
 ## More
 
+- [October 28](docs/results-20261028.md): two requests in flight, telemetry without a history, computed trend words, 3D slice, instability test
 - [October 27](docs/results-20261027.md): reading change, 4-bit Qwen, a cylinder flow, a request every 250 steps, repeats, MPI
 - [October 22, continued](docs/results-20261022-live.md): v2 pictures from the running solver with 12B, random windows, a developed flow, Qwen models
 - [October 22 report](docs/results-20261022.md): picture-reading test, seven Gemma 4 models from E2B to 31B, two picture styles
@@ -393,6 +424,7 @@ Other directories (`APMOSFoam`, `AEFoam`, `PINNFoam`, `TurbulenceModel_Examples`
 - [October 17 report](docs/results.md): synchronous conditions, paired image/no-image replay
 - [12B replay](docs/results.md#same-replay-with-gemma-4-12b-on-a-gpu-2026-10-19): the October 17 paired requests, Gemma 4 12B on a GPU node
 - [Evidence](docs/evidence/README.md): raw requests and responses, logs, verification results, hash manifests
+- October 28 downloads: [tests-2026-10-28](https://github.com/seungminyome/PythonFOAM/releases/tag/tests-2026-10-28) (the two-in-flight run's requests, replies and frames, the instability test set and its jobs)
 - October 27 downloads: [tests-2026-10-27](https://github.com/seungminyome/PythonFOAM/releases/tag/tests-2026-10-27) (the five picture jobs and two new test sets, the cylinder runs, the periodic run's requests, replies and frames, the MPI and POD-file runs)
 - Picture test downloads: [October 22](https://github.com/seungminyome/PythonFOAM/releases/tag/picture-test-2026-10-22) (the 308 requests with their answer key, the random-window sets, and every reply of the seven jobs)
 - v2 solver run downloads: [October 22](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-v2-2026-10-22) (every written time directory of the five cases and the eleven sweep cases, the trial run, the developed flow and the job records)

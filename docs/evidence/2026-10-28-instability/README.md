@@ -316,15 +316,15 @@ unstable / triples, by steps from the last frame to the crash):
 | [independent-recount.py](independent-recount.py), `independent-recount.json` | A recount without the test code (below) |
 | [manifest.json](manifest.json) | Origins, sizes and hashes of the files here |
 
-The full test set (70 request bodies, the frames with their arrays, 190 MB)
-is on the cluster at
-`/cluster/medbow/gscratch/syome/github_repos/picture-test-20261021/instability-test-20261028`.
-The jobs' archives, with every raw reply, are at
-`/cluster/medbow/gscratch/syome/github_repos/PythonFOAM-inst/results/window-test-24929533.tar.gz`
-and `window-test-24929534.tar.gz` (with `.sha256`). The runs' time
-directories are in `flow-states-20261027/unstable/`, `flow-states-20261028/`
-and `flow-states-20261022/long-100ms` under
-`/cluster/medbow/gscratch/syome/github_repos/`. None of these is in a release.
+The full test set (70 request bodies, the frames with their arrays, 190 MB;
+`instability-test-20261028.tar.gz`) and the jobs' archives with every raw
+reply (`window-test-24929533.tar.gz`, `window-test-24929534.tar.gz`) are
+assets of the
+[tests-2026-10-28](https://github.com/seungminyome/PythonFOAM/releases/tag/tests-2026-10-28)
+release. The runs' time directories stay on the cluster, in
+`flow-states-20261027/unstable/`, `flow-states-20261028/` and
+`flow-states-20261022/long-100ms` under
+`/cluster/medbow/gscratch/syome/github_repos/`.
 
 ## Recount
 

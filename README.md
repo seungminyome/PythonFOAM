@@ -40,7 +40,7 @@ the models said "unstable" only once the field had already blown up.
 
 ## Quick start
 
-Unit tests, no OpenFOAM or model needed (95 tests, about 50 s):
+Unit tests, no OpenFOAM or model needed (125 tests, about 80 s):
 
 ```bash
 pip install -r Solver_Examples/PODFoam/llm_demo/requirements.txt

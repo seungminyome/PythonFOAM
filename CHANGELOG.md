@@ -3,6 +3,15 @@
 Dates are when a run or change happened. Where a run is recorded, the code
 revision that produced it is given.
 
+## 2026-10-29, the merged code in a solver run (`eff951b`)
+
+- After merging the callback, instability-test and observer-3d branches:
+  build and bridge validation PASS; the 2D v2 frame and request body equal
+  those of the 2026-10-27 MPI test, the 3D slice frame and request body those
+  of the slice test (job 24929629); `telemetry.jsonl` complete in both (Slurm
+  job 24936949). Records in
+  [docs/evidence/2026-10-29-merged-check/](docs/evidence/2026-10-29-merged-check/README.md).
+
 ## 2026-10-28, two requests in flight (run from `2ed6da2`; `c85c79c`, `56646b9`)
 
 - `start_server.sh`: `LLM_PARALLEL` sets the server slots; `periodic_v2.slurm`

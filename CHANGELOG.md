@@ -40,6 +40,42 @@ revision that produced it is given.
   lists and the POD audit file is unreadable in both runs (both ranks write
   it); the comparison was rerun with that handled (job 24929607). Records in
   [docs/evidence/2026-10-28-callback/](docs/evidence/2026-10-28-callback/README.md).
+## 2026-10-28, instability test (`8d6a10a`, report `c9a1ba1`, review fixes `660f8c4`)
+
+- `readable_request.py`: `STABILITY_V2OWN_SYSTEM_PROMPT` and
+  `stability_v2_payload()` ask whether three v2 frames (own colour scales)
+  show signs of numerical instability. `llm_client.py` has the `stability`
+  reply schema (`reason`, then `stable`, `unstable` or `cannot_tell`); it is
+  not an `LLM_MODE`, so the solver still refuses it. `snapshot_runner.py`
+  scores it and `picture_test.py` summarises it. Existing request bodies are
+  unchanged byte for byte (golden tests).
+- New `instability_test.py`: builds the set from pimpleFoam runs (runs that
+  crashed give `unstable` triples labelled by steps to the crash, runs that
+  ended give `stable` ones), runs it through `picture_test.py`, and reports
+  the balanced score, how early `unstable` is said, answers by run and two
+  numeric baselines. New `test_instability_test.py` (12 tests since
+  `660f8c4`; 107 with `test_llm_client`, `test_callback`,
+  `test_ablation_runner`, `test_async` and `test_picture_test`, in any order
+  and with `unittest discover`).
+- Runs: `central-dt2e-5` run again from t = 0.1 s crashed in step 467 (job
+  24929408); the two upwind runs (2,000 steps) and `central-dt5e-6` (4,000
+  steps) ended (24929452, 24929449); test set build (24929495); Gemma 4 12B,
+  26B-A4B, 31B and Qwen3.5-35B-A3B on its 70 requests (24929533,
+  24929534). Records in
+  [docs/evidence/2026-10-28-instability/](docs/evidence/2026-10-28-instability/README.md).
+- Review fixes (`660f8c4`). `instability_test.main()` replaced
+  `picture_test`'s set lists and never put them back, so `test_picture_test`
+  failed (3 errors) when it ran after `test_instability_test` in one process,
+  as with `unittest discover`; `main()` now restores them, also after an
+  error. A run counts as crashed only when its log has a floating point
+  exception trace (`Foam::sigFpe`) and no `End`; `report` refuses run
+  folders made with different answer keys. Built again with this code, the
+  set has the same answer key and request bodies, and `report` gives the same
+  reports (job 24929764). The evidence README now says that the requests'
+  stated frame times alone separate the two classes (54 of 54 scored items),
+  that the upwind runs overlap most, not all, of the crashed runs' Courant
+  numbers, and where the central runs' largest |U| outside the window is
+  (`flow/domain_max.py`).
 
 ## 2026-10-27, reading change, 4-bit Qwen, a cylinder flow, requests every 250 steps, MPI (`6afbdeb`, `df72c24`, `ab6b943`)
 

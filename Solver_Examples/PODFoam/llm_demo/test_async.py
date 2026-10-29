@@ -781,8 +781,36 @@ class PeriodicRequestTests(unittest.TestCase):
         self.assertEqual(index["every"], 3)
         self.assertEqual([r["step"] for r in index["requests"]], [2, 5, 8])
         self.assertTrue(all(r["status"] == "ok" for r in index["requests"]), index)
+        self.assertTrue(all(r["record_written"] for r in index["requests"]), index)
         self.assertEqual(len(received), 3)
         self.assertFalse(single)
+
+    def test_index_says_when_a_record_was_not_written_in_its_budget(self):
+        # Slurm 24929296: a reply arrived (status ok) but the writer was stopped at the 0.2 s
+        # cleanup budget, so the folder had no llm_result.json while the index said ok.
+        with fixture() as (endpoint, received):
+            harness = V2Harness({"LLM_MODE": "describe", "LLM_ENDPOINT": endpoint, "LLM_ASYNC": "1",
+                                 "LLM_ANALYSIS_STEP": "2", "LLM_ANALYSIS_EVERY": "3"})
+            real = harness.callback._write_final_report
+
+            def slow(context, result, cleanup_start):
+                if context.get("request_step") == 5:
+                    time.sleep(1.0)
+                return real(context, result, cleanup_start)
+            try:
+                with patch.object(harness.callback, "_write_final_report", slow):
+                    harness.run(sleep_after=1, sleep_s=0.4)
+                index = json.loads((harness.case / "llm_requests" / "index.json").read_text())
+                written = {f.name: (f / "llm_result.json").exists()
+                           for f in sorted((harness.case / "llm_requests").glob("step-*"))}
+            finally:
+                harness.close()
+        by_step = {r["step"]: r for r in index["requests"]}
+        self.assertEqual(by_step[5]["status"], "ok", index)
+        self.assertFalse(by_step[5]["record_written"], index)
+        self.assertFalse(written["step-000005"], written)
+        self.assertTrue(by_step[2]["record_written"] and by_step[8]["record_written"], index)
+        self.assertTrue(written["step-000002"] and written["step-000008"], written)
 
     def test_a_step_is_skipped_while_the_only_allowed_request_is_pending(self):
         with fixture(delay_s=0.6) as (endpoint, received):

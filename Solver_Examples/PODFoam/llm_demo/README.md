@@ -276,7 +276,7 @@ reached is skipped and recorded. Each request writes the usual files
 (`llm_request.json`, `llm_request_body.json`, `llm_response.json`,
 `llm_result.json`, the raw reply) in its own `llm_requests/step-NNNNNN/`, and
 the last step writes `llm_requests/index.json` (step, status, arrival step,
-model time, solver stall). `run_periodic.py <suite run> <PODFoam> <output>`
+model time, solver stall, and since 2026-10-29 `record_written`: whether the record folder was written within its 0.2 s budget, which a reply that arrived can miss). `run_periodic.py <suite run> <PODFoam> <output>`
 runs such a case and its twin without requests from a v2 suite's baseline
 staging, compares every written file, checks each body against the builder
 and each frame against the written fields, scores the answers and records

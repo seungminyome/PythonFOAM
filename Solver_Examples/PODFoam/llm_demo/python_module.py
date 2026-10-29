@@ -1374,9 +1374,12 @@ def _finalize_job(job, step):
     outcome = {**context, **result, **reporting}
     for entry in _request_log:
         if entry["step"] == context.get("request_step") and entry["status"] == "pending":
+            # record_written: whether the bounded writer finished the record folder in its
+            # budget; a reply can arrive (status ok) and still have no llm_result.json
             entry.update(status=result.get("status"), arrived_at_step=context.get("arrived_at_step"),
                          inference_wall_s=result.get("inference_wall_s"),
-                         solver_stall_s=context.get("solver_stall_s"))
+                         solver_stall_s=context.get("solver_stall_s"),
+                         record_written=bool(reporting.get("writer_completed")))
     global _last_callback_outcome
     _last_callback_outcome = outcome
     return outcome

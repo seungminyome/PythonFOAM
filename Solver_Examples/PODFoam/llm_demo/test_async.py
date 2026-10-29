@@ -560,24 +560,191 @@ class V2PictureTests(unittest.TestCase):
         self.assertIn("not rendered by this run", second["error"])
         self.assertEqual(len(received), 1)
 
-    def test_final_telemetry_budget_scales_with_history(self):
-        harness = Harness({"LLM_MODE": "describe", "LLM_ENABLED": "0"})
+    def test_telemetry_budget_follows_the_pending_lines_not_the_run(self):
+        # before 2026-10-28 the last step rewrote every state, with 1e-4 s per state
+        harness = Harness({"LLM_MODE": "describe", "LLM_ENABLED": "0", "LLM_FINAL_STEP": "1200"})
         budgets, real = [], harness.callback._bounded_writer
 
         def spy(target, args, deadline_at):
-            if target is harness.callback._dump_telemetry:
-                budgets.append(deadline_at - time.monotonic())
+            if target is harness.callback._telemetry_child:
+                budgets.append((args[3] is not None, deadline_at - time.monotonic()))
             return real(target, args, deadline_at)
 
         harness.callback._bounded_writer = spy
-        harness.callback._history.extend({"step": 0} for _ in range(7999))
         try:
             with patch.dict(os.environ, harness.environment):
-                harness.callback.analysis_func(harness.state(10))
+                for step in range(1, 1201):
+                    harness.callback.analysis_func(harness.state(step))
+                lines = (harness.case / "telemetry.jsonl").read_text().splitlines()
+                # a backlog after failed appends gets a longer budget, still 1e-4 s per line
+                backlog = harness.callback._Telemetry()
+                backlog.pending, backlog.pending_lines = bytearray(b"{}\n" * 8000), 8000
+                backlog.append()
         finally:
             harness.close()
-        self.assertEqual(len(budgets), 1)
-        self.assertGreater(budgets[0], 0.7)
+        # appends after 500 and 1000 lines, the rest (200) at the last step, 0.2 s each
+        self.assertEqual([last for last, _ in budgets[:3]], [False, False, True])
+        for _, budget in budgets[:3]:
+            self.assertTrue(0.15 < budget <= 0.2, budget)
+        self.assertEqual(len(lines), 1200)
+        self.assertEqual([json.loads(line)["step"] for line in lines], list(range(1, 1201)))
+        self.assertGreater(budgets[3][1], 0.7)
+
+
+class ComputedTrendTests(unittest.TestCase):
+    """v2 sequences (2026-10-28): the answer key's trend words, computed from the frames' arrays,
+    in llm_result.json next to the answer; the request body changes only when asked."""
+
+    def run_sequence(self, environment, trickle=False):
+        """The run's result, request record, body, the answer keys of its three frames and the
+        bodies the tested builder gives for those frames in each form."""
+        import picture_test
+        import readable_request
+        import sequence_test
+        if trickle:
+            from test_llm_client import serve
+            server = serve("trickle")
+        else:
+            server = fixture(delay_s=0.3)
+        with server as served:
+            endpoint, received = (served, []) if trickle else served
+            harness = V2Harness(dict({"LLM_MODE": "sequence", "LLM_SEQUENCE_STEPS": "2,4,6",
+                                      "LLM_ENDPOINT": endpoint, "LLM_ASYNC": "1"}, **environment))
+            try:
+                harness.run(sleep_after=2, sleep_s=0.3)
+                result, request = harness.result(), harness.request()
+                raw = (harness.case / "llm_request_body.json").read_bytes()
+                folders = [harness.case / "llm_observation" / f"step-{s:06d}" for s in (2, 4, 6)]
+                frames = [readable_request.load_frame(folder)[0] for folder in folders]
+                truths = [picture_test.load_v2(folder)[1] for folder in folders]
+                numbers = [sequence_test.numbers_of(truth) for truth in truths]
+                bodies = {form: llm_client.encode_json(readable_request.sequence_v2_payload(
+                    frames, model="unit-test-model", own_ranges=True, **options))
+                    for form, options in (("own", {}), ("t", {"thresholds": True}),
+                                          ("tn", {"thresholds": True, "numbers": numbers}))}
+            finally:
+                harness.close()
+        return result, request, raw, truths, bodies, received
+
+    def test_trends_are_recorded_and_the_default_body_is_unchanged(self):
+        import readable_request
+        import snapshot_runner
+        result, request, raw, truths, bodies, received = self.run_sequence({})
+        key = json.loads(json.dumps(snapshot_runner.sequence_truth(truths)))
+        self.assertEqual(result["status"], "ok", result)
+        self.assertEqual(result["computed_trends"], key)
+        self.assertEqual(result["computed_trends_agreement"],
+                         snapshot_runner.score_sequence(result["structured_output"], key))
+        # the 20-cell fields: |U| grows with the step, p gets lower, the fastest cell stays put;
+        # the fixture answers decreasing, less_negative, same_place
+        self.assertEqual([key[k] for k in ("max_speed_trend", "min_pressure_trend", "fastest_flow_region")],
+                         ["increasing", "more_negative", "same_place"])
+        self.assertEqual(result["computed_trends_agreement"]["matches"], 1)
+        self.assertEqual(raw, bodies["own"])
+        self.assertEqual(received[0]["messages"][0]["content"], readable_request.SEQUENCE_V2OWN_SYSTEM_PROMPT)
+        self.assertNotIn("sequence_prompt", result)
+        self.assertNotIn("computed_trends", request)   # the request's record holds what was sent
+        self.assertNotIn(b"max_speed_m_per_s", raw)
+
+    def test_t_and_tn_send_the_trend_test_forms(self):
+        import readable_request
+        for form, system in (("t", readable_request.SEQUENCE_V2OWN_T_SYSTEM_PROMPT),
+                             ("tn", readable_request.SEQUENCE_V2OWN_TN_SYSTEM_PROMPT)):
+            with self.subTest(form=form):
+                result, _, raw, _, bodies, received = self.run_sequence({"LLM_SEQUENCE_PROMPT": form})
+                self.assertEqual(result["status"], "ok", result)
+                self.assertEqual(result["sequence_prompt"], form)
+                self.assertEqual(raw, bodies[form])
+                self.assertEqual(received[0]["messages"][0]["content"], system)
+                header = json.loads(received[0]["messages"][1]["content"][0]["text"])
+                self.assertEqual([f.get("min_pressure_m2_per_s2") for f in header["frames"]],
+                                 [-2.0, -4.0, -6.0] if form == "tn" else [None] * 3)
+
+    def test_trends_are_recorded_without_an_answer(self):
+        disabled = self.run_sequence({"LLM_ENABLED": "0"})[0]
+        late = self.run_sequence({"LLM_CALLBACK_DEADLINE_S": "2.5", "LLM_READ_TIMEOUT_S": "2"},
+                                 trickle=True)[0]
+        for result, status in ((disabled, "disabled"), (late, "timeout")):
+            self.assertEqual(result["status"], status, result)
+            self.assertEqual(result["computed_trends"]["max_speed_trend"], "increasing")
+            self.assertNotIn("computed_trends_agreement", result)
+
+    def test_a_refused_sequence_prompt_draws_no_frame_and_the_run_goes_on(self):
+        for environment, message in (({"LLM_SEQUENCE_PROMPT": "numbers"}, "own, t or tn"),
+                                     ({"LLM_SEQUENCE_PROMPT": "tn", "LLM_IMAGE_STYLE": "v1"},
+                                      "LLM_IMAGE_STYLE=v2")):
+            harness = V2Harness(dict({"LLM_MODE": "sequence", "LLM_SEQUENCE_STEPS": "2,4,6",
+                                      "LLM_ENDPOINT": "http://127.0.0.1:1/v1/chat/completions"},
+                                     **environment))
+            try:
+                harness.run()
+                outcome = harness.callback._last_callback_outcome
+                errors = (harness.case / "llm_errors.jsonl").read_text().splitlines()
+                telemetry = (harness.case / "telemetry.jsonl").read_text().splitlines()
+                drawn = (harness.case / "llm_observation").exists()
+            finally:
+                harness.close()
+            self.assertEqual(outcome["status"], "callback_error", outcome)
+            self.assertIn(message, outcome["error"])
+            self.assertEqual(len(errors), 1)
+            self.assertFalse(drawn)
+            self.assertEqual(len(telemetry), 10)
+
+    def test_the_rules_are_the_answer_key_of_the_picture_tests(self):
+        import picture_test
+        import snapshot_runner
+        harness = V2Harness({})
+        callback = harness.callback
+        harness.close()
+
+        def same(ours, key):
+            self.assertEqual(json.loads(json.dumps(ours)), json.loads(json.dumps(key)))
+
+        rng = np.random.default_rng(20261028)
+        compared = drawn = 0
+        while compared < 400:   # 400 seeded cases with at least one cell inside the window
+            case, drawn = drawn, drawn + 1
+            self.assertLess(drawn, 1000)   # about one window in four holds no cell
+            cells = int(rng.integers(3, 80))
+            centres = np.column_stack([rng.uniform(-1, 1, cells), rng.uniform(0, 0.2, cells), np.zeros(cells)])
+            plotted = ([[-1.0, 1.0], [0.0, 0.2]] if case % 3 == 0 else
+                       [sorted(rng.uniform(-1, 1, 2).tolist()), sorted(rng.uniform(0, 0.2, 2).tolist())])
+            inside = ((centres[:, 0] >= plotted[0][0]) & (centres[:, 0] <= plotted[0][1])
+                      & (centres[:, 1] >= plotted[1][0]) & (centres[:, 1] <= plotted[1][1]))
+            if not inside.any():
+                continue   # the key has nothing to compare; draw another case
+            offset = 50.0 if case % 4 == 0 else 0.0   # some sequences with positive pressures only
+            fields = [(rng.normal(size=(cells, 3)) * rng.uniform(0.5, 2.0),
+                       np.abs(rng.normal(size=cells)) * 10 + offset if offset else rng.normal(size=cells) * 100)
+                      for _ in range(int(rng.integers(2, 4)))]
+            times = [(100 * (k + 1), 1e-4 * (k + 1)) for k in range(len(fields))]
+            key = snapshot_runner.sequence_truth([picture_test.truth_from_arrays(centres, u, p, plotted, s, t)
+                                                  for (u, p), (s, t) in zip(fields, times)])
+            ours = callback._sequence_trends([callback._frame_extrema(centres, u, p, plotted, s, t)
+                                              for (u, p), (s, t) in zip(fields, times)])
+            same(ours, key)
+            answer = {"max_speed_trend": ("increasing", "decreasing", "roughly_constant", "cannot_tell")[case % 4],
+                      "min_pressure_trend": ("more_negative", "less_negative", "roughly_constant")[case % 3],
+                      "fastest_flow_region": ("same_place", "moves", "cannot_tell")[case % 3]}
+            same(callback._trend_agreement(answer, ours), snapshot_runner.score_sequence(answer, key))
+            compared += 1
+        self.assertEqual(compared, 400)
+        # values at the thresholds: 2 % relative change, 5 % of the plotted range
+        for first, last in ((1.0, 1.02), (0.98, 1.0), (1.0, 0.98), (-1.0, -1.02), (0.0, 0.0), (-3.0, 3.0)):
+            self.assertEqual(callback._trend(first, last), snapshot_runner.trend(first, last))
+        # the fastest cell moves from x = 10 % to exactly 15 % of the range, or a little further
+        centres = np.array([[10.0, 0.5, 0.0], [15.0, 0.5, 0.0], [15.000001, 0.5, 0.0]])
+        box = [[0.0, 100.0], [0.0, 1.0]]
+        first = np.array([[3.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
+        for fastest, word in ((1, "same_place"), (2, "moves")):
+            last = np.full((3, 3), 0.1)
+            last[fastest] = [3.0, 0.0, 0.0]
+            fields = [(first, np.zeros(3)), (last, np.zeros(3))]
+            key = snapshot_runner.sequence_truth([picture_test.truth_from_arrays(centres, u, p, box, k, k)
+                                                  for k, (u, p) in enumerate(fields)])
+            same(callback._sequence_trends([callback._frame_extrema(centres, u, p, box, k, k)
+                                            for k, (u, p) in enumerate(fields)]), key)
+            self.assertEqual(key["fastest_flow_region"], word)
 
 
 class PeriodicRequestTests(unittest.TestCase):

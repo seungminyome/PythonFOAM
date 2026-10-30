@@ -54,3 +54,6 @@
       24947327   wrong-setup-prepare2     me5475              teton      ttest01 2026-10-30T16:17:33 2026-10-30T16:17:40  COMPLETED      0:0 
 24947327.batch                  batch     me5475                         ttest01 2026-10-30T16:17:33 2026-10-30T16:17:40  COMPLETED      0:0 
 24947327.exte+                 extern     me5475                         ttest01 2026-10-30T16:17:33 2026-10-30T16:17:40  COMPLETED      0:0 
+      24947868      wrong-setup-facts     me5475              teton         t506 2026-10-30T16:59:33 2026-10-30T16:59:55  COMPLETED      0:0 
+24947868.batch                  batch     me5475                            t506 2026-10-30T16:59:33 2026-10-30T16:59:55  COMPLETED      0:0 
+24947868.exte+                 extern     me5475                            t506 2026-10-30T16:59:33 2026-10-30T16:59:55  COMPLETED      0:0 

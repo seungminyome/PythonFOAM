@@ -417,8 +417,12 @@ Tests: `test_wrong_setup_test.py`. Run on 2026-10-30
 ([evidence](../../../docs/evidence/2026-10-30-wrong-setup/README.md)): Gemma 4
 31B was right for 67 of 80 frames, 12B, 26B-A4B and Qwen3.5-35B-A3B for 41, 42
 and 45, against a constant baseline of 40 and 56 for the rule. 31B's lead over
-the rule comes from the viscosity run (8 of 8) and from 4 of 8 on the moving
-wall, whose reasons name no wall.
+the rule rests on the viscosity run (8 of 8, reasons that do not name it) and on
+4 of 8 on the moving wall, whose change is not in the pictures; without these two
+runs 31B gets 55 and the rule 56 of 64. Its other catches compare the colour bar's
+maximum with the stated speed, as the rule does. The largest Courant number above 1
+flags three of the wrong runs with no reference run (64 of 80), and given a normal
+run the colour bars' numbers alone get 75 of 80 (68 with each normal run held out).
 
 ## Replaying saved frames (describe and sequence)
 

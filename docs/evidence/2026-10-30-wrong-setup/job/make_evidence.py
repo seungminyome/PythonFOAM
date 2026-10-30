@@ -2,7 +2,9 @@
 """Fill docs/evidence/2026-10-30-wrong-setup/ from the run data and write its manifest.
 
 Usage: make_evidence.py copy <gpu job id> [<gpu job id> ...]   copies the records
-       make_evidence.py manifest                               writes manifest.json from what is there
+       make_evidence.py manifest <source run> ...              writes manifest.json from what is there
+       make_evidence.py refresh <source run> ...               copies the records named in LATER and writes manifest.json,
+                                                               taking the other files' origins from the manifest there
 """
 import gzip
 import hashlib
@@ -120,11 +122,28 @@ def copy_records(jobs):
     print(len(c.origins), "files copied")
 
 
+# Records made after the first copy: source under HERE, path in the evidence folder.
+LATER = {"reason-judgement.json": "reason-judgement.json", "jobs/sacct.txt": "job/sacct.txt",
+         "jobs/make_evidence.py": "job/make_evidence.py", "jobs/frame_facts.sbatch": "job/frame_facts.sbatch",
+         "jobs/frame-facts-24947868.out": "job/frame-facts-24947868.out", "jobs/final_checks.sbatch": "job/final_checks.sbatch"}
+
+
+def refresh(source_runs):
+    copier = Copier()
+    for source, target in LATER.items():
+        copier.copy(HERE / source, target)
+    known = json.loads((EV / "manifest.json").read_text())["files"]
+    origins = {f["path"]: {k: f[k] for k in ("source", "kind", "source_sha256") if k in f} for f in known}
+    origins.update(copier.origins)
+    ORIGIN.write_text(json.dumps(origins, indent=1))
+    write_manifest(source_runs)
+
+
 SCOPE = ("Wrong-setup picture test of 2026-10-30 on MedicineBow: 80 requests, one per written state, |U| and p on their own "
          "colour scales in the window x 0 to 0.12 m, y 0 to 0.04 m, from five normal and five wrongly set-up pimpleFoam runs of "
          "the step case (8,000 steps each); the system prompt gives the intended setup and asks whether the pictures are "
          "consistent with it; Gemma 4 12B, 26B-A4B, 31B and Qwen3.5-35B-A3B; answer key, leak check, numbers from the arrays and "
-         "logs, and a recount.")
+         "logs, the reasons judged by one AI agent, what the frames hold, and a recount.")
 NOTES = ["Sources are paths under /cluster/medbow/gscratch/syome/github_repos/ on MedicineBow, or 'written for this folder'.",
          "Files of kind gzip copy are gzip -9 copies (no name, mtime 0) of the named source; source_sha256 is the hash of the "
          "uncompressed bytes.",
@@ -158,5 +177,7 @@ def write_manifest(source_runs):
 if __name__ == "__main__":
     if sys.argv[1] == "copy":
         copy_records(sys.argv[2:])
+    elif sys.argv[1] == "refresh":
+        refresh(sys.argv[2:])
     else:
         write_manifest(sys.argv[2:])

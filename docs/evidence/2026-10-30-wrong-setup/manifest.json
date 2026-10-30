@@ -1,12 +1,13 @@
 {
- "scope": "Wrong-setup picture test of 2026-10-30 on MedicineBow: 80 requests, one per written state, |U| and p on their own colour scales in the window x 0 to 0.12 m, y 0 to 0.04 m, from five normal and five wrongly set-up pimpleFoam runs of the step case (8,000 steps each); the system prompt gives the intended setup and asks whether the pictures are consistent with it; Gemma 4 12B, 26B-A4B, 31B and Qwen3.5-35B-A3B; answer key, leak check, numbers from the arrays and logs, and a recount.",
+ "scope": "Wrong-setup picture test of 2026-10-30 on MedicineBow: 80 requests, one per written state, |U| and p on their own colour scales in the window x 0 to 0.12 m, y 0 to 0.04 m, from five normal and five wrongly set-up pimpleFoam runs of the step case (8,000 steps each); the system prompt gives the intended setup and asks whether the pictures are consistent with it; Gemma 4 12B, 26B-A4B, 31B and Qwen3.5-35B-A3B; answer key, leak check, numbers from the arrays and logs, the reasons judged by one AI agent, what the frames hold, and a recount.",
  "source_runs": [
   "pimpleFoam runs: job 24946879 (array 0 to 9), cases written by job 24946869",
   "set: build 24946942",
   "models: window-test-24947089",
   "report and reasons: 24947316",
   "unit tests: 24947320",
-  "cases written again and compared: 24947327"
+  "cases written again and compared: 24947327",
+  "frame facts: 24947868"
  ],
  "notes": [
   "Sources are paths under /cluster/medbow/gscratch/syome/github_repos/ on MedicineBow, or 'written for this folder'.",
@@ -19,8 +20,8 @@
    "path": "README.md",
    "source": "written for this folder",
    "kind": "derived",
-   "bytes": 27232,
-   "sha256": "59453eb22f81df8da057dd7083ff0750199e38945205cdf8da1d5f3d0a305c10"
+   "bytes": 40525,
+   "sha256": "7282b5b7bde6c2ef4d05257471f2baf4db7fe12ed66d0cd48dbecf193fafc416"
   },
   {
    "path": "contact-sheet.png",
@@ -170,6 +171,27 @@
    "sha256": "93e3451281f9a6e3e9e210e16a4f0bb081fc98dbad0611a6a3930bc579e9e702"
   },
   {
+   "path": "flow/frame-facts.json",
+   "source": "written for this folder",
+   "kind": "derived",
+   "bytes": 182070,
+   "sha256": "1d3998df32222f3dd544b9940e300963ba14e5fd6a6f801829d2e469a7911fe5"
+  },
+  {
+   "path": "flow/frame_facts.py",
+   "source": "written for this folder",
+   "kind": "derived",
+   "bytes": 16505,
+   "sha256": "32ca54816f9294c0b9ea840ec53f9a813756bef055eb887dc6d12b56f0592c65"
+  },
+  {
+   "path": "flow/judge_facts.py",
+   "source": "written for this folder",
+   "kind": "derived",
+   "bytes": 8695,
+   "sha256": "a096846d49258fea067c18a07cad9abe307e9145e7f7d9bdeb45710cc6a25392"
+  },
+  {
    "path": "flow/logs/M1-inlet-speed.log.gz",
    "source": "flow-states-20261030/M1-inlet-speed/log.pimpleFoam",
    "kind": "gzip copy",
@@ -313,11 +335,32 @@
    "sha256": "7a81ae509a0c09250210e40fffadf2e917559f1be5d38acf9d5a8c6fc8d3b230"
   },
   {
+   "path": "job/final_checks.sbatch",
+   "source": "wrong-setup-20261030/jobs/final_checks.sbatch",
+   "kind": "byte-preserved",
+   "bytes": 1861,
+   "sha256": "f2d8c1f43a2c9a241ced404ad4231b14e2e3c5a76bbdabcaaf925450ccdc2f17"
+  },
+  {
+   "path": "job/frame-facts-24947868.out",
+   "source": "wrong-setup-20261030/jobs/frame-facts-24947868.out",
+   "kind": "byte-preserved",
+   "bytes": 18680,
+   "sha256": "8013a0fa1eb9af74ce642498130ea3b8a9e927e92096e4f5c791f2687b970864"
+  },
+  {
+   "path": "job/frame_facts.sbatch",
+   "source": "wrong-setup-20261030/jobs/frame_facts.sbatch",
+   "kind": "byte-preserved",
+   "bytes": 1021,
+   "sha256": "3843a4ce56c619a102144e9a0ec14fae587b9218e3bde6ea355c311feb9b84a9"
+  },
+  {
    "path": "job/make_evidence.py",
    "source": "wrong-setup-20261030/jobs/make_evidence.py",
    "kind": "byte-preserved",
-   "bytes": 8488,
-   "sha256": "3fd69ed81e677965f088dea9e019171c04335335afb8e4a41ce88c56397f48cf"
+   "bytes": 9703,
+   "sha256": "2491a6cbadb1990215fc60babf93b42ab502baddb9ec09e942a64560d97fb8b6"
   },
   {
    "path": "job/normal-overlap-24947055.out",
@@ -442,8 +485,8 @@
    "path": "job/sacct.txt",
    "source": "wrong-setup-20261030/jobs/sacct.txt",
    "kind": "byte-preserved",
-   "bytes": 7952,
-   "sha256": "923abbfe27de35e79ea7d641c5e15a34d1fa9b7410d517d9ad66e5b8626c65b2"
+   "bytes": 8378,
+   "sha256": "f9ec6953ec754d12920d0d47eee614094fcb5db223bf8a8aaa0d593b777ebe32"
   },
   {
    "path": "job/submit_gpu.sh",
@@ -474,11 +517,25 @@
    "sha256": "d3d770147ee3b8b53fc2b193bfd0ac77178c8eec1b44bc322ceaf8ad2eee64da"
   },
   {
+   "path": "judge-facts.json",
+   "source": "written for this folder",
+   "kind": "derived",
+   "bytes": 3986,
+   "sha256": "b03b752f74305f164bc70c0af99d6012beeed7e2efc201ba8cda472a8ce47c72"
+  },
+  {
    "path": "pictures-notes.md",
    "source": "written for this folder",
    "kind": "derived",
    "bytes": 4138,
    "sha256": "fb32c07ba2228f10d5cd566030aeca0097837034aaa1c5b21eeda30e7ec23a3e"
+  },
+  {
+   "path": "reason-judgement.json",
+   "source": "wrong-setup-20261030/reason-judgement.json",
+   "kind": "byte-preserved",
+   "bytes": 50550,
+   "sha256": "07a7f81d1247c1c28008d9c0095785a279a061f71ec2fd8fa144393b8dd041f4"
   },
   {
    "path": "reasons-to-judge.jsonl",
@@ -491,15 +548,15 @@
    "path": "recount.json",
    "source": "written for this folder",
    "kind": "derived",
-   "bytes": 12256,
-   "sha256": "960d7cb88b068ca89b67f08af947704e17cec1333151208408d80446a4918e53"
+   "bytes": 20870,
+   "sha256": "192409a400ed0646ca75fa4c82a3485cd59f816fad90c861a0f48e801a64bd8d"
   },
   {
    "path": "recount.py",
    "source": "written for this folder",
    "kind": "derived",
-   "bytes": 15503,
-   "sha256": "79c11eb319ad5ef7016fd3560aa91ba143161e27fbff585dd7b662607acb1d67"
+   "bytes": 30028,
+   "sha256": "fdbc66682a153628ffd667733edef9ff63ad105691bdb0d8b84a1b99e2c65715"
   },
   {
    "path": "reports/12b.md",

@@ -15,6 +15,16 @@ revision that produced it is given.
   67, 12B 41, 26B-A4B 42, Qwen3.5-35B-A3B 45; constant baseline 40; a rule on
   the peak |U| 56. Records in
   [docs/evidence/2026-10-30-wrong-setup/](docs/evidence/2026-10-30-wrong-setup/README.md).
+- What these counts rest on, computed after the answers were read: without the
+  viscosity run and the moving-wall run, whose change is not in the pictures,
+  31B gets 55 and the rule 56 of 64. The largest Courant number above 1 flags
+  three of the five wrong runs with no reference run (64 of 80), and given a
+  normal run the colour bars' numbers alone get 75 of 80 (68 with each normal
+  run held out). The viscosity run is the only change that models seem to
+  notice and no such number flags; it is one run, and most of the reasons deny a
+  recirculation that is there. Reasons judged by one AI agent: of 37, 14 name the
+  change or its visible effect, 17 partly, 6 not. `wrong_setup_test.py`, the
+  runs, the question and the scoring are unchanged.
 
 ## 2026-10-29, documentation
 

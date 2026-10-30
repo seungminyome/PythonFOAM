@@ -17,6 +17,7 @@ SIF=${SIF:?OpenFOAM v2212 image}
 export PYTHON=${PYTHON:?Python 3 with numpy + matplotlib}
 export POD_SUITE_RUN=${POD_SUITE_RUN:?a PASSed v2 run of async_v2.slurm (its async-no-llm staging and sources)}
 # POD_HOST_MODULES="<modules>" loads what the source-built llama-server needs; empty: nothing is loaded
+# OPENFOAM_BASHRC: the bashrc inside the image (default /usr/lib/openfoam/openfoam2212/etc/bashrc)
 # ------------------------------------------------------------------------------------------------
 root="${SLURM_SUBMIT_DIR:-$PWD}"
 pod="$root/Solver_Examples/PODFoam"
@@ -31,7 +32,7 @@ export LLM_MODEL=${LLM_MODEL:-gemma-4-12b-it-qat-q4_0-vision}
 export LLM_ENDPOINT=http://127.0.0.1:$POD_LLM_PORT/v1/chat/completions
 export LLM_CTX=${LLM_CTX:-4096} LLM_BATCH=512 LLM_UBATCH=512
 export LLM_TIMEOUT_S=120 LLM_KILL_JOIN_S=${LLM_KILL_JOIN_S:-0.2}
-export OPENFOAM_BASHRC=/usr/lib/openfoam/openfoam2212/etc/bashrc PYTHONDONTWRITEBYTECODE=1
+export OPENFOAM_BASHRC=${OPENFOAM_BASHRC:-/usr/lib/openfoam/openfoam2212/etc/bashrc} PYTHONDONTWRITEBYTECODE=1
 export LLM_IMAGE_XRANGE=${LLM_IMAGE_XRANGE:-0,0.12} LLM_IMAGE_YRANGE=${LLM_IMAGE_YRANGE:-0,0.04}
 PERIODIC_STEPS=${PERIODIC_STEPS:-24000} PERIODIC_FIRST=${PERIODIC_FIRST:-250} PERIODIC_EVERY=${PERIODIC_EVERY:-250}
 PERIODIC_MAX_PENDING=${PERIODIC_MAX_PENDING:-1} PERIODIC_WRITE=${PERIODIC_WRITE:-250}
@@ -54,8 +55,11 @@ for f in python_module.py bounded_ipc.py llm_client.py readable_request.py reada
 done
 sha256sum "$frozen"/* > "$out/executed-callback-source.sha256"
 trap 'if [[ -n ${smi:-} ]]; then kill "$smi" 2>/dev/null || true; fi; bash "$hpc/stop_server.sh" || true' EXIT
+# the image, Python and host modules of this job
+printf 'SIF=%s\nPYTHON=%s\nPOD_HOST_MODULES=%s\n' "$SIF" "$PYTHON" "${POD_HOST_MODULES:-}" > "$out/site.txt"
 (
     if [[ -n ${POD_HOST_MODULES:-} ]]; then module load $POD_HOST_MODULES; fi
+    (module list) >> "$out/site.txt" 2>&1 || true
     nvidia-smi > "$out/nvidia-smi.txt" 2>&1 || true
     bash "$hpc/start_server.sh"
 )

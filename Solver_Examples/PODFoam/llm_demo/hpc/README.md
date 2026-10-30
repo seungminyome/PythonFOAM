@@ -50,7 +50,11 @@ bash Solver_Examples/PODFoam/llm_demo/hpc/setup_12b.sh
    selects the CUDA 13 build, which needs a driver of version 580 or newer.
    `async_v2.slurm` and `periodic_v2.slurm` have no lines to edit; they read
    `SIF` and `PYTHON` (required) and `POD_HOST_MODULES` (optional) from the
-   environment.
+   environment and write them, with `module list`, to `site.txt`. `SIF` is an
+   OpenFOAM v2212 image with its compilers and its bashrc at
+   `/usr/lib/openfoam/openfoam2212/etc/bashrc` (set `OPENFOAM_BASHRC` if it is
+   elsewhere), for example from
+   `apptainer pull docker://opencfd/openfoam-dev:2212`.
 3. Check the partition and `--gres` syntax match the cluster; give the account
    and partition on the `sbatch` command line.
 4. `HF_TOKEN` is needed only while the weights are not yet in
@@ -349,5 +353,9 @@ the asynchronous suite ran in the v2212 image instead), the prebuilt CUDA
 binaries, `LLAMA_CUDA=13.4` and the tarball layout of the
 12B scripts (`picture_test.slurm` ran from its own bundle with the same layout
 on 2026-10-22).
+`async_v2.slurm` and `periodic_v2.slurm` as they are now (settings from the
+environment, `site.txt`, the sweep only when its file is in the tree) have run
+only with stub commands, not on a GPU node; the jobs named above ran the earlier
+text of these scripts, which held the site's paths and modules.
 `start_server.sh` fails fast if the server does not answer `/health` within ten
 minutes; the log is in `llm-runtime-12b/server-*.log`.

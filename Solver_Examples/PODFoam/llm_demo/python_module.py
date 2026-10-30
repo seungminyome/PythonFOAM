@@ -127,7 +127,7 @@ def _kill_join_allowance():
     """How long a killed child may take to be reaped (LLM_KILL_JOIN_S, default 0.1 s).
 
     Reaping a killed child takes longer the more memory it maps: about 16 ms for 200 MB
-    and 38 ms for 500 MB on the MedicineBow nodes, where the earlier default of 0.02 s was
+    and 38 ms for 500 MB on the test nodes, where the earlier default of 0.02 s was
     too short for a worker forked from the solver. The allowance is spent only when a
     worker is killed, inside the 0.2 s cleanup budget of the deadline.
     """
@@ -556,7 +556,7 @@ def _v2_frame_record(frame, metadata):
 # has only the callback's modules, so the rules are repeated here from frame_scoring.py
 # (TREND_TOLERANCE, REGION_TOLERANCE_PCT, truth_from_arrays, trend, sequence_truth,
 # score_sequence); test_async.ComputedTrendTests checks that both give the same result.
-TREND_TOLERANCE = 0.02        # relative change of the first and last value below this: roughly_constant
+TREND_TOLERANCE = 0.02        # relative change of the first and last value of at most this: roughly_constant
 REGION_TOLERANCE_PCT = 5.0    # fastest cell moving at most this (percent of the plotted range): same_place
 
 

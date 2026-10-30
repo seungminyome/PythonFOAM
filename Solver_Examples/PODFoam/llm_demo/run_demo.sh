@@ -3,7 +3,7 @@
 # against the resident llama-server. Needs a PASSed validation run
 # (validation/run_v2106.sh) as the reference case; the newest one is used
 # unless POD_REFERENCE_RUN is set. POD_OPENFOAM_VERSION (default v2106) is the
-# OpenFOAM version the bashrc must report, e.g. v2212 in the MedicineBow image.
+# OpenFOAM version the bashrc must report, e.g. v2212.
 set -eo pipefail
 source_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 workspace=${POD_WORKSPACE:-$(cd -- "$source_dir/../../.." && pwd)}
@@ -35,8 +35,10 @@ printf 'Reference run: %s\nDemo directory: %s\n' "$reference" "$output"
 set +e
 source "${OPENFOAM_BASHRC:-/usr/lib/openfoam/openfoam2106/etc/bashrc}" > "$output/log.environment-setup" 2>&1
 set -eu
-# v2106 is the tested version; POD_OPENFOAM_VERSION=v2212 for the MedicineBow container
-[[ "$WM_PROJECT_VERSION" == "${POD_OPENFOAM_VERSION:-v2106}" ]]
+[[ "${WM_PROJECT_VERSION:-}" == "${POD_OPENFOAM_VERSION:-v2106}" ]] || {
+    echo "The bashrc reports OpenFOAM version '${WM_PROJECT_VERSION:-}', not '${POD_OPENFOAM_VERSION:-v2106}': set OPENFOAM_BASHRC and POD_OPENFOAM_VERSION" >&2
+    exit 1
+}
 export PYTHONNOUSERSITE=1 PYTHONUNBUFFERED=1 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
 unset PYTHONHOME PYTHONPATH
 work=$workspace/llm-demo-work

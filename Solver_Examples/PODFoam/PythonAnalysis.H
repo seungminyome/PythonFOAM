@@ -19,7 +19,8 @@ if (rank == 0)
 {
     PyObject* residuals = PyDict_New();
     List<SolverPerformance<vector>> solvesU;
-    if (residuals && pythonSolverPerformance(mesh, "U", solvesU))
+    // UEqn.H solves U only with the momentum predictor.
+    if (residuals && pimple.momentumPredictor() && pythonSolverPerformance(mesh, "U", solvesU))
     {
         const List<SolverPerformance<vector>>& solves = solvesU;
         const char* names[] = {"Ux", "Uy", "Uz"};

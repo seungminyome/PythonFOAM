@@ -35,10 +35,11 @@ directory's `bin/`, so `FOAM_USER_APPBIN` is left alone.
    known divergence of the original setup (`deltaT=1e-5`, LES, max Courant
    about 21, NaN in the second step). `checkMesh` reports 192 high-aspect-ratio
    cells and 16 faces above 70 degrees non-orthogonality. This is the
-   `baseline-pimple` copy, run with floating-point traps off. On the
-   openfoam.com versions the script requires the divergence (a nonzero exit and
-   `Final residual = nan`). On openfoam.org 8 the original case does not
-   diverge, so this step only records what happened
+   `baseline-pimple` copy, run with floating-point traps off (`FOAM_SIGFPE=false`
+   on openfoam.com; on openfoam.org the variable is unset, because any value turns
+   them on). On the openfoam.com versions the script requires the divergence (a
+   nonzero exit and `Final residual = nan`). On openfoam.org 8 the original case
+   does not diverge, so this step only records what happened
    (`baseline-pimple/log.pimpleFoam`, `baseline-pimple/exit-status`).
 2. Stages a stabilised copy (`fixed-pimple`: laminar, initial U = (32.2 0 0),
    `deltaT=1e-7`, Euler, upwind convection, limited non-orthogonal correction,

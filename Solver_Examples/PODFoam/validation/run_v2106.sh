@@ -21,7 +21,10 @@ printf 'Validation directory: %s\n' "$output"
 set +e
 source "${OPENFOAM_BASHRC:-/usr/lib/openfoam/openfoam2106/etc/bashrc}" > "$output/log.environment-setup" 2>&1
 set -eu
-[[ "$WM_PROJECT_VERSION" == "${POD_OPENFOAM_VERSION:-v2106}" ]]
+[[ "${WM_PROJECT_VERSION:-}" == "${POD_OPENFOAM_VERSION:-v2106}" ]] || {
+    echo "The bashrc reports OpenFOAM version '${WM_PROJECT_VERSION:-}', not '${POD_OPENFOAM_VERSION:-v2106}': set OPENFOAM_BASHRC and POD_OPENFOAM_VERSION" >&2
+    exit 1
+}
 # Keep all build products inside this run, including the executable.
 export FOAM_USER_APPBIN="$output/bin"
 export PYTHONNOUSERSITE=1 PYTHONUNBUFFERED=1 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
@@ -59,10 +62,13 @@ done
 if [[ ! -f "$output/log.checkMesh" ]]; then
     checkMesh -case "$output/baseline-pimple" -allGeometry -allTopology > "$output/log.checkMesh" 2>&1 || true
 fi
-# traps off only to reproduce the original nan
+# traps off only to reproduce the original nan; on openfoam.org any value of FOAM_SIGFPE,
+# also "false", turns them on, so there the variable is unset
+traps_off=(env FOAM_SIGFPE=false)
+[[ "$WM_PROJECT_VERSION" == v* ]] || traps_off=(env -u FOAM_SIGFPE)
 if [[ ! -f "$output/baseline-pimple/exit-status" ]]; then
     set +e
-    FOAM_SIGFPE=false pimpleFoam -case "$output/baseline-pimple" > "$output/baseline-pimple/log.pimpleFoam" 2>&1
+    "${traps_off[@]}" pimpleFoam -case "$output/baseline-pimple" > "$output/baseline-pimple/log.pimpleFoam" 2>&1
     baseline_status=$?
     set -e
     printf '%s\n' "$baseline_status" > "$output/baseline-pimple/exit-status"

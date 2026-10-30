@@ -13,9 +13,8 @@
 #SBATCH --output=pod-picture-test-%j.out
 set -euo pipefail
 # --- site settings: edit these lines -------------------------------------
-# MedicineBow (UWyo), as for job 24696203 (hpc/README.md):
-#   module load arcc/1.0 gcc/14.2.0 cuda-toolkit/12.8.0
-#   export PATH=<python 3 with numpy>/bin:$PATH
+# module load <modules>    # what the source-built llama-server needs (hpc/README.md)
+# export PATH=<python 3 with numpy>/bin:$PATH
 # Account and partition go on the command line: sbatch --account=... --partition=...
 # -------------------------------------------------------------------------
 root="${SLURM_SUBMIT_DIR:-$PWD}"
@@ -88,7 +87,7 @@ tar -czf "$out.tar.gz" -C "$(dirname "$out")" "$(basename "$out")"
 (cd "$(dirname "$out")" && sha256sum "$(basename "$out").tar.gz" > "$(basename "$out").tar.gz.sha256")
 echo "done: $out.tar.gz"
 # Optional: put the results on the temporary GitHub release RESULTS_RELEASE of the repository
-# RESULTS_REPO (owner/name). Needs GH_TOKEN with write access to the repository's contents (README.ko.md).
+# RESULTS_REPO (owner/name). Needs GH_TOKEN with write access to the repository's contents (hpc/README.md).
 if [[ -n ${GH_TOKEN:-} && -n ${RESULTS_RELEASE:-} && -n ${RESULTS_REPO:-} ]]; then
     set +e
     slug="$RESULTS_REPO"
@@ -104,6 +103,8 @@ if [[ -n ${GH_TOKEN:-} && -n ${RESULTS_RELEASE:-} && -n ${RESULTS_REPO:-} ]]; th
         fi
     done
     set -e
+elif [[ -n ${RESULTS_RELEASE:-} ]]; then
+    echo "no upload to release $RESULTS_RELEASE: it needs GH_TOKEN and RESULTS_REPO"
 fi
 # Optional cleanup. CLEANUP_MODELS=1 deletes the files this job downloaded (fetched.txt);
 # CLEANUP_MODELS=all deletes the models/<key> folders of every key in MODELS, also files

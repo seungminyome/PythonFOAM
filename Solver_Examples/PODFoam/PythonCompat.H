@@ -44,7 +44,13 @@ public:
 };
 #endif
 
-// This time step's linear solves of one field; false if it has none.
+// This time step's linear solves of one field; false if it has none, with two
+// limits on openfoam.org. Residuals<Type> clears its lists at the next solve of
+// that type, so a field not solved this step still gives an earlier step's list:
+// PythonAnalysis.H checks the momentum predictor for U, but other ways to stop a
+// field's solves during a run (maxIter 0) are not caught. A mesh motion deletes
+// Residuals<Type>, so with moveMeshOuterCorrectors only the last outer corrector's
+// solves are listed.
 template<class Type>
 bool pythonSolverPerformance
 (

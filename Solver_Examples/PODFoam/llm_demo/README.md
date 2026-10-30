@@ -55,9 +55,10 @@ cell centres), U and p, plus `mesh_cells`, `polygon_points` and
 `polygon_offsets`; `readable-metadata.json` gets `slice` (z, requested z,
 where it came from, whether it was moved, cells in the slice and in the mesh).
 The request is built as for 2D; neither the pictures nor the request say that
-they show a slice. An unreadable `LLM_SLICE_Z` or a plane that cuts no cells
-leaves the solver running and v2 requests refused with the reason, and so
-do slice polygons that fail the checks of `pod_image.plane_slice`. v1
+they show a slice. An unreadable `LLM_SLICE_Z` (on OpenFOAM 8 also a number
+followed by spaces) or a plane that cuts no cells leaves the solver running and
+v2 requests refused with the reason, and so do slice polygons that fail the
+checks of `pod_image.plane_slice`. v1
 pictures of a 3D case keep the nearest-cell raster of all cells. The slice
 shows the cut cells' own U and p (|U| includes Uz), not values interpolated
 to the plane; with `LLM_SLICE_Z=0.002` in the test case the cut cells'
@@ -269,7 +270,7 @@ the v1 picture; `observe` with v2 is refused.
 
 `LLM_KILL_JOIN_S` (default 0.1 s since 2026-10-27, before 0.02 s; up to 2 s) is how long a killed worker
 may take to be reaped. Reaping takes longer the more memory the child maps:
-about 16 ms for 200 MB and 38 ms for 500 MB on the MedicineBow nodes, where a
+about 16 ms for 200 MB and 38 ms for 500 MB on the test nodes, where a
 worker forked from a 0.5 GB solver is not reaped within 0.02 s; there the
 jobs use 0.2 s.
 

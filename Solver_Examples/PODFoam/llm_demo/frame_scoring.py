@@ -2,9 +2,8 @@
 
 truth_from_arrays and load_v2 give one frame's key from its arrays, sequence_truth the trend
 words of frames in time order, numbers_of the values a sequence request can state; score_describe
-and score_sequence compare a structured answer with a key. verify_async.py, the unit tests and
-the picture-reading test scripts use these functions. Nothing here draws a picture, runs the
-solver or sends a request.
+and score_sequence compare a structured answer with a key. verify_async.py and the unit tests
+use these functions. Nothing here draws a picture, runs the solver or sends a request.
 """
 import math
 
@@ -13,12 +12,12 @@ import numpy as np
 import readable_request
 from readable_request import AXES
 
-TREND_TOLERANCE = 0.02        # relative change below this is "roughly_constant"
-REGION_TOLERANCE_PCT = 5.0    # argmax moving less than this (percent of plotted range) is "same_place"
+TREND_TOLERANCE = 0.02        # relative change of at most this is "roughly_constant"
+REGION_TOLERANCE_PCT = 5.0    # argmax moving at most this (percent of plotted range) is "same_place"
 
 
 def truth_from_arrays(centres, velocity, pressure, plotted, step, time_s):
-    """The answer key snapshot_runner.load_frame computes, from arrays and a plotted range."""
+    """One frame's answer key, from its arrays and a plotted range."""
     (x0, x1), (y0, y1) = plotted
     x, y = centres[:, 0], centres[:, 1]
     inside = (x >= x0) & (x <= x1) & (y >= y0) & (y <= y1)

@@ -249,7 +249,7 @@ class AsyncTests(unittest.TestCase):
         with fixture(delay_s=0.3) as (endpoint, received):
             harness = Harness({"LLM_MODE": "describe", "LLM_ENDPOINT": endpoint, "LLM_ASYNC": "1"})
             try:
-                result = harness.run(sleep_after=5, sleep_s=0.5)
+                result = harness.run(sleep_after=5, sleep_s=1.0)
                 walls = dict(harness.walls)
                 telemetry = (harness.case / "telemetry.jsonl").read_text().splitlines()
             finally:
@@ -603,6 +603,29 @@ class V2PictureTests(unittest.TestCase):
         self.assertEqual(len(lines), 1200)
         self.assertEqual([json.loads(line)["step"] for line in lines], list(range(1, 1201)))
         self.assertGreater(budgets[3][1], 0.7)
+
+
+class ScoreDescribeTests(unittest.TestCase):
+    def test_distances_and_the_ten_percent_limit(self):
+        import frame_scoring
+        truth = {"fastest_flow": {"x_percent": 20.0, "y_percent": 30.0},
+                 "lowest_pressure": {"x_percent": 80.0, "y_percent": 50.0},
+                 "x_span_m": 0.12, "y_span_m": 0.04}
+        score = frame_scoring.score_describe(
+            {"fastest_flow_x_percent": 26.0, "fastest_flow_y_percent": 38.0,
+             "lowest_pressure_x_percent": 74.0, "lowest_pressure_y_percent": 58.5}, truth)
+        self.assertEqual(sorted(score), ["fastest_flow", "lowest_pressure"])
+        fastest, lowest = score["fastest_flow"], score["lowest_pressure"]
+        self.assertEqual(fastest["answer_percent"], [26.0, 38.0])
+        self.assertEqual(fastest["true_percent"], [20.0, 30.0])
+        self.assertEqual(fastest["error_percent"], [6.0, 8.0])
+        self.assertEqual(fastest["distance_percent"], 10.0)
+        self.assertTrue(fastest["within_10_percent"])     # exactly at the limit
+        self.assertEqual(lowest["error_percent"], [-6.0, 8.5])
+        self.assertFalse(lowest["within_10_percent"])
+        self.assertAlmostEqual(fastest["error_m"][0], 0.0072)
+        self.assertAlmostEqual(fastest["error_m"][1], 0.0032)
+        self.assertAlmostEqual(fastest["distance_m"], (0.0072 ** 2 + 0.0032 ** 2) ** 0.5)
 
 
 class ComputedTrendTests(unittest.TestCase):

@@ -20,6 +20,7 @@ export PYTHON=${PYTHON:?Python 3 with numpy + matplotlib}
 export POD_REFERENCE_RUN=${POD_REFERENCE_RUN:?a PASSed validation run (validation/run_v2106.sh) on this OpenFOAM}
 export LLM_LONG_START=${LLM_LONG_START:?time directory of a developed run of the same mesh, e.g. .../long-100ms/0.1}
 # POD_HOST_MODULES="<modules>" loads what the source-built llama-server needs; empty: nothing is loaded
+# OPENFOAM_BASHRC: the bashrc inside the image (default /usr/lib/openfoam/openfoam2212/etc/bashrc)
 # ------------------------------------------------------------------------------------------------
 root="${SLURM_SUBMIT_DIR:-$PWD}"
 pod="$root/Solver_Examples/PODFoam"
@@ -49,7 +50,7 @@ export LLM_ENDPOINT=http://127.0.0.1:$POD_LLM_PORT/v1/chat/completions
 export LLM_CTX=4096 LLM_BATCH=512 LLM_UBATCH=512
 export LLM_TIMEOUT_S=120 LLM_MAX_TOKENS=320 LLM_IMAGE_STYLE=v2
 export LLM_KILL_JOIN_S=${LLM_KILL_JOIN_S:-0.2}                          # a killed worker of a 0.5 GB solver takes ~40 ms to reap here
-export POD_SUITE=async OPENFOAM_BASHRC=/usr/lib/openfoam/openfoam2212/etc/bashrc POD_OPENFOAM_VERSION=v2212
+export POD_SUITE=async OPENFOAM_BASHRC=${OPENFOAM_BASHRC:-/usr/lib/openfoam/openfoam2212/etc/bashrc} POD_OPENFOAM_VERSION=v2212
 export PYTHONDONTWRITEBYTECODE=1
 # the run: 6000 steps of 5e-6 s from the start state, written every 250 steps
 export LLM_LONG_STEPS=${LLM_LONG_STEPS:-6000} LLM_LONG_DT=${LLM_LONG_DT:-5e-6} LLM_LONG_WRITE=${LLM_LONG_WRITE:-250}
@@ -59,8 +60,11 @@ export SWEEP_STEPS=${SWEEP_STEPS:-}                                        # def
 SWEEP_PARALLEL=${SWEEP_PARALLEL:-2}
 
 trap 'if [[ -n ${smi:-} ]]; then kill "$smi" 2>/dev/null || true; fi; bash "$hpc/stop_server.sh" || true' EXIT
+# the image, Python and host modules of this job
+printf 'SIF=%s\nPYTHON=%s\nPOD_HOST_MODULES=%s\n' "$SIF" "$PYTHON" "${POD_HOST_MODULES:-}" > "$out/site.txt"
 (
     if [[ -n ${POD_HOST_MODULES:-} ]]; then module load $POD_HOST_MODULES; fi
+    (module list) >> "$out/site.txt" 2>&1 || true
     nvidia-smi > "$out/nvidia-smi.txt" 2>&1 || true
     bash "$hpc/start_server.sh"
 )
@@ -98,7 +102,7 @@ else
     echo "$sweep does not exist: sweep skipped"
 fi
 for file in "$POD_LLM_STATE"/server-*.cmd "$POD_LLM_STATE"/server-*.log "$POD_LLM_STATE"/models-*.json \
-            "$POD_LLM_STATE"/gpu-*.txt "$out/nvidia-smi.txt" "$out/gpu-samples.csv" \
+            "$POD_LLM_STATE"/gpu-*.txt "$out/nvidia-smi.txt" "$out/gpu-samples.csv" "$out/site.txt" \
             "$POD_LLM_RUNTIME/runtime_manifest_12b.json"; do
     [[ -f $file ]] && cp "$file" "$run/" || true
 done

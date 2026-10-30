@@ -107,8 +107,8 @@ python3 llm_demo/runtime.py stop
 
 On a Slurm GPU node, `async_v2.slurm` runs the asynchronous suite with v2
 pictures and Gemma 4 12B, and `periodic_v2.slurm` the run with a request
-every N steps and the same run without requests. Site lines, the bridge
-validation inside the image and the developed flow the runs start from
+every N steps and the same run without requests. The required variables, the
+bridge validation inside the image and the developed flow the runs start from
 (`LLM_LONG_START`) are in
 [llm_demo/hpc/README.md](Solver_Examples/PODFoam/llm_demo/hpc/README.md).
 

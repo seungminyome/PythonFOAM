@@ -304,6 +304,7 @@ if (podSvdInterval < 0)
         << exit(FatalError);
 }
 label podSnapshotCount = 0;
+label podSnapshotsSinceSvd = 0;
 std::feclearexcept(FE_ALL_EXCEPT);
 pythonInitFpe.restore();
 Info<< "Python and NumPy initialized successfully" << endl;

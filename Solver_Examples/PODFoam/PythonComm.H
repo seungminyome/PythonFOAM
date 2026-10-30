@@ -31,23 +31,33 @@ forAll(U, celli)
         data[3*celli + cmpt] = value;
     }
 }
-PyObject* snapshotResult = PyObject_CallFunction(snapshot_func, "Oi", snapshot, rank);
-Py_DECREF(snapshot);
-if (!snapshotResult)
+// podSvdInterval 0: a module without analysis_func keeps the original schedule, where a
+// write step runs the SVD instead of collecting a snapshot (if it has snapshots to use).
+// The observer needs a snapshot at every step.
+const bool writeStepSvd = !podSvdInterval && runTime.outputTime();
+const bool collectSnapshot = analysis_func || !writeStepSvd || !podSnapshotsSinceSvd;
+if (collectSnapshot)
 {
-    PyErr_Print();
-    FatalErrorInFunction << "Python snapshot_func failed" << exit(FatalError);
+    PyObject* snapshotResult = PyObject_CallFunction(snapshot_func, "Oi", snapshot, rank);
+    if (!snapshotResult)
+    {
+        PyErr_Print();
+        FatalErrorInFunction << "Python snapshot_func failed" << exit(FatalError);
+    }
+    Py_DECREF(snapshotResult);
+    ++podSnapshotCount;
+    ++podSnapshotsSinceSvd;
+    Info<< "POD snapshot accepted: " << podSnapshotCount
+        << " time=" << runTime.timeName() << " cells=" << num_cells << endl;
 }
-Py_DECREF(snapshotResult);
-++podSnapshotCount;
-Info<< "POD snapshot accepted: " << podSnapshotCount
-    << " time=" << runTime.timeName() << " cells=" << num_cells << endl;
+Py_DECREF(snapshot);
 
 const bool computeSvd = podSvdInterval
     ? (podSnapshotCount % podSvdInterval == 0)
-    : runTime.outputTime();
+    : writeStepSvd && (analysis_func || !collectSnapshot);
 if (computeSvd)
 {
+    podSnapshotsSinceSvd = 0;
     PyObject* result = PyObject_CallFunction(svd_func, "i", rank);
     if (!result)
     {
@@ -75,9 +85,9 @@ if (computeSvd)
             << exit(FatalError);
     }
     if (PyArray_NDIM(modes) != 2 || PyArray_DIM(modes, 0) != 3*num_cells
-     || PyArray_DIM(modes, 1) != min(truncation, podSnapshotCount))
+     || PyArray_DIM(modes, 1) < 1 || PyArray_DIM(modes, 1) > truncation)
     {
-        FatalErrorInFunction << "Expected SVD shape (3*cells, min(truncation,snapshots))"
+        FatalErrorInFunction << "Expected SVD shape (3*cells, 1 to truncation modes)"
             << exit(FatalError);
     }
     const label nModes = PyArray_DIM(modes, 1);

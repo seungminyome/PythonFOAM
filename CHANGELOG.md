@@ -5,11 +5,15 @@ revision that produced it is given.
 
 ## 2026-10-29, documentation
 
-- README and the Pages site describe the current observer: one results table
-  with a constant-baseline column, the asynchronous v2 path as a diagram, a
-  settings table, a GPU quick start, limitations and next steps. The dated
-  measurement sections gave way to the report list; the pictures at the top
-  are the v2 pair sent from the running solver.
+- README follows the section shares of 13 widely used READMEs of similar
+  projects (coupling and in-situ tools, CFD machine learning, multimodal
+  evaluation): features, two headline results, the asynchronous v2 path as a
+  diagram, requirements, quick start, settings, outputs, limitations,
+  documentation, citation, acknowledgements and licence, about 1,200 words.
+- The Pages site is the results page: the table with a constant-baseline
+  column, the findings, the limitations and all reports with evidence links
+  and downloads. The pictures at the top of both are the v2 pair sent from the
+  running solver.
 - The October 27 and 28 reports open with their results, define their terms
   once, list their limitations once and keep Slurm jobs in Records. "One fixed
   answer" is now "constant baseline". No number changed.

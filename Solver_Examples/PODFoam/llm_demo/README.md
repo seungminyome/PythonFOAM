@@ -239,14 +239,14 @@ the v1 picture; `observe` with v2 is refused.
 - Computed trend words (2026-10-28). For a v2 sequence the worker also
   computes the three trend words from the frames' arrays, among the cells
   inside the plotted range, with the picture tests' answer key
-  (`snapshot_runner.py`: the largest |U| and the lowest p are roughly
+  (`frame_scoring.py`: the largest |U| and the lowest p are roughly
   constant when the last differs from the first by at most 2 % of the
   larger magnitude; the fastest cell is in the same place when it moved at
   most 5 % of the plotted range). `llm_result.json` gets them as
-  `computed_trends` (the dictionary `snapshot_runner.sequence_truth` gives
+  `computed_trends` (the dictionary `frame_scoring.sequence_truth` gives
   for those frames, with each time's extrema) and, when the model answered,
   `computed_trends_agreement`, the model's words against them (as
-  `snapshot_runner.score_sequence`). They are not sent and not in
+  `frame_scoring.score_sequence`). They are not sent and not in
   `llm_request.json`; a request that times out still records them.
   `test_async.ComputedTrendTests` checks them against the picture tests'
   functions on 400 seeded random cases (a drawn window that holds no cell is

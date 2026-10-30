@@ -296,7 +296,7 @@ def build(args):
     linked = pt.link_duplicate_arrays(builder.output / "frames")
     here = Path(__file__).resolve().parent
     code = {name: pt.file_sha256(here / name) for name in
-            ("instability_test.py", "picture_test.py", "readable_image.py", "readable_request.py",
+            ("instability_test.py", "picture_test.py", "frame_scoring.py", "readable_image.py", "readable_request.py",
              "foam_fields.py", "pod_image.py", "snapshot_runner.py", "llm_client.py")}
     groups = Counter(f"{e['design']['group']} {e['design']['run']}" for e in builder.entries)
     manifest = {"schema_version": 2, "test": f"{TEST_NAME} (seed {args.seed})", "seed": args.seed,

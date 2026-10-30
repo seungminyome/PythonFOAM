@@ -115,6 +115,7 @@ validation inside the image and the developed flow the runs start from
 ```bash
 export HF_TOKEN=hf_... POD_LLM_RUNTIME=$PWD/llm-runtime-12b
 bash Solver_Examples/PODFoam/llm_demo/hpc/setup_12b.sh   # llama.cpp b11429 (CUDA), Gemma 4 12B QAT
+export SIF=<of2212.sif> PYTHON=<python 3 with numpy and matplotlib>
 export POD_REFERENCE_RUN=<pod-v2212.XXXXXX> LLM_LONG_START=<developed case>/0.1
 sbatch --account=<account> --partition=<partition> Solver_Examples/PODFoam/llm_demo/hpc/async_v2.slurm
 POD_SUITE_RUN=<pod-llm-async.XXXXXX of a PASSed async_v2.slurm run> \

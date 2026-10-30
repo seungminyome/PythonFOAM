@@ -3,8 +3,8 @@
 # without requests, from the baseline staging of an earlier async_v2.slurm run; Gemma 4 12B on
 # the node's GPU, the solver in the OpenFOAM v2212 Apptainer image (see async_v2.slurm).
 # Submit from the repository root:
-#   POD_SUITE_RUN=<pod-llm-async.XXXXXX of async_v2.slurm> sbatch --account=... --partition=... \
-#       Solver_Examples/PODFoam/llm_demo/hpc/periodic_v2.slurm
+#   SIF=<image> PYTHON=<python> POD_SUITE_RUN=<pod-llm-async.XXXXXX of async_v2.slurm> \
+#       sbatch --account=... --partition=... Solver_Examples/PODFoam/llm_demo/hpc/periodic_v2.slurm
 #SBATCH --job-name=pod-periodic-v2
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
@@ -12,11 +12,11 @@
 #SBATCH --time=04:00:00
 #SBATCH --output=pod-periodic-v2-%j.out
 set -euo pipefail
-# --- site settings: edit these lines (MedicineBow, 2026-10-27) -----------------------------------
-SIF=${SIF:-/cluster/medbow/gscratch/syome/s4f/of2212.sif}          # OpenFOAM v2212 image
-export PYTHON=${PYTHON:-/gscratch/syome/conda/s4f/bin/python3}       # Python 3 with numpy + matplotlib
+# --- site settings: from the environment ----------------------------------------------------------
+SIF=${SIF:?OpenFOAM v2212 image}
+export PYTHON=${PYTHON:?Python 3 with numpy + matplotlib}
 export POD_SUITE_RUN=${POD_SUITE_RUN:?a PASSed v2 run of async_v2.slurm (its async-no-llm staging and sources)}
-host_modules="arcc/1.0 gcc/14.2.0 cuda-toolkit/12.8.0"
+# POD_HOST_MODULES="<modules>" loads what the source-built llama-server needs; empty: nothing is loaded
 # ------------------------------------------------------------------------------------------------
 root="${SLURM_SUBMIT_DIR:-$PWD}"
 pod="$root/Solver_Examples/PODFoam"
@@ -55,13 +55,13 @@ done
 sha256sum "$frozen"/* > "$out/executed-callback-source.sha256"
 trap 'if [[ -n ${smi:-} ]]; then kill "$smi" 2>/dev/null || true; fi; bash "$hpc/stop_server.sh" || true' EXIT
 (
-    module load $host_modules
+    if [[ -n ${POD_HOST_MODULES:-} ]]; then module load $POD_HOST_MODULES; fi
     nvidia-smi > "$out/nvidia-smi.txt" 2>&1 || true
     bash "$hpc/start_server.sh"
 )
 nvidia-smi --query-gpu=timestamp,memory.used,utilization.gpu --format=csv -lms 1000 > "$out/gpu-samples.csv" 2>&1 &
 smi=$!
-module load apptainer
+command -v apptainer > /dev/null || module load apptainer
 status=0
 # a staging copy of the suite whose executed-callback-source is this run's
 staged="$out/suite-staging"

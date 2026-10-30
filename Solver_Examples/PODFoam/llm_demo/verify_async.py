@@ -40,8 +40,7 @@ if STYLE == 'v2':
     import readable_request
     from llm_client import encode_json
     sys.path.insert(1, str(Path(__file__).resolve().parent))
-    import picture_test
-    import snapshot_runner
+    import frame_scoring
 CASES = ('async-no-llm', 'async-describe', 'async-sequence', 'async-server-error', 'async-timeout')
 EXPECTED_STATUS = {'async-no-llm': 'disabled', 'async-describe': 'ok', 'async-sequence': 'ok',
                    'async-server-error': 'error', 'async-timeout': 'timeout'}
@@ -97,17 +96,17 @@ def check_frame_v2(case, record, solver_time_s):
 
 
 def score_v2(name, result, frames):
-    """Scores of the answer against the arrays of its pictures (snapshot_runner rules)."""
+    """Scores of the answer against the arrays of its pictures (frame_scoring rules)."""
     output = result.get('structured_output')
     if not output:
         return None
-    truths = [picture_test.load_v2(f['directory'])[1] for f in frames]
+    truths = [frame_scoring.load_v2(f['directory'])[1] for f in frames]
     if result['mode'] == 'describe':
-        scores = snapshot_runner.score_describe(output, truths[0])
+        scores = frame_scoring.score_describe(output, truths[0])
         return {'truth': {k: truths[0][k] for k in ('fastest_flow', 'lowest_pressure', 'plotted_range_m')},
                 'scores': scores}
-    truth = snapshot_runner.sequence_truth(truths)
-    return {'truth': truth, 'scores': snapshot_runner.score_sequence(output, truth)}
+    truth = frame_scoring.sequence_truth(truths)
+    return {'truth': truth, 'scores': frame_scoring.score_sequence(output, truth)}
 
 
 for name in CASES:
@@ -197,13 +196,12 @@ for name in CASES:
                 assert hashlib.sha256(base64.b64decode(data)).hexdigest() == frame['image_sha256'][field]
         # LLM_SEQUENCE_PROMPT (2026-10-28): own (default), t or tn, the forms of the trend test
         form = result.get('sequence_prompt', 'own')
-        truths = [picture_test.load_v2(f['directory'])[1] for f in frames]
+        truths = [frame_scoring.load_v2(f['directory'])[1] for f in frames]
         options, system = {}, readable_request.SEQUENCE_V2OWN_SYSTEM_PROMPT
         if form == 't':
             options, system = {'thresholds': True}, readable_request.SEQUENCE_V2OWN_T_SYSTEM_PROMPT
         elif form == 'tn':
-            import sequence_test
-            options = {'thresholds': True, 'numbers': [sequence_test.numbers_of(t) for t in truths]}
+            options = {'thresholds': True, 'numbers': [frame_scoring.numbers_of(t) for t in truths]}
             system = readable_request.SEQUENCE_V2OWN_TN_SYSTEM_PROMPT
         assert body['messages'][0]['content'] == system
         assert body['response_format']['json_schema']['name'] == 'fluid_sequence'
@@ -212,10 +210,10 @@ for name in CASES:
             frames, model=body['model'], own_ranges=True, **options)), name
         if 'computed_trends' in result:
             # callbacks since 2026-10-28 record the answer key they computed from the frames
-            key = snapshot_runner.sequence_truth(truths)
+            key = frame_scoring.sequence_truth(truths)
             assert result['computed_trends'] == json.loads(json.dumps(key)), name
             if 'computed_trends_agreement' in result:
-                assert result['computed_trends_agreement'] == snapshot_runner.score_sequence(
+                assert result['computed_trends_agreement'] == frame_scoring.score_sequence(
                     result['structured_output'], result['computed_trends']), name
         if name == 'async-sequence':
             scores = score_v2(name, result, frames)

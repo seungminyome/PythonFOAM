@@ -1,10 +1,12 @@
 #!/bin/bash
 # The five asynchronous cases (run_async_cases.py) with v2 pictures and Gemma 4 12B on one GPU
-# node, started from a developed flow state, then the describe sweep (run_live_sweep.py):
-# requests at several steps, each with its own plotted window. OpenFOAM runs inside an Apptainer
-# image (MedicineBow has no OpenFOAM module); llama-server runs on the host GPU and the solver's
-# callback reaches it on 127.0.0.1 (the image shares the host network).
-# Submit from the repository root:  sbatch --account=... --partition=... Solver_Examples/PODFoam/llm_demo/hpc/async_v2.slurm
+# node, started from a developed flow state, then the describe sweep (run_live_sweep.py, when that
+# file is in this tree): requests at several steps, each with its own plotted window. OpenFOAM
+# runs inside an Apptainer image; llama-server runs on the host GPU and the solver's callback
+# reaches it on 127.0.0.1 (the image shares the host network).
+# Submit from the repository root:
+#   SIF=<image> PYTHON=<python> POD_REFERENCE_RUN=<validation run> LLM_LONG_START=<time directory> \
+#       sbatch --account=... --partition=... Solver_Examples/PODFoam/llm_demo/hpc/async_v2.slurm
 #SBATCH --job-name=pod-async-v2
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
@@ -12,16 +14,21 @@
 #SBATCH --time=04:00:00
 #SBATCH --output=pod-async-v2-%j.out
 set -euo pipefail
-# --- site settings: edit these lines (MedicineBow, 2026-10-22) -----------------------------------
-SIF=${SIF:-/cluster/medbow/gscratch/syome/s4f/of2212.sif}          # OpenFOAM v2212 image
-export PYTHON=${PYTHON:-/gscratch/syome/conda/s4f/bin/python3}       # Python 3 with numpy + matplotlib
+# --- site settings: from the environment ----------------------------------------------------------
+SIF=${SIF:?OpenFOAM v2212 image}
+export PYTHON=${PYTHON:?Python 3 with numpy + matplotlib}
 export POD_REFERENCE_RUN=${POD_REFERENCE_RUN:?a PASSed validation run (validation/run_v2106.sh) on this OpenFOAM}
 export LLM_LONG_START=${LLM_LONG_START:?time directory of a developed run of the same mesh, e.g. .../long-100ms/0.1}
-host_modules="arcc/1.0 gcc/14.2.0 cuda-toolkit/12.8.0"              # what the source-built llama-server needs
+# POD_HOST_MODULES="<modules>" loads what the source-built llama-server needs; empty: nothing is loaded
 # ------------------------------------------------------------------------------------------------
 root="${SLURM_SUBMIT_DIR:-$PWD}"
 pod="$root/Solver_Examples/PODFoam"
 hpc="$pod/llm_demo/hpc"
+sweep="$pod/llm_demo/run_live_sweep.py"
+if [[ -n ${POD_SUITE_RUN:-} && ! -f $sweep ]]; then
+    echo "POD_SUITE_RUN asks for the sweep only, and $sweep does not exist" >&2
+    exit 1
+fi
 job=${SLURM_JOB_ID:-local}
 out=${POD_ASYNC_OUT:-$root/../pod-async-v2/run-$job}                 # outside the git tree
 mkdir -p "$out"
@@ -53,14 +60,14 @@ SWEEP_PARALLEL=${SWEEP_PARALLEL:-2}
 
 trap 'if [[ -n ${smi:-} ]]; then kill "$smi" 2>/dev/null || true; fi; bash "$hpc/stop_server.sh" || true' EXIT
 (
-    module load $host_modules
+    if [[ -n ${POD_HOST_MODULES:-} ]]; then module load $POD_HOST_MODULES; fi
     nvidia-smi > "$out/nvidia-smi.txt" 2>&1 || true
     bash "$hpc/start_server.sh"
 )
 nvidia-smi --query-gpu=timestamp,memory.used,utilization.gpu --format=csv -lms 1000 > "$out/gpu-samples.csv" 2>&1 &
 smi=$!
 
-module load apptainer
+command -v apptainer > /dev/null || module load apptainer
 suite_status=0
 if [[ -n ${POD_SUITE_RUN:-} ]]; then
     # sweep only, on an earlier suite run of this checkout (its binary sits next to it)
@@ -80,12 +87,16 @@ fi
 fi
 # the sweep needs only the suite's async-no-llm baseline, so it runs even if a check above failed
 sweep_status=0
+if [[ -f $sweep ]]; then
 apptainer exec "$SIF" bash -c '
     set +e; source "$OPENFOAM_BASHRC" > /dev/null 2>&1; set -eo pipefail
     export LD_LIBRARY_PATH=$(dirname "$PYTHON")/../lib:$LD_LIBRARY_PATH
     "$PYTHON" "'"$pod"'/llm_demo/run_live_sweep.py" "'"$run"'" "'"$out"'/llm-demo-work/bin/PODFoam" \
         "'"$run"'-sweep'"${POD_SUITE_RUN:+-$job}"'" ${SWEEP_STEPS:+--steps $SWEEP_STEPS} --parallel '"$SWEEP_PARALLEL"' | tee "'"$run"'-sweep'"${POD_SUITE_RUN:+-$job}"'.json"' \
     || sweep_status=$?
+else
+    echo "$sweep does not exist: sweep skipped"
+fi
 for file in "$POD_LLM_STATE"/server-*.cmd "$POD_LLM_STATE"/server-*.log "$POD_LLM_STATE"/models-*.json \
             "$POD_LLM_STATE"/gpu-*.txt "$out/nvidia-smi.txt" "$out/gpu-samples.csv" \
             "$POD_LLM_RUNTIME/runtime_manifest_12b.json"; do

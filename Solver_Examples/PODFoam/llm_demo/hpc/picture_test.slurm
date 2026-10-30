@@ -87,11 +87,11 @@ cp "$root/pod-picture-test-$job.out" "$out/job-so-far.out" 2>/dev/null || true
 tar -czf "$out.tar.gz" -C "$(dirname "$out")" "$(basename "$out")"
 (cd "$(dirname "$out")" && sha256sum "$(basename "$out").tar.gz" > "$(basename "$out").tar.gz.sha256")
 echo "done: $out.tar.gz"
-# Optional: put the results on the temporary GitHub release named by RESULTS_RELEASE.
-# Needs GH_TOKEN with write access to the repository's contents (README.ko.md).
-if [[ -n ${GH_TOKEN:-} && -n ${RESULTS_RELEASE:-} ]]; then
+# Optional: put the results on the temporary GitHub release RESULTS_RELEASE of the repository
+# RESULTS_REPO (owner/name). Needs GH_TOKEN with write access to the repository's contents (README.ko.md).
+if [[ -n ${GH_TOKEN:-} && -n ${RESULTS_RELEASE:-} && -n ${RESULTS_REPO:-} ]]; then
     set +e
-    slug="${RESULTS_REPO:-seungminyome/PythonFOAM}"
+    slug="$RESULTS_REPO"
     id=$(curl -s -H "Authorization: Bearer $GH_TOKEN" "https://api.github.com/repos/$slug/releases/tags/$RESULTS_RELEASE" \
          | python3 -c 'import json, sys; print(json.load(sys.stdin)["id"])' 2>/dev/null)
     for file in "$out.tar.gz" "$out.tar.gz.sha256"; do

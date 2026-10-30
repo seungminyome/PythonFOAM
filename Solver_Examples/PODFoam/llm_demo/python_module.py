@@ -553,17 +553,16 @@ def _v2_frame_record(frame, metadata):
 
 
 # The answer key of the picture tests, for the frames of a v2 sequence. The case folder
-# has only the callback's modules, so the rules are repeated here from snapshot_runner.py
-# (TREND_TOLERANCE, REGION_TOLERANCE_PCT, trend, sequence_truth, score_sequence) and
-# picture_test.py (truth_from_arrays); test_async.ComputedTrendTests checks that both
-# give the same result.
+# has only the callback's modules, so the rules are repeated here from frame_scoring.py
+# (TREND_TOLERANCE, REGION_TOLERANCE_PCT, truth_from_arrays, trend, sequence_truth,
+# score_sequence); test_async.ComputedTrendTests checks that both give the same result.
 TREND_TOLERANCE = 0.02        # relative change of the first and last value below this: roughly_constant
 REGION_TOLERANCE_PCT = 5.0    # fastest cell moving at most this (percent of the plotted range): same_place
 
 
 def _frame_extrema(centres, velocity, pressure, plotted, step, time_s):
     """Largest |U|, lowest p and the fastest cell's place, among the cells whose centres lie in
-    the plotted range [[x0, x1], [y0, y1]] (picture_test.truth_from_arrays)."""
+    the plotted range [[x0, x1], [y0, y1]] (frame_scoring.truth_from_arrays)."""
     (x0, x1), (y0, y1) = plotted
     x, y = centres[:, 0], centres[:, 1]
     inside = (x >= x0) & (x <= x1) & (y >= y0) & (y <= y1)
@@ -600,7 +599,7 @@ def _trend(first, last, tolerance=TREND_TOLERANCE):
 
 
 def _sequence_trends(extrema):
-    """The three trend words from the first and last time (snapshot_runner.sequence_truth)."""
+    """The three trend words from the first and last time (frame_scoring.sequence_truth)."""
     first, last = extrema[0], extrema[-1]
     speed_trend, speed_change = _trend(first["max_speed_m_per_s"], last["max_speed_m_per_s"])
     pressure_word, pressure_change = _trend(first["min_pressure_m2_per_s2"],
@@ -626,7 +625,7 @@ def _sequence_trends(extrema):
 
 
 def _trend_agreement(structured, computed):
-    """The model's trend words against the computed ones (snapshot_runner.score_sequence)."""
+    """The model's trend words against the computed ones (frame_scoring.score_sequence)."""
     out = {}
     for name in ("max_speed_trend", "min_pressure_trend", "fastest_flow_region"):
         out[name] = {"answer": structured[name], "truth": computed[name],

@@ -1,4 +1,4 @@
-# PODFoam bridge validation on OpenFOAM v2106
+# PODFoam bridge validation
 
 Ten serial time steps of the PODFoam case (20,540 cells) to check that the
 C++/Python round trip is intact: every snapshot reaches Python as its own
@@ -12,11 +12,22 @@ cd Solver_Examples/PODFoam
 ./validation/run_v2106.sh --resume <run-dir>   # reuse mesh and reference solver output
 ```
 
+The script, whatever its name, supports OpenFOAM v2012, v2106 and v2212
+(openfoam.com) and OpenFOAM 8 (openfoam.org). v2106 is the default. For another
+version set `OPENFOAM_BASHRC` to that installation's bashrc and
+`POD_OPENFOAM_VERSION` to the version it reports (`WM_PROJECT_VERSION`); the
+script stops if the two differ, and the run directory is named after the version:
+
+```bash
+OPENFOAM_BASHRC=/usr/lib/openfoam/openfoam2212/etc/bashrc POD_OPENFOAM_VERSION=v2212 ./validation/run_v2106.sh
+OPENFOAM_BASHRC=/opt/openfoam8/etc/bashrc POD_OPENFOAM_VERSION=8 ./validation/run_v2106.sh
+```
+
 Environment variables: `OPENFOAM_BASHRC` (default
-`/usr/lib/openfoam/openfoam2106/etc/bashrc`), `PYTHON` (default
-`/usr/bin/python3`, needs numpy), `POD_WORKSPACE` (default: parent of the
-checkout). The executable is built into the run directory's `bin/`, so
-`FOAM_USER_APPBIN` is left alone.
+`/usr/lib/openfoam/openfoam2106/etc/bashrc`), `POD_OPENFOAM_VERSION` (default
+`v2106`), `PYTHON` (default `/usr/bin/python3`, needs numpy), `POD_WORKSPACE`
+(default: parent of the checkout). The executable is built into the run
+directory's `bin/`, so `FOAM_USER_APPBIN` is left alone.
 
 ## What the script does
 
@@ -24,7 +35,11 @@ checkout). The executable is built into the run directory's `bin/`, so
    known divergence of the original setup (`deltaT=1e-5`, LES, max Courant
    about 21, NaN in the second step). `checkMesh` reports 192 high-aspect-ratio
    cells and 16 faces above 70 degrees non-orthogonality. This is the
-   `baseline-pimple` copy, run with floating-point traps off.
+   `baseline-pimple` copy, run with floating-point traps off. On the
+   openfoam.com versions the script requires the divergence (a nonzero exit and
+   `Final residual = nan`). On openfoam.org 8 the original case does not
+   diverge, so this step only records what happened
+   (`baseline-pimple/log.pimpleFoam`, `baseline-pimple/exit-status`).
 2. Stages a stabilised copy (`fixed-pimple`: laminar, initial U = (32.2 0 0),
    `deltaT=1e-7`, Euler, upwind convection, limited non-orthogonal correction,
    `DICGaussSeidel` pressure smoother) and runs `pimpleFoam` on it.
@@ -56,9 +71,9 @@ The script prints `PASS` only if all checks succeed. A passing run
 
 ## Solver changes behind this
 
-`PODFoam.C`, `PythonCreate.H`, `PythonComm.H`, `pEqn.H`:
+`PODFoam.C`, `PythonCompat.H`, `PythonCreate.H`, `PythonComm.H`, `pEqn.H`:
 
-- v2106 argument handling (`setRootCaseLists.H`), NumPy C API import with error
+- Argument handling (`setRootCaseLists.H`), NumPy C API import with error
   checking, the case directory on `sys.path` so `-case` works.
 - Snapshots are copied into a NumPy array that Python owns (no
   `PyArray_SimpleNewFromData` views of solver memory); U and p are checked
@@ -68,10 +83,12 @@ The script prints `PASS` only if all checks succeed. A passing run
   `zeroGradient` fields.
 - `pEqn.solve()` uses the `pFinal` solver on the final corrector, as
   `pimpleFoam` does in v2106; without it the POD solver drifts from the
-  reference.
-- `sigFpe::ignore` around Python initialisation, calls and finalisation:
-  NumPy's import deliberately overflows while probing machine limits, which
-  OpenFOAM's FPE trap would otherwise report as a solver divergence.
+  reference. On openfoam.org the call is a plain `pEqn.solve()`: `fvMatrix`
+  selects that solver itself.
+- Floating-point traps off (`PythonFpeOff` in `PythonCompat.H`, which is
+  `sigFpe::ignore` on openfoam.com) around Python initialisation, calls and
+  finalisation: NumPy's import deliberately overflows while probing machine
+  limits, which OpenFOAM's FPE trap would otherwise report as a solver divergence.
 - `Py_FinalizeEx()` at the end, with the function objects released first.
 - Optional `podSvdInterval` in `controlDict` (0 keeps the original
   write-time SVD schedule).

@@ -17,11 +17,11 @@ if (analysis_func)
     const label nAllCells = returnReduce(mesh.nCells(), sumOp<label>());
 if (rank == 0)
 {
-    const dictionary& perf = mesh.solverPerformanceDict();
     PyObject* residuals = PyDict_New();
-    if (residuals && perf.found("U"))
+    List<SolverPerformance<vector>> solvesU;
+    if (residuals && pythonSolverPerformance(mesh, "U", solvesU))
     {
-        const List<SolverPerformance<vector>> solves(perf.lookup("U"));
+        const List<SolverPerformance<vector>>& solves = solvesU;
         const char* names[] = {"Ux", "Uy", "Uz"};
         for (direction cmpt = 0; cmpt < 3 && solves.size(); ++cmpt)
         {
@@ -45,9 +45,10 @@ if (rank == 0)
             }
         }
     }
-    if (residuals && perf.found("p"))
+    List<SolverPerformance<scalar>> solvesP;
+    if (residuals && pythonSolverPerformance(mesh, "p", solvesP))
     {
-        const List<SolverPerformance<scalar>> solves(perf.lookup("p"));
+        const List<SolverPerformance<scalar>>& solves = solvesP;
         if (solves.size())
         {
             label iterations = 0;

@@ -2,7 +2,7 @@
 # Build PODFoam and run the ten-step bridge validation in a fresh directory
 # under the workspace (default: the parent of the PythonFOAM checkout).
 # Environment: OPENFOAM_BASHRC (v2106), PYTHON (interpreter with numpy), POD_WORKSPACE,
-# POD_OPENFOAM_VERSION (default v2106; e.g. v2212 for the MedicineBow Apptainer image).
+# POD_OPENFOAM_VERSION (default v2106; also v2012, v2212 and, for openfoam.org, 8).
 set -eo pipefail
 source_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 workspace=${POD_WORKSPACE:-$(cd -- "$source_dir/../../.." && pwd)}
@@ -68,8 +68,11 @@ if [[ ! -f "$output/baseline-pimple/exit-status" ]]; then
     printf '%s\n' "$baseline_status" > "$output/baseline-pimple/exit-status"
 fi
 baseline_status=$(cat "$output/baseline-pimple/exit-status")
-[[ "$baseline_status" != 0 ]]
-grep -q 'Final residual = nan' "$output/baseline-pimple/log.pimpleFoam"
+# openfoam.org 8 runs the original case to its end
+if [[ "$WM_PROJECT_VERSION" == v* ]]; then
+    [[ "$baseline_status" != 0 ]]
+    grep -q 'Final residual = nan' "$output/baseline-pimple/log.pimpleFoam"
+fi
 export FOAM_SIGFPE=true
 if ! grep -q '^End$' "$output/fixed-pimple/log.pimpleFoam" 2>/dev/null; then
     pimpleFoam -case "$output/fixed-pimple" > "$output/fixed-pimple/log.pimpleFoam" 2>&1

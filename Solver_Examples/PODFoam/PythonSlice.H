@@ -54,7 +54,7 @@ inline PythonPlaneSlice pythonPlaneSlice
         if (!text.empty())
         {
             scalar value = 0;
-            if (readScalar(text, value) && std::isfinite(value))
+            if (readScalar(text.c_str(), value) && std::isfinite(value))
             {
                 source = 1;
                 slice.requestedZ = value;
@@ -101,8 +101,13 @@ inline PythonPlaneSlice pythonPlaneSlice
 
     const cuttingPlane cut(plane(point(0, 0, slice.z), vector(0, 0, 1)), mesh, false);
     const pointField& cutPoints = cut.points();
+    #ifdef OPENFOAM
     const faceList& cutFaces = cut.surfFaces();
     const labelList& cutCells = cut.meshCells();
+    #else
+    const faceList& cutFaces = cut.faces();
+    const labelList& cutCells = cut.cutCells();
+    #endif
     label nPts = 0;
     forAll(cutFaces, facei) nPts += cutFaces[facei].size();
     polyPoints.setSize(nPts);

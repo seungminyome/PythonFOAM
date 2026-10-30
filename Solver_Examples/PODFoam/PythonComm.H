@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: (other)
 // An owning array prevents saved Python views from aliasing the next timestep.
 {
-Foam::sigFpe::ignore pythonCallFpe;
+PythonFpeOff pythonCallFpe;
 if (mesh.nCells() != num_cells)
 {
     FatalErrorInFunction << "POD requires a fixed cell count" << exit(FatalError);

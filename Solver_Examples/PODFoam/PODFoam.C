@@ -51,6 +51,7 @@ Description
 #include "fvcSmooth.H"
 #include "sigFpe.H"
 #include "emptyPolyPatch.H"
+#include "PythonCompat.H"
 #include "PythonGather.H"
 #include "PythonSlice.H"
 
@@ -211,7 +212,7 @@ int main(int argc, char *argv[])
     }
 
     {
-        Foam::sigFpe::ignore pythonFpe;
+        PythonFpeOff pythonFpe;
         Py_DECREF(snapshot_func);
         Py_DECREF(svd_func);
         Py_XDECREF(analysis_func);

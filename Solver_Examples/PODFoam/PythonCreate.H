@@ -3,7 +3,7 @@
 // Initialize the embedded interpreter and validate the bridge API.
 // NumPy's machine-limit probes deliberately overflow during import. Keep
 // OpenFOAM traps enabled for PDE work, but use Python's FP semantics here.
-Foam::sigFpe::ignore pythonInitFpe;
+PythonFpeOff pythonInitFpe;
 Py_Initialize();
 if (init_numpy() < 0)
 {
@@ -14,7 +14,7 @@ if (init_numpy() < 0)
 // Resolve python_module.py from the case even when invoked with -case; in a
 // parallel run the case path is processorN/, so the undecomposed case
 // directory (globalPath) is added as well.
-for (const fileName& dir : {runTime.path(), runTime.globalPath()})
+for (const fileName& dir : {runTime.path(), runTime.rootPath()/runTime.globalCaseName()})
 {
     PyObject* casePath = PyUnicode_FromString(dir.c_str());
     if (!casePath || PyList_Insert(PySys_GetObject("path"), 0, casePath) < 0)

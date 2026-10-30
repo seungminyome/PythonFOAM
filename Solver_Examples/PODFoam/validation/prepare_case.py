@@ -1,5 +1,6 @@
 """Stage the three cases from Run_Case without touching it."""
 from pathlib import Path
+import os
 import re
 import shutil
 import sys
@@ -11,8 +12,9 @@ for name in ('baseline-pimple', 'fixed-pimple', 'fixed-pod'):
         shutil.copytree(source / 'Run_Case' / directory, case / directory)
     # Remove restart metadata only from the newly staged copies.
     (case / '0/uniform/time').unlink(missing_ok=True)
-    turbulence = (case / 'constant/momentumTransport').read_text()
-    turbulence = turbulence.replace('object      momentumTransport;', 'object      turbulenceProperties;')
+    # openfoam.org reads momentumTransport, openfoam.com turbulenceProperties.
+    transport = case / 'constant/momentumTransport'
+    turbulence = transport.read_text()
     turbulence = re.sub(r'(LES\s*\{)', r'\1\n    LESModel Smagorinsky;', turbulence)
     if name != 'baseline-pimple':
         turbulence = re.sub(r'simulationType\s+LES;', 'simulationType laminar;', turbulence)
@@ -28,7 +30,10 @@ for name in ('baseline-pimple', 'fixed-pimple', 'fixed-pod'):
         solution.write_text(solution.read_text()
             .replace('nNonOrthogonalCorrectors 0;', 'nNonOrthogonalCorrectors 2;')
             .replace('smoother        GaussSeidel;', 'smoother        DICGaussSeidel;'))
-    (case / 'constant/turbulenceProperties').write_text(turbulence)
+    transport.write_text(turbulence)
+    (case / 'constant/turbulenceProperties').unlink(missing_ok=True)
+    (case / 'constant/turbulenceProperties').write_text(
+        turbulence.replace('object      momentumTransport;', 'object      turbulenceProperties;'))
     dt, end = ('1e-5', '1e-4') if name == 'baseline-pimple' else ('1e-7', '1e-6')
     control = '''FoamFile
 {
@@ -58,6 +63,8 @@ podSvdInterval 10;
 functions {}
 libs ("libincompressibleTurbulenceModels.so");
 '''
+    if not os.environ.get('WM_PROJECT_VERSION', 'v').startswith('v'):
+        control = control.replace('libs ("libincompressibleTurbulenceModels.so");\n', '')
     (case / 'system/controlDict').write_text(control.replace('SOLVER', 'PODFoam' if name == 'fixed-pod' else 'pimpleFoam').replace('END', end).replace('DT', dt))
     if name == 'fixed-pod':
         shutil.copy2(source / 'validation/python_module.py', case / 'python_module.py')

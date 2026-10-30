@@ -54,7 +54,9 @@ bash Solver_Examples/PODFoam/llm_demo/hpc/setup_12b.sh
    OpenFOAM v2212 image with its compilers and its bashrc at
    `/usr/lib/openfoam/openfoam2212/etc/bashrc` (set `OPENFOAM_BASHRC` if it is
    elsewhere), for example from
-   `apptainer pull docker://opencfd/openfoam-dev:2212`.
+   `apptainer pull docker://opencfd/openfoam-dev:2212`. The bridge validation
+   passes in that image (2026-10-30); the suite has run only in the image of
+   the runs below.
 3. Check the partition and `--gres` syntax match the cluster; give the account
    and partition on the `sbatch` command line.
 4. `HF_TOKEN` is needed only while the weights are not yet in

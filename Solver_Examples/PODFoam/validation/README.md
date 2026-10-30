@@ -68,7 +68,9 @@ bridge module (ten snapshots, five modes per component, written to
 
 The script prints `PASS` only if all checks succeed. A passing run
 (`pod-v2106.c5jpOq`, 2026-10-10) gave max Courant 0.211, max snapshot error
-5e-11, max mode error 5e-13, 45 field files checked.
+5e-11, max mode error 5e-13, 45 field files checked. At `cf61575` (2026-10-30)
+the script passed on v2012, v2106, v2212 and OpenFOAM 8, with the same numbers
+except max Courant 0.212 on OpenFOAM 8.
 
 ## Solver changes behind this
 

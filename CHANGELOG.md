@@ -3,6 +3,31 @@
 Dates are when a run or change happened. Where a run is recorded, the code
 revision that produced it is given.
 
+## 2026-10-30, OpenFOAM versions; HPC scripts without site defaults (`cc61adb`, `4a8f59c`, `cf61575`)
+
+- PODFoam builds on OpenFOAM v2012, v2106, v2212 and 8 (`PythonCompat.H`). At
+  `cf61575`, on all four, the bridge validation passes and the observer with no
+  model runs the 2D step case and the 3D slice case, serial and on 2 ranks (Slurm
+  jobs 24947448 to 24947451, 24947494, 24947501, 24947502 and 24947507). The
+  openfoam.com versions reproduce the original case's divergence; on OpenFOAM 8
+  that case does not diverge, with the traps off as with them on.
+- Two limits on OpenFOAM 8, stated in `PythonCompat.H`: a field whose solves stop
+  during a run through `maxIter 0` goes on reporting its last list (a momentum
+  predictor switched off is checked), and on a moving mesh with
+  `moveMeshOuterCorrectors` only the last outer corrector's solves are reported.
+- `frame_scoring.py` holds the answer keys and the scores, so `verify_async.py` and
+  the core tests need no experiment script; the older modules give the same names.
+  `test_picture_test.py` imports the test scripts and checks those names. Unit
+  tests: 127 in the six modules.
+- `async_v2.slurm`, `periodic_v2.slurm`: `SIF` and `PYTHON` are required, and a job
+  without them stops at once. Host modules come only from `POD_HOST_MODULES`;
+  without it a source-built llama-server does not start (`libcudart.so.12` not
+  found). `site.txt` records these settings, and `OPENFOAM_BASHRC` can be set. In
+  this form the two scripts have run only with stub commands.
+- `picture_test.slurm`, `window_test.slurm`: uploads need `RESULTS_REPO`; there is
+  no default repository any more. A job with `RESULTS_RELEASE` but without
+  `RESULTS_REPO` or `GH_TOKEN` prints that nothing is uploaded.
+
 ## 2026-10-29, documentation
 
 - README follows the section shares of 13 widely used READMEs of similar

@@ -3,6 +3,19 @@
 Dates are when a run or change happened. Where a run is recorded, the code
 revision that produced it is given.
 
+## 2026-10-30, wrong-setup test (`97db7eb`)
+
+- New `wrong_setup_test.py` and `test_wrong_setup_test.py` (27 tests; 152 in
+  all; `make test` and CI run them). Can a model see from one frame's pictures
+  that a run was set up wrong, when the system prompt gives the intended setup
+  and names no kind of mistake? `check` refuses a set whose request text could
+  separate the classes, the flaw of the October 28 instability set.
+- Run: five normal runs and five with one changed entry, 8,000 steps each (job
+  24946879), 80 requests, four models (job 24947089). Right of 80: Gemma 4 31B
+  67, 12B 41, 26B-A4B 42, Qwen3.5-35B-A3B 45; constant baseline 40; a rule on
+  the peak |U| 56. Records in
+  [docs/evidence/2026-10-30-wrong-setup/](docs/evidence/2026-10-30-wrong-setup/README.md).
+
 ## 2026-10-29, documentation
 
 - README follows the section shares of 13 widely used READMEs of similar

@@ -388,6 +388,38 @@ captions, picture titles), and the frames of the crashed runs are 2×10⁻⁵ to
 stated times alone separate the classes. A new set should space the frames
 equally in both classes or leave the times out.
 
+### Wrong-setup test (`wrong_setup_test.py`)
+
+`wrong_setup_test.py prepare --long <developed case> --output <dir>` writes
+ten cases from a developed run of the step case: five normal runs, each from
+another written state, and five with one changed entry (inlet speed,
+viscosity, slip walls, a moving wall, half an inlet). All start at t = 0.1 s
+with a fixed time step, so all have the same steps and times. After the runs,
+`flow-check --design <dir>/design.json` lists each run's log numbers and
+refuses a log with a crash or another number of steps, and a last written U
+or `transportProperties` without the design's entries. `build --design
+<design.json> --centres <fields.npz> --output <set>` makes the same check and
+writes one `wrong-setup-v2own` request per state at the design's steps: two v2
+pictures (|U| and p, each on its own colour scale) in the solver's window,
+the intended setup in the system prompt, and the reply `reason`, then
+`assessment` (`consistent`, `inconsistent` or `cannot_tell`). The reply schema
+is registered inside the script while a command runs; the solver callback does
+not send this request. `check` also runs the leak check: it refuses a set whose
+bodies differ in more than the pictures and the frame's step and time, or where
+a rule on the request text could beat the constant baseline. `run` works as in
+`picture_test.py`. `report` gives right of the frames by model, class and run
+against the constant baseline and a rule on the peak |U|, and the numbers from
+the arrays and logs against the normal runs' ranges; `--reasons` writes the
+`inconsistent` answers on wrong frames with each run's actual change for a
+judge. `contact` draws one sheet with a frame of each run.
+`hpc/window_test.slurm` runs it with `PICTURE_TEST_SCRIPT=wrong_setup_test.py`.
+Tests: `test_wrong_setup_test.py`. Run on 2026-10-30
+([evidence](../../../docs/evidence/2026-10-30-wrong-setup/README.md)): Gemma 4
+31B was right for 67 of 80 frames, 12B, 26B-A4B and Qwen3.5-35B-A3B for 41, 42
+and 45, against a constant baseline of 40 and 56 for the rule. 31B's lead over
+the rule comes from the viscosity run (8 of 8) and from 4 of 8 on the moving
+wall, whose reasons name no wall.
+
 ## Replaying saved frames (describe and sequence)
 
 `snapshot_runner.py` sends saved frames (directories with `state.png`,
@@ -520,10 +552,11 @@ Unit tests (no model needed):
 
 ```bash
 cd Solver_Examples/PODFoam/llm_demo
-python3 -m unittest test_llm_client test_callback test_ablation_runner test_async test_picture_test test_instability_test -v
+python3 -m unittest test_llm_client test_callback test_ablation_runner test_async test_picture_test test_instability_test test_wrong_setup_test -v
 ```
 
-125 tests on 2026-10-29 (Python 3.11, numpy and matplotlib needed; 108 on
+152 tests on 2026-10-30 (Python 3.10 and 3.12), 125 on 2026-10-29 before the
+wrong-setup test (Python 3.11, numpy and matplotlib needed; 108 on
 2026-10-28 before the instability and slice tests were merged), with
 `TMPDIR` on a node's local disk and on NFS. Six of `test_callback.TelemetryTests`
 compare with main's callback of 2026-10-27, kept at

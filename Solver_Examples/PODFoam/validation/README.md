@@ -82,7 +82,7 @@ except max Courant 0.212 on OpenFOAM 8.
   `PyArray_SimpleNewFromData` views of solver memory); U and p are checked
   finite before the call.
 - Return-value checks: native float64 ndarray, shape
-  `(3*cells, min(truncation, snapshots))`, finite; written as
+  `(3*cells, modes)` with 1 to `truncation` modes, finite; written as
   `zeroGradient` fields.
 - `pEqn.solve()` uses the `pFinal` solver on the final corrector, as
   `pimpleFoam` does in v2106; without it the POD solver drifts from the
@@ -93,8 +93,11 @@ except max Courant 0.212 on OpenFOAM 8.
   finalisation: NumPy's import deliberately overflows while probing machine
   limits, which OpenFOAM's FPE trap would otherwise report as a solver divergence.
 - `Py_FinalizeEx()` at the end, with the function objects released first.
-- Optional `podSvdInterval` in `controlDict` (0 keeps the original
-  write-time SVD schedule).
+- Optional `podSvdInterval` in `controlDict`. At 0, the default, a module
+  without `analysis_func` keeps the original schedule: a write step runs the
+  SVD instead of collecting a snapshot, if snapshots have been collected since
+  the last SVD. With `analysis_func` a write step collects its snapshot and then
+  runs the SVD.
 
 This is a connection test, not a physical validation of the case: the mesh
 quality issues and the large initial pressure transient are still there.

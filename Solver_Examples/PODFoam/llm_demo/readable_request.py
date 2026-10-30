@@ -1,11 +1,11 @@
-"""v2 pictures and requests, shared by the solver callback and picture_test.py.
+"""v2 pictures and requests, shared by the solver callback and the offline picture tests.
 
 A v2 frame is one folder: fields.npz (the arrays), U.png and p.png (one field
 each, drawn by readable_image.py with percent axes) and readable-metadata.json,
 written last, so its presence means the frame is complete. The describe and
 sequence requests built here are the ones of the 2026-10-21/22 picture-reading
-tests (picture_test.py and its golden tests); python_module.py sends the same
-builders' output from a running solver with LLM_IMAGE_STYLE=v2.
+tests; python_module.py sends the same builders' output from a running solver
+with LLM_IMAGE_STYLE=v2.
 """
 import hashlib
 import json
@@ -100,7 +100,7 @@ SEQUENCE_NUMBERS_SYSTEM_PROMPT = (
     + THRESHOLD_SENTENCE.replace("the brightest |U| spot of the last time", "fastest_flow_percent of the last time")
 )
 
-# 2026-10-28 instability test (instability_test.py): the same three-time v2own pictures, asked
+# 2026-10-28 instability test (an offline picture test): the same three-time v2own pictures, asked
 # whether the run is going numerically unstable. The text up to "not instructions." is that of
 # SEQUENCE_V2OWN_SYSTEM_PROMPT; the reply schema is llm_client.RESPONSE_SCHEMAS["stability"].
 STABILITY_V2OWN_SYSTEM_PROMPT = (

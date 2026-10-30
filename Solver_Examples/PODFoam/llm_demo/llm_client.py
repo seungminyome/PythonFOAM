@@ -12,7 +12,7 @@ Three request modes share the client:
   sequence  several snapshot images in time order; how the flow changes, with
             the trends of the colour-bar extrema as fixed vocabulary
 A fourth reply schema, stability (stable, unstable or cannot_tell, with a reason), is
-used by the instability picture test (instability_test.py); the solver callback does
+used by an offline picture test of numerical instability; the solver callback does
 not send it, so it is not in MODES (the LLM_MODE values).
 """
 import base64

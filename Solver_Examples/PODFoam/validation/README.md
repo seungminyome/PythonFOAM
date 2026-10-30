@@ -66,11 +66,9 @@ bridge module (ten snapshots, five modes per component, written to
 - U and p of `fixed-pod` equal `fixed-pimple` at every step (rtol 1e-10,
   atol 1e-9).
 
-The script prints `PASS` only if all checks succeed. A passing run
-(`pod-v2106.c5jpOq`, 2026-10-10) gave max Courant 0.211, max snapshot error
-5e-11, max mode error 5e-13, 45 field files checked. At `cf61575` (2026-10-30)
-the script passed on v2012, v2106, v2212 and OpenFOAM 8, with the same numbers
-except max Courant 0.212 on OpenFOAM 8.
+The script prints `PASS` only if all checks succeed. A passing run gives about
+max Courant 0.211 (0.212 on OpenFOAM 8), max snapshot error 5e-11, max mode error
+5e-13, and 45 field files checked in `fixed-pod`.
 
 ## Solver changes behind this
 
@@ -84,20 +82,21 @@ except max Courant 0.212 on OpenFOAM 8.
 - Return-value checks: native float64 ndarray, shape
   `(3*cells, modes)` with 1 to `truncation` modes, finite; written as
   `zeroGradient` fields.
-- `pEqn.solve()` uses the `pFinal` solver on the final corrector, as
-  `pimpleFoam` does in v2106; without it the POD solver drifts from the
-  reference. On openfoam.org the call is a plain `pEqn.solve()`: `fvMatrix`
-  selects that solver itself.
+- On openfoam.com the pressure solve uses the `p` solver until the final
+  corrector and `pFinal` there, as that version's `pimpleFoam` does. With one
+  outer corrector, as in this case, a plain `pEqn.solve()` selects `pFinal` at
+  every corrector there, and U and p then drift from the reference. On
+  openfoam.org `pimpleFoam` has a plain `pEqn.solve()`, and so does this code.
 - Floating-point traps off (`PythonFpeOff` in `PythonCompat.H`, which is
   `sigFpe::ignore` on openfoam.com) around Python initialisation, calls and
   finalisation: NumPy's import deliberately overflows while probing machine
   limits, which OpenFOAM's FPE trap would otherwise report as a solver divergence.
 - `Py_FinalizeEx()` at the end, with the function objects released first.
-- Optional `podSvdInterval` in `controlDict`. At 0, the default, a module
-  without `analysis_func` keeps the original schedule: a write step runs the
-  SVD instead of collecting a snapshot, if snapshots have been collected since
-  the last SVD. With `analysis_func` a write step collects its snapshot and then
-  runs the SVD.
+- Optional `podSvdInterval` in `controlDict`. At 0, the default, a module with
+  `snapshot_func` and `svd_func` keeps the original schedule: a write step runs
+  the SVD instead of collecting a snapshot, if snapshots have been collected
+  since the last SVD. Above 0, every step collects a snapshot and the SVD runs
+  every `podSvdInterval` snapshots.
 
 This is a connection test, not a physical validation of the case: the mesh
 quality issues and the large initial pressure transient are still there.

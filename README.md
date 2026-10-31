@@ -157,9 +157,9 @@ In the case directory:
 
 - Only positions and fixed-vocabulary words are scored. Gemma 4 E2B gives no
   usable answers.
-- Tested on 2D laminar flows, one extruded 3D case and 2 MPI ranks without a
-  model request. No model has read a slice picture. No model suite ran on v2012
-  or 8.
+- Tested on 2D laminar flows, one extruded 3D case, 2 MPI ranks without a
+  model request and up to two requests in flight. No model has read a slice
+  picture. No model suite ran on v2012 or 8.
 - No model warned of a crash more than 5 steps ahead.
 - Wrong setup: 31B 67 of 80, others 41 to 45, constant answer 40, peak |U| rule
   56; without two runs, 31B 55 and the rule 56 of 64.

@@ -57,8 +57,9 @@ bash Solver_Examples/PODFoam/llm_demo/hpc/setup_12b.sh
    `/usr/lib/openfoam/openfoam2212/etc/bashrc` (set `OPENFOAM_BASHRC` if it is
    elsewhere), for example from
    `apptainer pull docker://opencfd/openfoam-dev:2212`. The bridge validation
-   passes in that image (2026-10-30); the suite has run only in the image of
-   the runs below.
+   passes in that image (job 24952019,
+   [record](../../../../docs/evidence/2026-10-30-versions/dev2212-24952019/dev2212-24952019.out));
+   the suite has run only in the image of the runs below.
 3. Check the partition and `--gres` syntax match the cluster; give the account
    and partition on the `sbatch` command line.
 
@@ -357,10 +358,13 @@ on 2026-10-22).
 `periodic_v2.slurm` as it is now (settings from the environment, `site.txt`) has run
 only with stub commands, not on a GPU node; the jobs named above ran its earlier text,
 which held the site's paths and modules. `async_v2.slurm` as it is now ran unedited on
-a GPU with 12B and a source-built server, with `LLM_LONG_STEPS=1000` from a developed
-state, and its check passed (job 24950817 on an A30,
+a GPU with 12B and a source-built server, with `LLM_LONG_STEPS=1000` and sequence frames
+at 250, 500 and 750 from a developed state, and its check passed (job 24950817 on an A30,
 [evidence](../../../../docs/evidence/2026-10-30-versions/README.md)); its default 6000
 steps were not run in this form, and neither was `async_v2_sweep.slurm`.
 `setup_12b.sh` has run in this form only with a stand-in `curl`, not with a real download.
+`window_test.slurm` (last run: job 24947089), `picture_test.slurm` and `replay_12b.slurm` have
+not run in their present text; since their last runs, the changes are comments and site lines,
+the upload branch of the first two and, in `replay_12b.slurm`, an optional `HF_TOKEN`.
 `start_server.sh` fails fast if the server does not answer `/health` within ten
 minutes; the log is in `llm-runtime-12b/server-*.log`.

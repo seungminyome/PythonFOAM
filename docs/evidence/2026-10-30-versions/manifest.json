@@ -12,8 +12,8 @@
    "path": "README.md",
    "source": "written for this folder",
    "kind": "derived",
-   "bytes": 8064,
-   "sha256": "0d38d52c0d508ca576ce1bcd906c6fb4a56caca13c6ab14e65d63d12571b6ac5"
+   "bytes": 9361,
+   "sha256": "f964e236630abcd913fab44b807af9fc4df0e1436d647ab5cf3f70936b809ae7"
   },
   {
    "path": "code-identity.txt",
@@ -86,6 +86,20 @@
    "sha256": "455490b72e222bdd67e15c3e74858ff6d5ab2180a4992eee66b25bdc2efed680"
   },
   {
+   "path": "dev2212-24952019/dev2212-24952019.out",
+   "source": "pod-versions-20261030/pr/refix/dev2212-final",
+   "kind": "record",
+   "bytes": 2359,
+   "sha256": "7f4be443eba51e2753d0193a87eb65c5120e464557eab4b3230b33ed60b96553"
+  },
+  {
+   "path": "dev2212-24952019/dev2212_validation.sbatch",
+   "source": "pod-versions-20261030/pr/refix/dev2212-final",
+   "kind": "record",
+   "bytes": 1008,
+   "sha256": "6dcbf50c9f8cef683d9dde518936d2d47b8a143c24ef8ba1d8816a4016ebf3d4"
+  },
+  {
    "path": "docker-24950798/job.out",
    "source": "MedicineBow pod-versions-20261030/slurm/refix-docker-24950798.out (not released)",
    "kind": "byte-preserved",
@@ -133,6 +147,13 @@
    "kind": "derived",
    "bytes": 6166,
    "sha256": "b4e6ffc34a36586e2893c7165657217f357e9d7900351f8f50a1bc188c28a90b"
+  },
+  {
+   "path": "gpu-constraints.txt",
+   "source": "sacct on MedicineBow, 2026-10-30",
+   "kind": "record",
+   "bytes": 753,
+   "sha256": "ee5f58031314f7ae896cdade30b559ae78a9ae1d618be22df8ff624d61033b6a"
   },
   {
    "path": "gpu-suite-24949283/HEAD",
@@ -1406,8 +1427,8 @@
    "path": "sacct.txt",
    "source": "written for this folder",
    "kind": "derived",
-   "bytes": 5090,
-   "sha256": "a04a6729ef925bd62fa37e7eb70e87208b388cbc15dee9b9902af92bc96d9d93"
+   "bytes": 5360,
+   "sha256": "4dfff3d42209f4769dbfec59189d70170bc3f051d4c3a44604c0e24721d6304c"
   },
   {
    "path": "schedule/ef78700-8-24950749/job.out",

@@ -27,9 +27,9 @@ Each job's folder has its `HEAD`; `git-status.txt` is empty for every job that r
 | `matrix/` | 24950780 to 24950783 | `b17763d` | [version_check.sbatch](scripts/matrix/version_check.sbatch): build and bridge validation, then the observer with no model (`LLM_ENABLED=0`), v2 frame at step 100, 110 steps from t = 0.1 s: `serial2d`, `serial3d`, `par2d`, `par3d` | [compare.out](compare.out), [version-compare.json](version-compare.json); all PASS, all four cases end on all four versions |
 | `commits/` | 24950784 to 24950791 | `2a93911`, `69cc2c1` | [try_version.sh](scripts/try_version.sh): the validation at commits 2 and 3 of the PR tree | PASS on all four |
 | `stand-in/` | 24950794 to 24950797 | `b17763d` | [suites.sbatch](scripts/stand-in/suites.sbatch): validation, `run_demo.sh` both suites and the v2 asynchronous suite, against [stub_server.py](scripts/stand-in/stub_server.py) | all exit 0 with `PASS` |
-| `documented-commands/` | 24950840 to 24950843 | `b17763d` | [doc_commands.sh](scripts/refix-jobs/doc_commands.sh): the observer commands of `llm_demo/README.md` in a fresh copy | 45 of 45 files equal, `DOC COMMANDS PASS` |
-| `quick-start-24950804/` | 24950804 | `b17763d` | [quick_steps.sh](scripts/refix-jobs/quick_steps.sh): the quick start in order in the v2106 image, Gemma 4 E2B on 8 CPUs | [steps.tsv](quick-start-24950804/steps.tsv): 10 of 10 exit 0, both suites PASS |
-| `gpu-suite-24950817/` | 24950816 (reference), 24950817 | `b17763d` | [submit_suite.sh](scripts/gpu/submit_suite.sh): `async_v2.slurm` unedited, v2212, Gemma 4 12B, NVIDIA A30, `LLM_LONG_STEPS=1000` | `async-verification.json` PASS |
+| `documented-commands/` | 24950840 to 24950843 | `b17763d` | [doc_commands.sh](scripts/refix-jobs/doc_commands.sh): the observer commands of the PR tree's `llm_demo/README.md` in a fresh copy | 45 of 45 files equal, `DOC COMMANDS PASS` |
+| `quick-start-24950804/` | 24950804 | `b17763d` | [quick_steps.sh](scripts/refix-jobs/quick_steps.sh): the PR tree's quick start in order in the v2106 image, Gemma 4 E2B on 8 CPUs; `setup_runtime.sh` found the E2B files in place and downloaded nothing | [steps.tsv](quick-start-24950804/steps.tsv): 10 of 10 exit 0, both suites PASS |
+| `gpu-suite-24950817/` | 24950816 (reference), 24950817 | `b17763d` | [submit_suite.sh](scripts/gpu/submit_suite.sh): `async_v2.slurm` unedited, v2212, Gemma 4 12B, NVIDIA A30, `LLM_LONG_STEPS=1000`, sequence frames at 250, 500, 750 | `async-verification.json` PASS |
 | `gpu-suite-24949283/` | 24949283 | `fae10ba` | The same at `fae10ba`, whose `async_v2.slurm` and code differ from `b17763d`, on an NVIDIA L40S | `async-verification.json` PASS |
 | `gpu-versions-24950818/` | 24950818 | `b17763d` | [part_a.sbatch](scripts/gpu/part_a.sbatch): one server on the host GPU, each image in turn, one real `describe` request at step 100 of 110, NVIDIA A30 | `part-a.json`: `ok` on all four |
 | `gpu-versions-24949167/` | 24949167 | `fae10ba` | The same on an NVIDIA L40S | `part-a.json`: `ok` on all four |
@@ -40,6 +40,7 @@ Each job's folder has its `HEAD`; `git-status.txt` is empty for every job that r
 | | 24948188 to 24948191 | `adcaec7` | The same on v2012, v2106, v2212, and the regression on v2106. The C++ of `adcaec7` differs from `bf7a06e` | the same counts and sizes |
 | `schedule/` | 24950748, 24950749 | `ef78700` | [schedule.py](scripts/schedule/schedule.py): the POD schedule against a table predicted from the stated rule, 20 runs of this fork and 6 of upstream's build, v2106 and 8; [scenarios.py](scripts/schedule/scenarios.py): 46 failure and edge cases | `schedule.json`: 0 problems; `scenarios.json` |
 | | 24949780, 24949782 | `fae10ba` | The schedule check at `fae10ba`, which differs from `b17763d` | 24949782: 0 problems. 24949780 (v2106): 2 log-count problems on 2 ranks (`step 4: 0 snapshots in C++ log, expected 1` and the same at step 1), cause not examined; none in 24950748 |
+| `dev2212-24952019/` | 24952019 | `d9d1109` | [dev2212_validation.sbatch](dev2212-24952019/dev2212_validation.sbatch): the bridge validation in the image pulled from `docker://opencfd/openfoam-dev:2212`, the image `hpc/README.md` names; the other v2212 jobs use `of2212.sif` | PASS, exit 0 |
 | `unit-tests/` | 24951126 | merged `main` (`41ca1bf`) | [unit_merged.sbatch](scripts/unit_merged.sbatch), a fresh clone, Python 3.10.22 and 3.12.15: the module list of `tests.yml`, then `make test` | 156 tests, OK, four times |
 | | 24950761, 24951079 | `cabcfc6`, `bf7a06e` | [unit_tests.sbatch](scripts/matrix/unit_tests.sbatch), Python 3.10 and 3.12 | 156 tests OK; the PR tree's three modules, 83 tests OK |
 
@@ -67,7 +68,15 @@ cell values, and each module's saved snapshot matrices column by column. The mod
 in each folder: `module-recording.py` is upstream's with the save added, and
 `module-overwrite.py` also reproduces upstream's overwrite of the first column in Python.
 `fork-plainp` is this fork's solver with the `#ifdef` of `pEqn.H` replaced by upstream's
-plain `pEqn.solve()`.
+plain `pEqn.solve()`. In the shipped `Run_Case`, [pod_account_inner.sh](scripts/matrix/pod_account_inner.sh)
+and [upstream_regression_inner.sh](scripts/matrix/upstream_regression_inner.sh) set `endTime` to
+1.5e-4, `startFrom` to `startTime` and `writePrecision` to 12, and remove `0/uniform/time`. The
+Docker job runs the case unchanged.
+
+Jobs 24950817 and 24950818 were submitted with `--constraint='l40s|a6000'`, as in
+[submit_suite.sh](scripts/gpu/submit_suite.sh), and started with `l40s|a6000|a30`, on
+mba30-005 ([gpu-constraints.txt](gpu-constraints.txt)). The other jobs of
+[sacct.txt](sacct.txt) started with what they were submitted with.
 
 ## Records left out
 
@@ -80,5 +89,8 @@ records are as recorded.
 projector, both answered 200. `setup_12b.sh` itself ran only with a stand-in `curl` (job
 24950752, not kept here); it has not fetched the files in this form.
 
-[sacct.txt](sacct.txt) has each job's state, node, partition and time. [manifest.json](manifest.json)
+[sacct.txt](sacct.txt) has each job's state, node, partition and time, apart from the
+wrong-setup jobs ([their sacct.txt](../2026-10-30-wrong-setup/job/sacct.txt)) and the runs that
+gave the start states, 24757460 ([October 22](../2026-10-22-live-v2/README.md)) and 24929629
+([October 28](../2026-10-28-3d/README.md)). [manifest.json](manifest.json)
 lists every file here with its size and hash.

@@ -62,8 +62,7 @@ cell centres), U and p, plus `mesh_cells`, `polygon_points` and
 `polygon_offsets`; `readable-metadata.json` gets `slice` (z, requested z,
 where it came from, whether it was moved, cells in the slice and in the mesh).
 The request is built as for 2D; neither the pictures nor the request say that
-they show a slice. An unreadable `POD_SLICE_Z` (on OpenFOAM 8 also a number
-followed by spaces) or a plane that cuts no cells leaves the solver running and
+they show a slice. An unreadable `POD_SLICE_Z` or a plane that cuts no cells leaves the solver running and
 v2 requests refused with the reason, and so do slice polygons that fail the
 checks of `pod_image.plane_slice`. v1
 pictures of a 3D case keep the nearest-cell raster of all cells. The slice
@@ -583,10 +582,8 @@ cd Solver_Examples/PODFoam/llm_demo
 python3 -m unittest test_llm_client test_callback test_callback_main test_ablation_runner test_async test_picture_test test_instability_test test_wrong_setup_test -v
 ```
 
-156 tests on 2026-10-30 (Python 3.10 and 3.12; job 24951126 on the merged `main`),
-125 on 2026-10-29 before the wrong-setup test (Python 3.11, numpy and matplotlib needed;
-108 on 2026-10-28 before the instability and slice tests were merged), with
-`TMPDIR` on a node's local disk and on NFS. `test_callback_main.py`
+156 tests (Python 3.10 and 3.12, job 24951126 on the merged `main`); numpy and
+matplotlib are needed. `test_callback_main.py`
 compares with main's callback of 2026-10-27, kept at
 [docs/evidence/2026-10-28-callback/callback-main/python_module.py](../../../docs/evidence/2026-10-28-callback/callback-main/python_module.py);
 in a copy of the code without the repository's `docs/` it is skipped.

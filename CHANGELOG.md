@@ -13,7 +13,7 @@ revision that produced it is given.
   On v2012, v2106, v2212 and 8: validation and observer with no model, 2D and 3D, serial and
   2 ranks (jobs 24950780 to 24950783), suites against a stand-in server (24950794 to 24950797),
   one 12B request (24950818, A30; 24949167, L40S). 12B suite on v2212 (24950817, A30; 24949283,
-  L40S), E2B quick start on v2106 (24950804), upstream's Docker image (24950798).
+  L40S), the PR tree's E2B quick start on v2106 (24950804), upstream's Docker image (24950798).
 - Comparison with upstream's PODFoam at `bf7a06e` (jobs 24951136 to 24951141): U, p and phi
   byte-identical on OpenFOAM 8; POD modes equal with the first-snapshot overwrite reproduced in
   Python (30 of 30, 150 of 150); on openfoam.com also with upstream's pressure line.
@@ -21,8 +21,11 @@ revision that produced it is given.
   of the eight modules, 83 tests (job 24951079).
 - `README.md`: OpenFOAM v2012, v2106, v2212 and 8; `PYTHON` in the quick start; `HF_TOKEN` is
   optional, since the 12B repository answers without a token (`hf-no-token.txt` in the evidence).
-  `hpc/README.md`: the same; `async_v2.slurm` as it is now has run on a GPU.
-  `llm_demo/README.md`: versions, POD schedule, test counts.
+  `hpc/README.md`: the same; `async_v2.slurm` as it is now has run on a GPU. Bridge validation
+  in `opencfd/openfoam-dev:2212` at this code (24952019).
+  `llm_demo/README.md`: versions, POD schedule, test counts. Earlier counts: 125 on 2026-10-29
+  before the wrong-setup test (Python 3.11), 108 on 2026-10-28 before the instability and slice
+  tests were merged, with `TMPDIR` on a node's local disk and on NFS.
 
 ## 2026-10-30, review of the PR files
 
@@ -68,8 +71,8 @@ revision that produced it is given.
 
 ## 2026-10-30, wrong-setup test (`97db7eb`)
 
-- New `wrong_setup_test.py` and `test_wrong_setup_test.py` (27 tests; 154 in
-  all; `make test` and CI run them). Can a model see from one frame's pictures
+- New `wrong_setup_test.py` and `test_wrong_setup_test.py` (27 tests; 152 in
+  all at `97db7eb`, 154 after the merge; `make test` and CI run them). Can a model see from one frame's pictures
   that a run was set up wrong, when the system prompt gives the intended setup
   and names no kind of mistake? `check` refuses a set whose request text could
   separate the classes, the flaw of the October 28 instability set.

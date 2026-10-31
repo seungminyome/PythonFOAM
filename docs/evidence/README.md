@@ -1,6 +1,7 @@
 # Evidence
 
-Recorded runs, one directory per test date (`2026-10-28-inflight`,
+Recorded runs, one directory per test date (`2026-10-30-versions` and
+`2026-10-30-wrong-setup` hold the runs of October 30, `2026-10-28-inflight`,
 `2026-10-28-callback`, `2026-10-28-3d` and `2026-10-28-instability` hold
 the tests of October 28, `2026-10-27-solver` and
 `2026-10-27-picture-tests` hold the solver runs and the picture tests of
@@ -13,7 +14,8 @@ are gzip copies); each directory has a hash manifest.
 
 | Directory | Run | Code | Report |
 |---|---|---|---|
-| [2026-10-30-wrong-setup/](2026-10-30-wrong-setup/README.md) | Slurm job 24947089: can a model see that a run was set up wrong? 80 one-frame requests from five normal and five wrongly set-up pimpleFoam runs, four models; job 24946879: the runs; 24946942: the set's build; answer key, leak check, the reasons judged by one AI agent, what the frames hold and a recount | `97db7eb` (what the counts rest on: `bc90034`) | this folder's README |
+| [2026-10-30-versions/](2026-10-30-versions/README.md) | Slurm jobs 24950780 to 24950783: build, bridge validation and the observer with no model on OpenFOAM v2012, v2106, v2212 and 8; 24950794 to 24950797: the suites against a stand-in server; 24950818, 24950817, 24950804: runs with a model; 24951136 to 24951141: comparison with upstream's PODFoam; POD schedule, upstream's Docker image, unit tests | `b17763d` (code equal to `bf7a06e` and `main`), recorded per job | [results-20261030.md](../results-20261030.md) |
+| [2026-10-30-wrong-setup/](2026-10-30-wrong-setup/README.md) | Slurm job 24947089: can a model see that a run was set up wrong? 80 one-frame requests from five normal and five wrongly set-up pimpleFoam runs, four models; job 24946879: the runs; 24946942: the set's build; answer key, leak check, the reasons judged by one AI agent, what the frames hold and a recount | `97db7eb` (what the counts rest on: `bc90034`) | [results-20261030.md](../results-20261030.md) |
 | [2026-10-29-merged-check/](2026-10-29-merged-check/README.md) | Slurm job 24936949: the merged code built and validated, a 2D and a 3D v2 frame equal to earlier runs | `eff951b` | [results-20261028.md](../results-20261028.md) |
 | [2026-10-28-inflight/](2026-10-28-inflight/README.md) | Slurm job 24929296: a describe request every 50 steps with two in flight and a two-slot server, 6,000 steps, and its twin; comparison with the one-in-flight run of October 27 | `2ed6da2` (summary rebuilt with `c85c79c`) | [results-20261028.md](../results-20261028.md) |
 | [2026-10-28-callback/](2026-10-28-callback/README.md) | Slurm job 24929555 (CPU): main's and the new callback on the step case, 1,250 steps without model requests (describe, sequence, the `tn` sequence form, 2 MPI ranks), every written file and `telemetry.jsonl` compared; the telemetry of 24,000 recorded states replayed under tracemalloc; comparison rerun in job 24929607 | `16d665e` (branch `callback-telemetry-trends`) against `2ed6da2` | this folder's README |

@@ -29,6 +29,14 @@ You can find an extensive hands-on tutorial, courtesy of the ALCF PythonFOAM wor
 2. `Turbulence_Model_Examples/` (Work in progress)
 	See detailed `README.md` in this folder.
 
+## PODFoam: optional hooks and validation
+
+`PODFoam` can call two more functions in `python_module.py`: `analysis_func` after every time step, if it exists, and then `mesh_func` once at start-up, if that exists too. Both get copies of the data, and nothing they return goes back into the solver. See [HOOKS.md](Solver_Examples/PODFoam/HOOKS.md).
+
+`Solver_Examples/PODFoam/validation/` is a ten-step test of the C++/Python round trip. It checks the snapshots Python received, the POD modes written back, and U and p against `pimpleFoam`. Its [README](Solver_Examples/PODFoam/validation/README.md) says how results differ from before.
+
+PODFoam builds and passes this validation on OpenFOAM v2012, v2106, v2212 and 8.
+
 ## To compile and run
 
 Inspect `prep_env.sh` to set paths to various Python, numpy headers and libraries and to source your OpenFOAM 8 installation. **Replace these with the include/lib paths to your personal Python environments.** The Python module within `Run_Case/` directories of different `Solvers/` require the use of `numpy`, `matplotlib`, and `tensorflow` so ensure that your environment has these installed. The best way to obtain these is to `pip install tensorflow==2.1` which will automatically find the right numpy dependency and then `pip install matplotlib` to obtain plot capability. You will also need to install `mpi4py` which you can using `pip install mpi4py`.

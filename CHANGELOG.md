@@ -3,6 +3,23 @@
 Dates are when a run or change happened. Where a run is recorded, the code
 revision that produced it is given.
 
+## 2026-10-30, review of the PR files
+
+- `PODFoam`: `SystemExit` in the module no longer ends the run with its own exit status;
+  the launch folder stays on `sys.path`; upstream's four timing lines are back; all ranks
+  must return the same number of POD modes and define the same hooks; a rank without
+  cells is accepted. `LLM_SLICE_Z` is now `POD_SLICE_Z`.
+- `validation/`: the baseline copy is only recorded; each case edit must find its text;
+  it runs on Python 3.6. The scripts take an already sourced OpenFOAM and `python3` on
+  `PATH` by default.
+- `run_demo.sh` and `pack_run.py` use the same default runtime folder as `runtime.py`; with
+  `LLM_LONG_CASES` it no longer prints `PASS`. `setup_12b.sh` needs no token and keeps a
+  token off the command line. `LLM_HTTP_PYTHON` defaults to the running Python.
+- Moved out of the shared files, for the PR: the stability request to
+  `stability_request.py`, the sweep job to `hpc/async_v2_sweep.slurm`, the comparison with
+  main's callback to `test_callback_main.py`, and `/results/`, `/work/` to their own
+  `.gitignore` files. `async_v2.slurm` no longer packs untracked files.
+
 ## 2026-10-30, OpenFOAM versions; HPC scripts without site defaults (`cc61adb`, `4a8f59c`, `cf61575`)
 
 - PODFoam builds on OpenFOAM v2012, v2106, v2212 and 8 (`PythonCompat.H`). At

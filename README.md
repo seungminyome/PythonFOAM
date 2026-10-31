@@ -132,7 +132,7 @@ POD_SUITE_RUN=<pod-llm-async.XXXXXX of a PASSed async_v2.slurm run> \
 | `LLM_ANALYSIS_STEP`, `LLM_ANALYSIS_EVERY` | one request at step 5 | one request at a chosen step, or a `describe` request every N steps |
 | `LLM_ASYNC_MAX_PENDING` | 1 | 1 or 2 |
 | `LLM_MODEL` | Gemma 4 E2B Q4_0 | Gemma 4 12B QAT |
-| `LLM_SLICE_Z` | 3D cases: the middle of the z range | – |
+| `POD_SLICE_Z` | 3D cases: the middle of the z range | – |
 
 All settings are in [llm_demo/README.md](Solver_Examples/PODFoam/llm_demo/README.md).
 

@@ -430,7 +430,7 @@ class V2Harness(Harness):
 
 
 class V2PictureTests(unittest.TestCase):
-    """LLM_IMAGE_STYLE=v2: the solver sends what the 2026-10-22 picture tests sent."""
+    """LLM_IMAGE_STYLE=v2: the solver sends what readable_request.py builds."""
 
     def frame_folder(self, harness, step):
         return harness.case / "llm_observation" / f"step-{step:06d}"
@@ -575,7 +575,7 @@ class V2PictureTests(unittest.TestCase):
         self.assertEqual(len(received), 1)
 
     def test_telemetry_budget_follows_the_pending_lines_not_the_run(self):
-        # before 2026-10-28 the last step rewrote every state, with 1e-4 s per state
+        # the last step appends the pending lines, not one line per state of the run
         harness = Harness({"LLM_MODE": "describe", "LLM_ENABLED": "0", "LLM_FINAL_STEP": "1200"})
         budgets, real = [], harness.callback._bounded_writer
 
@@ -629,7 +629,7 @@ class ScoreDescribeTests(unittest.TestCase):
 
 
 class ComputedTrendTests(unittest.TestCase):
-    """v2 sequences (2026-10-28): the answer key's trend words, computed from the frames' arrays,
+    """v2 sequences: the answer key's trend words, computed from the frames' arrays,
     in llm_result.json next to the answer; the request body changes only when asked."""
 
     def run_sequence(self, environment, trickle=False):
@@ -821,7 +821,7 @@ class PeriodicRequestTests(unittest.TestCase):
         self.assertFalse(single)
 
     def test_index_says_when_a_record_was_not_written_in_its_budget(self):
-        # Slurm 24929296: a reply arrived (status ok) but the writer was stopped at the 0.2 s
+        # Seen in a real run: a reply arrived (status ok) but the writer was stopped at the 0.2 s
         # cleanup budget, so the folder had no llm_result.json while the index said ok.
         with fixture() as (endpoint, received):
             harness = V2Harness({"LLM_MODE": "describe", "LLM_ENDPOINT": endpoint, "LLM_ASYNC": "1",
@@ -925,7 +925,7 @@ class SliceHarness(V2Harness):
 
 
 class PlaneSliceTests(unittest.TestCase):
-    """v2 pictures of a 3D case: a plane slice, one polygon per cut cell (2026-10-28)."""
+    """v2 pictures of a 3D case: a plane slice, one polygon per cut cell."""
 
     def test_describe_v2_of_a_3d_case_draws_the_slice_cells_as_a_2d_case_would(self):
         import matplotlib.image
@@ -1027,8 +1027,8 @@ class PlaneSliceTests(unittest.TestCase):
         self.assertEqual(empty["reason"], "the plane z = 1 m cuts no cells")
         self.assertEqual(empty["record"]["cells"], 0)
         failed = pod_image.plane_slice(np.zeros((0, 3)), [0], [], centres,
-                                       {"normal": (0.0, 0.0, 1.0), "z_m": None, "z_source": "LLM_SLICE_Z",
-                                        "error": "LLM_SLICE_Z is not a finite number: 'abc'",
+                                       {"normal": (0.0, 0.0, 1.0), "z_m": None, "z_source": "POD_SLICE_Z",
+                                        "error": "POD_SLICE_Z is not a finite number: 'abc'",
                                         "mesh_z_range_m": (0.0, 0.01)})
         self.assertIn("'abc'", failed["reason"])
 
@@ -1044,7 +1044,7 @@ class PlaneSliceTests(unittest.TestCase):
                                                        points, offsets, cut, dict(SLICE_PLANE))
                     self.assertEqual(count, 40)
                     self.assertIn("do not lie in the plane", harness.callback._geometry["slice"]["reason"])
-                elif plane is None:   # a solver that passes no slice (before 2026-10-28)
+                elif plane is None:   # a solver that passes no slice
                     harness.callback.mesh_func(harness.centres, np.full(40, 1e-9), (1, 1, 1), 0,
                                                np.zeros((0, 3)), np.zeros(1, dtype=np.int64),
                                                np.zeros(0, dtype=np.int64))

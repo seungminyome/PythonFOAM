@@ -27,12 +27,14 @@ def internal_values(path):
     return values
 
 
+if len(sys.argv) != 2:
+    sys.exit(f'usage: {sys.argv[0]} RUN_DIRECTORY')
 root = Path(sys.argv[1])
 settings = json.loads((root/'async-settings.json').read_text())
 STEPS, WRITE_EVERY = settings['steps'], settings['write_every']
 T0 = settings.get('start_time_s', 0.0)
 STYLE = settings.get('image_style', 'v1')
-# every file frozen for the run (later runs freeze more files than the 2026-10-20 one)
+# every file frozen for the run
 CALLBACK_FILES = tuple(sorted(p.name for p in (root/'executed-callback-source').iterdir() if p.is_file()))
 if STYLE == 'v2':
     # the frozen modules, so the parity check uses exactly the code the solver ran
@@ -128,7 +130,7 @@ for name in CASES:
     assert len(walls) == STEPS
     courant = [float(m[1]) for m in re.finditer(r'^Courant Number mean: \S+ max: (\S+)', log, re.M)]
     assert courant, name
-    # from t = 0 the impulsive start gives Co up to 1.05 for a few steps (2026-10-20 run);
+    # from t = 0 the impulsive start gives Co up to 1.05 for a few steps;
     # a run from a developed state must stay below 1 with its fixed time step
     if 'start_files_sha256' in settings:
         assert max(courant) < 1.0, (name, max(courant))
@@ -194,7 +196,7 @@ for name in CASES:
             for part, field in zip(images[2 * k:2 * k + 2], ('U', 'p')):
                 data = part['image_url']['url'].split(',', 1)[1]
                 assert hashlib.sha256(base64.b64decode(data)).hexdigest() == frame['image_sha256'][field]
-        # LLM_SEQUENCE_PROMPT (2026-10-28): own (default), t or tn, the forms of the trend test
+        # LLM_SEQUENCE_PROMPT: own (default), t or tn
         form = result.get('sequence_prompt', 'own')
         truths = [frame_scoring.load_v2(f['directory'])[1] for f in frames]
         options, system = {}, readable_request.SEQUENCE_V2OWN_SYSTEM_PROMPT
@@ -209,7 +211,7 @@ for name in CASES:
         assert body_bytes == encode_json(readable_request.sequence_v2_payload(
             frames, model=body['model'], own_ranges=True, **options)), name
         if 'computed_trends' in result:
-            # callbacks since 2026-10-28 record the answer key they computed from the frames
+            # the callback records the answer key it computed from the frames
             key = frame_scoring.sequence_truth(truths)
             assert result['computed_trends'] == json.loads(json.dumps(key)), name
             if 'computed_trends_agreement' in result:

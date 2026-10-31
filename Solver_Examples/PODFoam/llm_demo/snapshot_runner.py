@@ -24,6 +24,7 @@ from frame_scoring import (REGION_TOLERANCE_PCT, TREND_TOLERANCE, score_describe
 from llm_client import (DEFAULT_ENDPOINT, DEFAULT_MODEL, TREND_PRESSURE, TREND_REGION,
                         TREND_SPEED, build_request, build_sequence_request, encode_json,
                         request_local, write_json)
+import stability_request  # noqa: F401  (adds the stability reply schema)
 
 
 def sha256(data):

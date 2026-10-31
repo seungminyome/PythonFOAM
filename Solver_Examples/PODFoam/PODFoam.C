@@ -71,6 +71,20 @@ int init_numpy() {
   import_array1(-1);
   return 0;
 }
+
+// Prints and clears the pending Python error. Not PyErr_Print: on SystemExit
+// that ends the process with the exit's own status, often 0.
+void printPythonError()
+{
+    PyObject *errorType = nullptr, *errorValue = nullptr, *errorTrace = nullptr;
+    PyErr_Fetch(&errorType, &errorValue, &errorTrace);
+    PyErr_NormalizeException(&errorType, &errorValue, &errorTrace);
+    if (errorType) PyErr_Display(errorType, errorValue, errorTrace);
+    Py_XDECREF(errorType);
+    Py_XDECREF(errorValue);
+    Py_XDECREF(errorTrace);
+    PyErr_Clear();
+}
 /*Done importing Python functionality*/
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

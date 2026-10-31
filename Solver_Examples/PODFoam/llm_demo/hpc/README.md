@@ -17,7 +17,7 @@ The paired replay has been run once, on MedicineBow (2026-10-19): see
 | `demo_12b.slurm` | Bridge validation, the five solver conditions, verification, and the paired replay of the new state. Needs OpenFOAM v2106 on the node. |
 | `picture_test.slurm`, `fetch_models.sh`, `models.tsv` | The picture-reading test for several model sizes (prepared 2026-10-21, run 2026-10-22); see [below](#picture-reading-test-run-2026-10-22). |
 | `window_test.slurm` | The random-window picture test (`window_test.py`) for the models in `MODELS`; see [below](#random-window-test-and-qwen-models-run-2026-10-22). |
-| `async_v2.slurm` | The asynchronous suite with v2 pictures from the running solver and Gemma 4 12B, started from a developed flow, then the describe sweep; OpenFOAM in an Apptainer image, llama-server on the host GPU; see [below](#v2-pictures-from-the-running-solver-async_v2slurm-run-2026-10-22). |
+| `async_v2.slurm` | The asynchronous suite with v2 pictures from the running solver and Gemma 4 12B, started from a developed flow (`async_v2_sweep.slurm`: then the describe sweep); OpenFOAM in an Apptainer image, llama-server on the host GPU; see [below](#v2-pictures-from-the-running-solver-async_v2slurm-run-2026-10-22). |
 | `periodic_v2.slurm` | A long run with a v2 describe request every N steps and its twin without requests (`run_periodic.py`), from the baseline staging of an `async_v2.slurm` run; cost, memory and pipe traffic. |
 | `build_llama_cuda.sh` | Fallback: build llama.cpp b11429 from source with CUDA if the prebuilt binary does not run (older glibc, other CUDA). |
 
@@ -243,8 +243,8 @@ callback inside it reaches a llama-server started on the host GPU at
 ubatch 512, the picture-test settings), records the git state of the
 checkout on the host (the image has no git; `pack_run.py` copies it), and
 runs `run_demo.sh` with `POD_SUITE=async` and `LLM_IMAGE_STYLE=v2` in the
-image, then `run_live_sweep.py`. Where that file is not in the tree, the job
-ends after the suite and refuses `POD_SUITE_RUN` (the sweep only).
+image. `async_v2_sweep.slurm` is the same job followed by `run_live_sweep.py`; with
+`POD_SUITE_RUN` set it runs only the sweep.
 
 ```bash
 # from the repository root, after a validation run and a developed run of the same mesh
@@ -258,8 +258,8 @@ Apptainer comes from the `PATH`, or else from `module load apptainer`.
 
 Defaults: 6000 steps of 5e-6 s from the start state, written every 250
 steps, the describe request at step 250, sequence frames at 3000, 3250 and
-3750, the window x 0 to 0.12 m, y 0 to 0.04 m, then eleven sweep requests
-every 500 steps (`SWEEP_STEPS`, `SWEEP_PARALLEL`). `LLM_KILL_JOIN_S=0.2`:
+3750, the window x 0 to 0.12 m, y 0 to 0.04 m; `async_v2_sweep.slurm` then sends eleven
+sweep requests every 500 steps (`SWEEP_STEPS`, `SWEEP_PARALLEL`). `LLM_KILL_JOIN_S=0.2`:
 on these nodes a killed worker forked from the 0.5 GB solver takes about
 40 ms to be reaped, longer than the default of then, 0.02 s (0.1 s since
 2026-10-27). The developed state came
@@ -301,8 +301,8 @@ SIF=<of2212.sif> PYTHON=<conda>/bin/python3 POD_SUITE_RUN=<pod-llm-async.XXXXXX 
 
 Jobs 24903974 to 24903978 (picture tests), 24903264 (periodic), 24903298 and
 24903263 (repeats of the October 22 suite with `async_v2.slurm`; with
-`POD_SUITE_RUN` set, `async_v2.slurm` runs only the sweep, as job 24903755
-did), on the mb-a30 partition except 24903975 to 24903977 on mb-l40s. The first
+`POD_SUITE_RUN` set, the sweep job now in `async_v2_sweep.slurm` runs only the sweep, as
+job 24903755 did), on the mb-a30 partition except 24903975 to 24903977 on mb-l40s. The first
 two picture-test submissions that started stopped at once because
 `window_test.slurm` no longer loaded the CUDA module
 (`libcudart.so.12` not found); `POD_HOST_MODULES` was added for that. Results in the
@@ -356,7 +356,7 @@ binaries, `LLAMA_CUDA=13.4` and the tarball layout of the
 12B scripts (`picture_test.slurm` ran from its own bundle with the same layout
 on 2026-10-22).
 `async_v2.slurm` and `periodic_v2.slurm` as they are now (settings from the
-environment, `site.txt`, the sweep only when its file is in the tree) have run
+environment, `site.txt`) have run
 only with stub commands, not on a GPU node; the jobs named above ran the earlier
 text of these scripts, which held the site's paths and modules.
 `start_server.sh` fails fast if the server does not answer `/health` within ten

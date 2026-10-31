@@ -358,7 +358,7 @@ on 2026-10-22).
 only with stub commands, not on a GPU node; the jobs named above ran its earlier text,
 which held the site's paths and modules. `async_v2.slurm` as it is now ran unedited on
 a GPU with 12B and a source-built server, with `LLM_LONG_STEPS=1000` from a developed
-state, and its check passed (jobs 24950817 on an A30 and 24949283 on an L40S,
+state, and its check passed (job 24950817 on an A30,
 [evidence](../../../../docs/evidence/2026-10-30-versions/README.md)); its default 6000
 steps were not run in this form, and neither was `async_v2_sweep.slurm`.
 `setup_12b.sh` has run in this form only with a stand-in `curl`, not with a real download.

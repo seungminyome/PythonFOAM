@@ -12,8 +12,9 @@ and writes [report-numbers.json](report-numbers.json).
 Most jobs ran `b17763d`, a local commit of the PR tree (branch `pr/podfoam-observer`
 with an earlier README) that is not on GitHub. Its code equals `bf7a06e` and `main`:
 [code-identity.txt](code-identity.txt) lists the blob of each of the 64 files under
-`Solver_Examples/PODFoam`, without the three READMEs, read from git objects. Between
-`b17763d` and `bf7a06e` only `llm_demo/README.md` and `llm_demo/hpc/README.md` differ.
+`Solver_Examples/PODFoam`, without the three READMEs, read from git objects. Under that
+folder, only `llm_demo/README.md` and `llm_demo/hpc/README.md` differ between `b17763d` and
+`bf7a06e`.
 The 24 files that only `main` has (experiment scripts, their tests) are listed there as
 well. No job here runs them, apart from the unit tests.
 
@@ -29,7 +30,7 @@ Each job's folder has its `HEAD`; `git-status.txt` is empty for every job that r
 | `documented-commands/` | 24950840 to 24950843 | `b17763d` | [doc_commands.sh](scripts/refix-jobs/doc_commands.sh): the observer commands of `llm_demo/README.md` in a fresh copy | 45 of 45 files equal, `DOC COMMANDS PASS` |
 | `quick-start-24950804/` | 24950804 | `b17763d` | [quick_steps.sh](scripts/refix-jobs/quick_steps.sh): the quick start in order in the v2106 image, Gemma 4 E2B on 8 CPUs | [steps.tsv](quick-start-24950804/steps.tsv): 10 of 10 exit 0, both suites PASS |
 | `gpu-suite-24950817/` | 24950816 (reference), 24950817 | `b17763d` | [submit_suite.sh](scripts/gpu/submit_suite.sh): `async_v2.slurm` unedited, v2212, Gemma 4 12B, NVIDIA A30, `LLM_LONG_STEPS=1000` | `async-verification.json` PASS |
-| `gpu-suite-24949283/` | 24949283 | `fae10ba` | The same on an NVIDIA L40S | `async-verification.json` PASS |
+| `gpu-suite-24949283/` | 24949283 | `fae10ba` | The same at `fae10ba`, whose `async_v2.slurm` and code differ from `b17763d`, on an NVIDIA L40S | `async-verification.json` PASS |
 | `gpu-versions-24950818/` | 24950818 | `b17763d` | [part_a.sbatch](scripts/gpu/part_a.sbatch): one server on the host GPU, each image in turn, one real `describe` request at step 100 of 110, NVIDIA A30 | `part-a.json`: `ok` on all four |
 | `gpu-versions-24949167/` | 24949167 | `fae10ba` | The same on an NVIDIA L40S | `part-a.json`: `ok` on all four |
 | `docker-24950798/` | 24950798 | `b17763d` | [docker_inner.sh](scripts/refix-jobs/docker_inner.sh): upstream's image `romitmaulik1/pythonfoam_docker` (Ubuntu 18.04, OpenFOAM 8, Python 3.6.9): validation with only OpenFOAM sourced, `wclean && wmake`, the shipped `Run_Case` for 120 s | PASS; exit 0; 1,349 steps, stopped by the timeout |

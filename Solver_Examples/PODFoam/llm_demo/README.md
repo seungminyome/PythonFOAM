@@ -155,6 +155,8 @@ Use one `POD_WORKSPACE` per version, or delete `llm-demo-work` in the workspace 
 `run_demo.sh` builds there, and a build left by another version stopped it (seen going
 from v2106 to v2212; `log.build` in its run folder says `No rule to make target`).
 
+**GPU.** For Gemma 4 12B on a Slurm GPU node see [hpc/README.md](hpc/README.md).
+
 ## Settings
 
 All are environment variables.
@@ -178,10 +180,11 @@ All are environment variables.
 | `OPENFOAM_BASHRC`, `POD_OPENFOAM_VERSION` | Bashrc and the version it reports; the sourced OpenFOAM's, else v2106 |
 | `PYTHON` | Interpreter the solver links to; `python3` on `PATH` |
 | `POD_WORKSPACE`, `POD_REFERENCE_RUN` | Where runs go, parent of the checkout; reference case, newest passed validation |
-| `POD_LLM_RUNTIME`, `POD_LLM_PORT`, `POD_LLM_STATE` | Model files, `llm-runtime` beside the checkout; 8088; folder of `server.pid`, the runtime folder (leave it unset with `runtime.py`) |
+| `POD_LLM_RUNTIME`, `POD_LLM_PORT`, `POD_LLM_STATE` | Model files, `llm-runtime` beside the checkout; 8088; folder of `server.pid` for `hpc/start_server.sh` and `stop_server.sh`, the runtime folder (leave it unset with `runtime.py`) |
 | `POD_SUITE`, `POD_GIT_RECORDS` | `sync` or `async`; git records for `pack_run.py` where git is missing |
 | `LLM_LONG_STEPS`, `LLM_LONG_DT`, `LLM_LONG_WRITE`, `LLM_LONG_STEP`, `LLM_LONG_SEQUENCE_STEPS` | Asynchronous suite: 3000, 5e-7, 250, 250, `250,750,1250` |
 | `LLM_LONG_CASES`, `LLM_LONG_START`, `LLM_LONG_FIXTURE_DEADLINE_S` | Its cases, all (a subset runs no checks and no archive, and ends with `Cases finished, not checked`); start state, t = 0; deadline of the failure cases, 4 s |
+| `SIF`, `POD_HOST_MODULES`, `POD_ASYNC_OUT`, `HF_TOKEN`, `LLAMA_CUDA`, `GEMMA_12B_REVISION`, `CMAKE_CUDA_ARCHITECTURES`, `BUILD_JOBS`, `LLM_MODEL_FILE`, `LLM_PROJECTOR_FILE`, `LLM_CTX`, `LLM_BATCH`, `LLM_UBATCH`, `LLM_PARALLEL`, `LLM_THREADS`, `LLM_GPU_LAYERS`, `LLM_IMAGE_TOKENS`, `LLM_IMAGE_MIN_TOKENS` | GPU path, see `hpc/README.md` |
 | `WM_PROJECT_VERSION`, `WM_PROJECT_DIR`, `SLURM_JOB_ID`, `SLURM_SUBMIT_DIR` | From OpenFOAM or Slurm; read only |
 | `FOAM_USER_APPBIN`, `LD_LIBRARY_PATH` | The scripts point the first at the run or the workspace, so your own application folder is not written; for the second see Quick start |
 

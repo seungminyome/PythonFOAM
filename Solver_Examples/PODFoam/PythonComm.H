@@ -34,10 +34,11 @@
     }
     clock_gettime(CLOCK_MONOTONIC, &tw2); // POSIX
     posix_wall = 1000.0*tw2.tv_sec + 1e-6*tw2.tv_nsec - (1000.0*tw1.tv_sec + 1e-6*tw1.tv_nsec);
-    // podSvdInterval 0 keeps the original schedule, where a write step runs the SVD
-    // instead of collecting a snapshot (if it has snapshots to use).
+    // podSvdInterval 0: a module without analysis_func keeps the original schedule, where a
+    // write step runs the SVD instead of collecting a snapshot (if it has snapshots to use).
+    // A module with analysis_func gets a snapshot at every step.
     const bool writeStepSvd = !podSvdInterval && runTime.outputTime();
-    const bool collectSnapshot = !writeStepSvd || !podSnapshotsSinceSvd;
+    const bool collectSnapshot = analysis_func || !writeStepSvd || !podSnapshotsSinceSvd;
     if (collectSnapshot)
     {
         printf("Numpy array cast time: %.2f ms\n", posix_wall);
@@ -61,7 +62,7 @@
 
     const bool computeSvd = podSvdInterval
         ? (podSnapshotCount % podSvdInterval == 0)
-        : writeStepSvd && !collectSnapshot;
+        : writeStepSvd && (analysis_func || !collectSnapshot);
     if (computeSvd)
     {
         podSnapshotsSinceSvd = 0;
@@ -156,5 +157,7 @@
             << " modes=" << nModes << " finite=true time="
             << runTime.timeName() << endl;
     }
+    // The callback's return value is not used.
+    #include "PythonAnalysis.H"
     std::feclearexcept(FE_ALL_EXCEPT);
 } // Restore OpenFOAM floating-point traps before the next PDE step.

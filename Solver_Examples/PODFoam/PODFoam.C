@@ -50,7 +50,10 @@ Description
 #include "localEulerDdtScheme.H"
 #include "fvcSmooth.H"
 #include "sigFpe.H"
+#include "emptyPolyPatch.H"
 #include "PythonCompat.H"
+#include "PythonGather.H"
+#include "PythonSlice.H"
 
 // Some time related libraries
 #include <ctime>
@@ -59,6 +62,7 @@ Description
 
 /*The following stuff is for Python interoperability*/
 #include <Python.h>
+#include <chrono>
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #define PY_ARRAY_UNIQUE_SYMBOL POD_ARRAY_API
 #include <numpy/arrayobject.h>
@@ -225,6 +229,7 @@ int main(int argc, char *argv[])
         PythonFpeOff pythonFpe;
         Py_DECREF(snapshot_func);
         Py_DECREF(svd_func);
+        Py_XDECREF(analysis_func);
         if (Py_FinalizeEx() < 0)
         {
             FatalErrorInFunction << "Python finalization failed" << exit(FatalError);

@@ -42,7 +42,7 @@ snapshot and SVD stay per rank as before. Tested on 2 ranks on 2026-10-27
 
 3D cases (2026-10-28). A 3D mesh has no `empty` patch, so the cell polygons
 come from a plane slice instead (`PythonSlice.H`): OpenFOAM's `cuttingPlane`
-at z = `LLM_SLICE_Z` (default: the middle of the mesh's z range), normal
+at z = `POD_SLICE_Z` (default: the middle of the mesh's z range), normal
 (0 0 1), not triangulated, so each cut cell gives one polygon, its section. A
 plane through mesh points (the middle of an even number of uniform layers)
 would lie on the faces between two cells; it is moved halfway to the next
@@ -55,12 +55,13 @@ cell centres), U and p, plus `mesh_cells`, `polygon_points` and
 `polygon_offsets`; `readable-metadata.json` gets `slice` (z, requested z,
 where it came from, whether it was moved, cells in the slice and in the mesh).
 The request is built as for 2D; neither the pictures nor the request say that
-they show a slice. An unreadable `LLM_SLICE_Z` or a plane that cuts no cells
-leaves the solver running and v2 requests refused with the reason, and so
-do slice polygons that fail the checks of `pod_image.plane_slice`. v1
+they show a slice. An unreadable `POD_SLICE_Z` (on OpenFOAM 8 also a number
+followed by spaces) or a plane that cuts no cells leaves the solver running and
+v2 requests refused with the reason, and so do slice polygons that fail the
+checks of `pod_image.plane_slice`. v1
 pictures of a 3D case keep the nearest-cell raster of all cells. The slice
 shows the cut cells' own U and p (|U| includes Uz), not values interpolated
-to the plane; with `LLM_SLICE_Z=0.002` in the test case the cut cells'
+to the plane; with `POD_SLICE_Z=0.002` in the test case the cut cells'
 centres are at z = 0.00238 m. A 3D case needs the `python_module.py` of
 2026-10-28 or later: an older `mesh_func` takes seven arguments, fails on
 the eighth, and leaves the case without pictures. Wedge (axisymmetric)
@@ -118,7 +119,7 @@ Until 2026-10-27 the callback kept every state until the last step (about
 1.35 KiB per step with Python 3.11) and then rewrote the whole file, with a
 deadline of 1e-4 s per state; the request worker also rewrote it at the
 request step. The finished file has the same bytes:
-`test_callback.TelemetryTests` compares it with main's callback over 2,345
+`test_callback_main.py` compares it with main's callback over 2,345
 steps, and the [October 28 check](../../../docs/evidence/2026-10-28-callback/README.md)
 compares it in PODFoam runs and over the 24,000 states of the October 27
 periodic run. There the Python heap stayed at most 0.515 MiB (tracemalloc's
@@ -239,14 +240,14 @@ the v1 picture; `observe` with v2 is refused.
 - Computed trend words (2026-10-28). For a v2 sequence the worker also
   computes the three trend words from the frames' arrays, among the cells
   inside the plotted range, with the picture tests' answer key
-  (`snapshot_runner.py`: the largest |U| and the lowest p are roughly
+  (`frame_scoring.py`: the largest |U| and the lowest p are roughly
   constant when the last differs from the first by at most 2 % of the
   larger magnitude; the fastest cell is in the same place when it moved at
   most 5 % of the plotted range). `llm_result.json` gets them as
-  `computed_trends` (the dictionary `snapshot_runner.sequence_truth` gives
+  `computed_trends` (the dictionary `frame_scoring.sequence_truth` gives
   for those frames, with each time's extrema) and, when the model answered,
   `computed_trends_agreement`, the model's words against them (as
-  `snapshot_runner.score_sequence`). They are not sent and not in
+  `frame_scoring.score_sequence`). They are not sent and not in
   `llm_request.json`; a request that times out still records them.
   `test_async.ComputedTrendTests` checks them against the picture tests'
   functions on 400 seeded random cases (a drawn window that holds no cell is
@@ -269,7 +270,7 @@ the v1 picture; `observe` with v2 is refused.
 
 `LLM_KILL_JOIN_S` (default 0.1 s since 2026-10-27, before 0.02 s; up to 2 s) is how long a killed worker
 may take to be reaped. Reaping takes longer the more memory the child maps:
-about 16 ms for 200 MB and 38 ms for 500 MB on the MedicineBow nodes, where a
+about 16 ms for 200 MB and 38 ms for 500 MB on the test nodes, where a
 worker forked from a 0.5 GB solver is not reaped within 0.02 s; there the
 jobs use 0.2 s.
 
@@ -388,6 +389,42 @@ captions, picture titles), and the frames of the crashed runs are 2×10⁻⁵ to
 stated times alone separate the classes. A new set should space the frames
 equally in both classes or leave the times out.
 
+### Wrong-setup test (`wrong_setup_test.py`)
+
+`wrong_setup_test.py prepare --long <developed case> --output <dir>` writes
+ten cases from a developed run of the step case: five normal runs, each from
+another written state, and five with one changed entry (inlet speed,
+viscosity, slip walls, a moving wall, half an inlet). All start at t = 0.1 s
+with a fixed time step, so all have the same steps and times. After the runs,
+`flow-check --design <dir>/design.json` lists each run's log numbers and
+refuses a log with a crash or another number of steps, and a last written U
+or `transportProperties` without the design's entries. `build --design
+<design.json> --centres <fields.npz> --output <set>` makes the same check and
+writes one `wrong-setup-v2own` request per state at the design's steps: two v2
+pictures (|U| and p, each on its own colour scale) in the solver's window,
+the intended setup in the system prompt, and the reply `reason`, then
+`assessment` (`consistent`, `inconsistent` or `cannot_tell`). The reply schema
+is registered inside the script while a command runs; the solver callback does
+not send this request. `check` also runs the leak check: it refuses a set whose
+bodies differ in more than the pictures and the frame's step and time, or where
+a rule on the request text could beat the constant baseline. `run` works as in
+`picture_test.py`. `report` gives right of the frames by model, class and run
+against the constant baseline and a rule on the peak |U|, and the numbers from
+the arrays and logs against the normal runs' ranges; `--reasons` writes the
+`inconsistent` answers on wrong frames with each run's actual change for a
+judge. `contact` draws one sheet with a frame of each run.
+`hpc/window_test.slurm` runs it with `PICTURE_TEST_SCRIPT=wrong_setup_test.py`.
+Tests: `test_wrong_setup_test.py`. Run on 2026-10-30
+([evidence](../../../docs/evidence/2026-10-30-wrong-setup/README.md)): Gemma 4
+31B was right for 67 of 80 frames, 12B, 26B-A4B and Qwen3.5-35B-A3B for 41, 42
+and 45, against a constant baseline of 40 and 56 for the rule. 31B's lead over
+the rule rests on the viscosity run (8 of 8, reasons that do not name it) and on
+4 of 8 on the moving wall, whose change is not in the pictures; without these two
+runs 31B gets 55 and the rule 56 of 64. Its other catches compare the colour bar's
+maximum with the stated speed, as the rule does. The largest Courant number above 1
+flags three of the wrong runs with no reference run (64 of 80), and given a normal
+run the colour bars' numbers alone get 75 of 80 (68 with each normal run held out).
+
 ## Replaying saved frames (describe and sequence)
 
 `snapshot_runner.py` sends saved frames (directories with `state.png`,
@@ -473,7 +510,7 @@ Environment variables: `OPENFOAM_BASHRC`, `PYTHON`, `POD_WORKSPACE`,
 checkout), `POD_LLM_PORT` (8088), `POD_REFERENCE_RUN` (newest passed
 validation run by default), `LLM_ANALYSIS_STEP`, `LLM_IMAGE_INPUT` (1/0),
 `LLM_CALLBACK_DEADLINE_S`, `LLM_CONNECT_TIMEOUT_S`, `LLM_READ_TIMEOUT_S`,
-`LLM_MAX_TOKENS` (up to 192 for `observe`, 320 for the other modes), `LLM_MODE`, `LLM_ASYNC`, `LLM_SEQUENCE_STEPS`, `LLM_SEQUENCE_PROMPT` (`own`, `t`, `tn`; v2), `LLM_ASYNC_MAX_PENDING` (1 to 8), `LLM_ASYNC_END`, `LLM_FINAL_STEP`, `LLM_IMAGE_XRANGE`, `LLM_IMAGE_YRANGE`, `LLM_SLICE_Z` (3D cases: z of the plane slice in metres, read by the solver), `POD_SUITE` (`async` for the long asynchronous suite), and for that suite `LLM_LONG_STEPS`, `LLM_LONG_DT`, `LLM_LONG_WRITE`, `LLM_LONG_STEP`, `LLM_LONG_SEQUENCE_STEPS`, `LLM_LONG_CASES`.
+`LLM_MAX_TOKENS` (up to 192 for `observe`, 320 for the other modes), `LLM_MODE`, `LLM_ASYNC`, `LLM_SEQUENCE_STEPS`, `LLM_SEQUENCE_PROMPT` (`own`, `t`, `tn`; v2), `LLM_ASYNC_MAX_PENDING` (1 to 8), `LLM_ASYNC_END`, `LLM_FINAL_STEP`, `LLM_IMAGE_XRANGE`, `LLM_IMAGE_YRANGE`, `POD_SLICE_Z` (3D cases: z of the plane slice in metres, read by the solver), `POD_SUITE` (`async` for the long asynchronous suite), and for that suite `LLM_LONG_STEPS`, `LLM_LONG_DT`, `LLM_LONG_WRITE`, `LLM_LONG_STEP`, `LLM_LONG_SEQUENCE_STEPS`, `LLM_LONG_CASES`.
 
 `run_demo.sh` sets `LLM_MAX_TOKENS=192` for every mode unless it is already
 set, so the October 20 in-solver describe and sequence requests used 192 (the
@@ -520,15 +557,16 @@ Unit tests (no model needed):
 
 ```bash
 cd Solver_Examples/PODFoam/llm_demo
-python3 -m unittest test_llm_client test_callback test_ablation_runner test_async test_picture_test test_instability_test -v
+python3 -m unittest test_llm_client test_callback test_callback_main test_ablation_runner test_async test_picture_test test_instability_test test_wrong_setup_test -v
 ```
 
-125 tests on 2026-10-29 (Python 3.11, numpy and matplotlib needed; 108 on
+152 tests on 2026-10-30 (Python 3.10 and 3.12), 125 on 2026-10-29 before the
+wrong-setup test (Python 3.11, numpy and matplotlib needed; 108 on
 2026-10-28 before the instability and slice tests were merged), with
-`TMPDIR` on a node's local disk and on NFS. Six of `test_callback.TelemetryTests`
-compare with main's callback of 2026-10-27, kept at
+`TMPDIR` on a node's local disk and on NFS. `test_callback_main.py`
+compares with main's callback of 2026-10-27, kept at
 [docs/evidence/2026-10-28-callback/callback-main/python_module.py](../../../docs/evidence/2026-10-28-callback/callback-main/python_module.py);
-in a copy of the code without the repository's `docs/` they are skipped.
+in a copy of the code without the repository's `docs/` it is skipped.
 
 ## Replaying a saved state with and without the image
 

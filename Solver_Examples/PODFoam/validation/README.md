@@ -1,4 +1,4 @@
-# PODFoam bridge validation on OpenFOAM v2106
+# PODFoam bridge validation
 
 Ten serial time steps of the PODFoam case (20,540 cells) to check that the
 C++/Python round trip is intact: every snapshot reaches Python as its own
@@ -12,19 +12,40 @@ cd Solver_Examples/PODFoam
 ./validation/run_v2106.sh --resume <run-dir>   # reuse mesh and reference solver output
 ```
 
-Environment variables: `OPENFOAM_BASHRC` (default
-`/usr/lib/openfoam/openfoam2106/etc/bashrc`), `PYTHON` (default
-`/usr/bin/python3`, needs numpy), `POD_WORKSPACE` (default: parent of the
-checkout). The executable is built into the run directory's `bin/`, so
-`FOAM_USER_APPBIN` is left alone.
+The script, whatever its name, supports OpenFOAM v2012, v2106 and v2212
+(openfoam.com) and OpenFOAM 8 (openfoam.org). It takes the version and the bashrc
+of an OpenFOAM already sourced; with none sourced it uses v2106. To choose another,
+set `OPENFOAM_BASHRC` to that installation's bashrc and `POD_OPENFOAM_VERSION` to
+the version it reports (`WM_PROJECT_VERSION`). The script stops if the two differ,
+and the run directory is named after the version:
+
+```bash
+OPENFOAM_BASHRC=/usr/lib/openfoam/openfoam2212/etc/bashrc POD_OPENFOAM_VERSION=v2212 ./validation/run_v2106.sh
+OPENFOAM_BASHRC=/opt/openfoam8/etc/bashrc POD_OPENFOAM_VERSION=8 ./validation/run_v2106.sh
+```
+
+Other environment variables: `PYTHON` (default `python3` on `PATH`, needs numpy) and
+`POD_WORKSPACE` (default: parent of the checkout). If `PYTHON` is not the system
+Python, put its `lib` folder on `LD_LIBRARY_PATH`; otherwise the script stops at
+`Unresolved shared libraries`. The script points `FOAM_USER_APPBIN` at the run
+directory's `bin/`, so your own application folder is not written.
+
+The validation passed with Python 3.11 on all four versions, and on OpenFOAM 8 also
+with Python 3.6.9 in the Docker image the top-level README names.
 
 ## What the script does
 
-1. Runs the shipped case with the standard `pimpleFoam` to reproduce the
-   known divergence of the original setup (`deltaT=1e-5`, LES, max Courant
-   about 21, NaN in the second step). `checkMesh` reports 192 high-aspect-ratio
-   cells and 16 faces above 70 degrees non-orthogonality. This is the
-   `baseline-pimple` copy, run with floating-point traps off.
+1. Stages `baseline-pimple`, a copy of the shipped case with `LESModel Smagorinsky`
+   added and a generated `controlDict` (fixed `deltaT=1e-5`, ten steps), and runs the
+   standard `pimpleFoam` on it with floating-point traps off (`FOAM_SIGFPE=false` on
+   openfoam.com; on openfoam.org the variable is unset, because any value turns them
+   on). The outcome is only recorded (`baseline-pimple/log.pimpleFoam`,
+   `baseline-pimple/exit-status`): on openfoam.com this copy reaches max Courant about
+   21 and NaN in the second step, and on OpenFOAM 8 it finishes its ten steps.
+   `log.checkMesh` reports 192 high-aspect-ratio cells and 16 faces above 70 degrees
+   non-orthogonality. The shipped `Run_Case` differs from this copy: it adjusts its
+   time step (`maxCo 1`), and on openfoam.com, with `LESModel` added by hand, it diverges
+   within about 90 steps with upstream's build and with this code.
 2. Stages a stabilised copy (`fixed-pimple`: laminar, initial U = (32.2 0 0),
    `deltaT=1e-7`, Euler, upwind convection, limited non-orthogonal correction,
    `DICGaussSeidel` pressure smoother) and runs `pimpleFoam` on it.
@@ -32,49 +53,80 @@ checkout). The executable is built into the run directory's `bin/`, so
    `fixed-pod`, runs the rebuilt PODFoam for ten steps with
    `podSvdInterval 10`, and compares it with `fixed-pimple`.
 
-`prepare_case.py` holds the case edits; `python_module.py` is the minimal
-bridge module (ten snapshots, five modes per component, written to
-`python_svd_audit.npz` for the checks).
+`prepare_case.py` holds the case edits and stops if one does not find its text in
+`Run_Case`; `python_module.py` is the minimal bridge module (ten snapshots, five modes
+per component, written to `python_svd_audit.npz` for the checks).
 
 ## Pass criteria (`verify.py`)
 
 - Both solvers: exactly ten `Time =` entries at 1e-7 ... 1e-6 s, `End`, no
   `FOAM FATAL`, all residuals and written fields finite, no linear solve hitting
   the 1000-iteration cap, max Courant below 1.
-- PODFoam log: ten `POD snapshot accepted` lines, one
-  `POD SVD returned to OpenFOAM: rows=61620 modes=5 finite=true`,
+- PODFoam log: ten `POD snapshot accepted` lines, a
+  `POD SVD returned to OpenFOAM: rows=61620 modes=5 finite=true` line,
   `Python finalized successfully`.
-- The snapshots Python kept equal the written U fields (rtol 1e-10); the
+- The snapshots Python kept equal the written U fields (rtol 1e-10, atol 1e-9); the
   returned modes are orthonormal, satisfy the eigen-equation of the snapshot
   matrix, and equal the written `upod_*`, `vpod_*`, `wpod_*` fields.
 - U and p of `fixed-pod` equal `fixed-pimple` at every step (rtol 1e-10,
   atol 1e-9).
 
-The script prints `PASS` only if all checks succeed. A passing run
-(`pod-v2106.c5jpOq`, 2026-10-10) gave max Courant 0.211, max snapshot error
-5e-11, max mode error 5e-13, 45 field files checked.
+The script prints `PASS` only if all checks succeed. A passing run gives about
+max Courant 0.211 (0.212 on OpenFOAM 8), max snapshot error 5e-11, max mode error
+5e-13, and 45 field files checked in `fixed-pod`.
 
-## Solver changes behind this
+## What changes from upstream's PODFoam
 
-`PODFoam.C`, `PythonCreate.H`, `PythonComm.H`, `pEqn.H`:
+Results change in these ways:
 
-- v2106 argument handling (`setRootCaseLists.H`), NumPy C API import with error
-  checking, the case directory on `sys.path` so `-case` works.
-- Snapshots are copied into a NumPy array that Python owns (no
-  `PyArray_SimpleNewFromData` views of solver memory); U and p are checked
-  finite before the call.
-- Return-value checks: native float64 ndarray, shape
-  `(3*cells, min(truncation, snapshots))`, finite; written as
-  `zeroGradient` fields.
-- `pEqn.solve()` uses the `pFinal` solver on the final corrector, as
-  `pimpleFoam` does in v2106; without it the POD solver drifts from the
-  reference.
-- `sigFpe::ignore` around Python initialisation, calls and finalisation:
-  NumPy's import deliberately overflows while probing machine limits, which
-  OpenFOAM's FPE trap would otherwise report as a solver divergence.
-- `Py_FinalizeEx()` at the end, with the function objects released first.
-- Optional `podSvdInterval` in `controlDict` (0 keeps the original
-  write-time SVD schedule).
+- **POD modes.** Each snapshot reaches Python as an array that Python owns. Upstream's
+  module keeps the first snapshot of a window as a view of the C++ buffer, which the
+  next snapshot overwrites, so in upstream's build the first two columns of every
+  snapshot matrix are equal. Here the first column holds the first snapshot. With that
+  overwrite reproduced in Python, the cell values of all modes equal upstream's.
+- **Mode files.** The modes are written as dimensionless `zeroGradient` fields.
+  Upstream's are copies of U's components, with U's dimensions and boundary conditions.
+- **U and p on openfoam.com.** The pressure solve uses the `p` solver until the final
+  corrector and `pFinal` there, as that version's `pimpleFoam` does. With one outer
+  corrector, as in this case, a plain `pEqn.solve()` selects `pFinal` at every corrector
+  there. On openfoam.org `pimpleFoam` has a plain `pEqn.solve()`, and so does this code,
+  so U, p and phi stay byte-identical to upstream's on OpenFOAM 8.
+
+Runs can stop or behave differently in these ways:
+
+- **Floating-point traps** are on in the solver, as in `pimpleFoam`, and off around
+  Python initialisation, calls and finalisation (`PythonFpeOff` in `PythonCompat.H`,
+  which is `sigFpe::ignore` on openfoam.com), because NumPy's import overflows on
+  purpose while probing machine limits. Upstream's argument handling leaves them off,
+  so a run that goes on through an overflow there stops with SIGFPE here.
+- **Checked calls.** A failed import, a missing function, or an error or `SystemExit` in
+  `snapshot_func` or `svd_func` stops the solver with the Python traceback. U and p must
+  be finite before a snapshot. `svd_func` must return a native float64 ndarray of shape
+  `(3*cells, modes)` with 1 to `truncation` modes and finite values. `online_mode = False`
+  in the shipped module stopped this way at `writeInterval` 3 and 6 in short tests: a
+  tiny negative eigenvalue gives a NaN under `np.sqrt`.
+- **Parallel runs.** All ranks must return the same number of modes, because the boundary
+  update of each mode exchanges data between them; otherwise the run stops and says so.
+  A rank without cells takes the others' count.
+- **Python threads.** `Py_FinalizeEx()` runs at the end, after the Python function
+  references are released. It waits for non-daemon threads, so a module that starts one
+  must also stop it, or the solver does not exit.
+- **`sys.path`.** The case directory comes first, so `-case` finds the case's module. The
+  launch folder stays on the path after it.
+- **Log.** Each step prints a `Time =` line with its deltaT, which the validation reads.
+  Upstream's timing lines stay.
+
+`podSvdInterval` in `controlDict` is new and optional. At 0, the default, a module with
+`snapshot_func` and `svd_func` keeps the original schedule: a write step runs the SVD
+instead of collecting a snapshot, if snapshots have been collected since the last SVD.
+Above 0, every step collects a snapshot and the SVD runs every `podSvdInterval`
+snapshots. An SVD on a step that writes nothing else then makes a time folder holding
+only POD fields. If that is the newest folder, `startFrom latestTime` stops on the
+missing `p`, and `purgeWrite` does not remove these folders.
+
+This covers PODFoam only. `PODFoam_Debug` and `APMOSFoam` have the same
+`array[:,0].reshape(-1,1)` line over a C++ buffer, `AEFoam` has `np.expand_dims` there,
+and their `pEqn.H` have the plain `pEqn.solve()`. They were read, not run.
 
 This is a connection test, not a physical validation of the case: the mesh
 quality issues and the large initial pressure transient are still there.

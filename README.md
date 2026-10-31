@@ -107,14 +107,15 @@ python3 llm_demo/runtime.py stop
 
 On a Slurm GPU node, `async_v2.slurm` runs the asynchronous suite with v2
 pictures and Gemma 4 12B, and `periodic_v2.slurm` the run with a request
-every N steps and the same run without requests. Site lines, the bridge
-validation inside the image and the developed flow the runs start from
+every N steps and the same run without requests. The required variables, the
+bridge validation inside the image and the developed flow the runs start from
 (`LLM_LONG_START`) are in
 [llm_demo/hpc/README.md](Solver_Examples/PODFoam/llm_demo/hpc/README.md).
 
 ```bash
 export HF_TOKEN=hf_... POD_LLM_RUNTIME=$PWD/llm-runtime-12b
 bash Solver_Examples/PODFoam/llm_demo/hpc/setup_12b.sh   # llama.cpp b11429 (CUDA), Gemma 4 12B QAT
+export SIF=<of2212.sif> PYTHON=<python 3 with numpy and matplotlib>
 export POD_REFERENCE_RUN=<pod-v2212.XXXXXX> LLM_LONG_START=<developed case>/0.1
 sbatch --account=<account> --partition=<partition> Solver_Examples/PODFoam/llm_demo/hpc/async_v2.slurm
 POD_SUITE_RUN=<pod-llm-async.XXXXXX of a PASSed async_v2.slurm run> \
@@ -131,7 +132,7 @@ POD_SUITE_RUN=<pod-llm-async.XXXXXX of a PASSed async_v2.slurm run> \
 | `LLM_ANALYSIS_STEP`, `LLM_ANALYSIS_EVERY` | one request at step 5 | one request at a chosen step, or a `describe` request every N steps |
 | `LLM_ASYNC_MAX_PENDING` | 1 | 1 or 2 |
 | `LLM_MODEL` | Gemma 4 E2B Q4_0 | Gemma 4 12B QAT |
-| `LLM_SLICE_Z` | 3D cases: the middle of the z range | – |
+| `POD_SLICE_Z` | 3D cases: the middle of the z range | – |
 
 All settings are in [llm_demo/README.md](Solver_Examples/PODFoam/llm_demo/README.md).
 

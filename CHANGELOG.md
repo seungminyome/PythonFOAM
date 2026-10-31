@@ -3,6 +3,71 @@
 Dates are when a run or change happened. Where a run is recorded, the code
 revision that produced it is given.
 
+## 2026-10-30, review of the PR files
+
+- `PODFoam`: `SystemExit` in the module no longer ends the run with its own exit status;
+  the launch folder stays on `sys.path`; upstream's four timing lines are back; all ranks
+  must return the same number of POD modes and define the same hooks; a rank without
+  cells is accepted. `LLM_SLICE_Z` is now `POD_SLICE_Z`.
+- `validation/`: the baseline copy is only recorded; each case edit must find its text;
+  it runs on Python 3.6. The scripts take an already sourced OpenFOAM and `python3` on
+  `PATH` by default.
+- `run_demo.sh` and `pack_run.py` use the same default runtime folder as `runtime.py`; with
+  `LLM_LONG_CASES` it no longer prints `PASS`. `setup_12b.sh` needs no token and keeps a
+  token off the command line. `LLM_HTTP_PYTHON` defaults to the running Python.
+- Moved out of the shared files, for the PR: the stability request to
+  `stability_request.py`, the sweep job to `hpc/async_v2_sweep.slurm`, the comparison with
+  main's callback to `test_callback_main.py`, and `/results/`, `/work/` to their own
+  `.gitignore` files. `async_v2.slurm` no longer packs untracked files.
+
+## 2026-10-30, OpenFOAM versions; HPC scripts without site defaults (`cc61adb`, `4a8f59c`, `cf61575`)
+
+- PODFoam builds on OpenFOAM v2012, v2106, v2212 and 8 (`PythonCompat.H`). At
+  `cf61575`, on all four, the bridge validation passes and the observer with no
+  model runs the 2D step case and the 3D slice case, serial and on 2 ranks (Slurm
+  jobs 24947448 to 24947451, 24947494, 24947501, 24947502 and 24947507). The
+  openfoam.com versions reproduce the original case's divergence; on OpenFOAM 8
+  that case does not diverge, with the traps off as with them on.
+- Two limits on OpenFOAM 8, stated in `PythonCompat.H`: a field whose solves stop
+  during a run through `maxIter 0` goes on reporting its last list (a momentum
+  predictor switched off is checked), and on a moving mesh with
+  `moveMeshOuterCorrectors` only the last outer corrector's solves are reported.
+- `frame_scoring.py` holds the answer keys and the scores, so `verify_async.py` and
+  the core tests need no experiment script; the older modules give the same names.
+  `test_picture_test.py` imports the test scripts and checks those names. Unit
+  tests: 127 in the six modules.
+- `async_v2.slurm`, `periodic_v2.slurm`: `SIF` and `PYTHON` are required, and a job
+  without them stops at once. Host modules come only from `POD_HOST_MODULES`;
+  without it a source-built llama-server does not start (`libcudart.so.12` not
+  found). `site.txt` records these settings, and `OPENFOAM_BASHRC` can be set. In
+  this form the two scripts have run only with stub commands.
+- `picture_test.slurm`, `window_test.slurm`: uploads need `RESULTS_REPO`; there is
+  no default repository any more. A job with `RESULTS_RELEASE` but without
+  `RESULTS_REPO` or `GH_TOKEN` prints that nothing is uploaded.
+
+## 2026-10-30, wrong-setup test (`97db7eb`)
+
+- New `wrong_setup_test.py` and `test_wrong_setup_test.py` (27 tests; 154 in
+  all; `make test` and CI run them). Can a model see from one frame's pictures
+  that a run was set up wrong, when the system prompt gives the intended setup
+  and names no kind of mistake? `check` refuses a set whose request text could
+  separate the classes, the flaw of the October 28 instability set.
+- Run: five normal runs and five with one changed entry, 8,000 steps each (job
+  24946879), 80 requests, four models (job 24947089). Right of 80: Gemma 4 31B
+  67, 12B 41, 26B-A4B 42, Qwen3.5-35B-A3B 45; constant baseline 40; a rule on
+  the peak |U| 56. Records in
+  [docs/evidence/2026-10-30-wrong-setup/](docs/evidence/2026-10-30-wrong-setup/README.md).
+- What these counts rest on, computed after the answers were read: without the
+  viscosity run and the moving-wall run, whose change is not in the pictures,
+  31B gets 55 and the rule 56 of 64. The largest Courant number above 1 flags
+  three of the five wrong runs with no reference run (64 of 80), and given a
+  normal run the colour bars' numbers alone get 75 of 80 (68 with each normal
+  run held out). The viscosity run is the only change that models seem to
+  notice and no such number flags; it is one run, and most of the reasons deny a
+  recirculation that is there. Reasons judged by one AI agent: of 37, 14 name the
+  change or its visible effect, 17 partly, 6 not. `wrong_setup_test.py`, the
+  runs, the question and the scoring are unchanged.
+
 ## 2026-10-29, documentation
 
 - README follows the section shares of 13 widely used READMEs of similar

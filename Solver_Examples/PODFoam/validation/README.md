@@ -31,7 +31,7 @@ Python, put its `lib` folder on `LD_LIBRARY_PATH`; otherwise the script stops at
 directory's `bin/`, so your own application folder is not written.
 
 The validation passed with Python 3.11 on all four versions, and on OpenFOAM 8 also
-with Python 3.6.9 in the Docker image the top-level README names.
+with Python 3.6.9 in upstream's Docker image `romitmaulik1/pythonfoam_docker`.
 
 ## What the script does
 

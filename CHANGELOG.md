@@ -3,6 +3,27 @@
 Dates are when a run or change happened. Where a run is recorded, the code
 revision that produced it is given.
 
+## 2026-10-30, report of October 30; versions at the final code (`cabcfc6`, PR tree `bf7a06e`)
+
+- `compat-final` (`cabcfc6`) merged into `main`. PR tree: branch `pr/podfoam-observer`, `bf7a06e`.
+  All code under `Solver_Examples/PODFoam` that the two share has the same blobs
+  ([code-identity.txt](docs/evidence/2026-10-30-versions/code-identity.txt)).
+- New [docs/results-20261030.md](docs/results-20261030.md) and
+  [docs/evidence/2026-10-30-versions/](docs/evidence/2026-10-30-versions/README.md).
+  On v2012, v2106, v2212 and 8: validation and observer with no model, 2D and 3D, serial and
+  2 ranks (jobs 24950780 to 24950783), suites against a stand-in server (24950794 to 24950797),
+  one 12B request (24950818, A30; 24949167, L40S). 12B suite on v2212 (24950817, A30; 24949283,
+  L40S), E2B quick start on v2106 (24950804), upstream's Docker image (24950798).
+- Comparison with upstream's PODFoam at `bf7a06e` (jobs 24951136 to 24951141): U, p and phi
+  byte-identical on OpenFOAM 8; POD modes equal with the first-snapshot overwrite reproduced in
+  Python (30 of 30, 150 of 150); on openfoam.com also with upstream's pressure line.
+- Unit tests: 156 on merged `main` with Python 3.10 and 3.12 (job 24951126). The PR tree holds three
+  of the eight modules, 83 tests (job 24951079).
+- `README.md`: OpenFOAM v2012, v2106, v2212 and 8; `PYTHON` in the quick start; `HF_TOKEN` is
+  optional, since the 12B repository answers without a token (`hf-no-token.txt` in the evidence).
+  `hpc/README.md`: the same; `async_v2.slurm` as it is now has run on a GPU.
+  `llm_demo/README.md`: versions, POD schedule, test counts.
+
 ## 2026-10-30, review of the PR files
 
 - `PODFoam`: `SystemExit` in the module no longer ends the run with its own exit status;

@@ -16,10 +16,17 @@ Results: [October 17 report](../../../docs/results.md),
 [October 20 report](../../../docs/results-20261020.md),
 [12B paired replay](../../../docs/results.md#same-replay-with-gemma-4-12b-on-a-gpu-2026-10-19),
 [October 22 picture test](../../../docs/results-20261022.md),
-[October 22 v2 pictures from the running solver](../../../docs/results-20261022-live.md).
+[October 22 v2 pictures from the running solver](../../../docs/results-20261022-live.md),
+[October 30: versions, upstream's PODFoam, wrong-setup test](../../../docs/results-20261030.md).
 
 This extends the stock PODFoam example with an optional callback. Modules that
-only define `snapshot_func` and `svd_func` keep working as before.
+only define `snapshot_func` and `svd_func` keep working as before, and how results
+differ from upstream's build is in the
+[validation README](../validation/README.md#what-changes-from-upstreams-podfoam).
+PODFoam builds on OpenFOAM v2012, v2106, v2212 and 8. Runs with a model: both suites
+with E2B on v2106, the asynchronous suite with 12B on v2212, one 12B `describe` request
+on each of the four. The other suites on v2012 and 8 ran against a stand-in server,
+which reads no picture ([report](../../../docs/results-20261030.md#versions)).
 
 ## How it fits into the solver
 
@@ -70,6 +77,13 @@ meshes and single-layer meshes bounded by symmetry or cyclic patches have no
 the step case extruded to 8 cells in z, serially and on 2 ranks
 ([evidence](../../../docs/evidence/2026-10-28-3d/README.md)); not tested on
 other 3D meshes or with a model.
+
+POD schedule. With `podSvdInterval` at its default of 0, a module without
+`analysis_func` keeps upstream's schedule: a write step runs the SVD instead of
+collecting a snapshot, if snapshots have been collected since the last SVD. A module
+with `analysis_func`, such as this one, gets a snapshot at every step and an SVD at
+write steps, or every `podSvdInterval` snapshots if that is set
+([table](../../../docs/results-20261030.md#upstreams-podfoam)).
 
 `llm_demo/python_module.py` is the callback. At one chosen step (default 5)
 it forks a worker that:
@@ -491,10 +505,19 @@ the results are in the [October 22 report](../../../docs/results-20261022.md).
 
 ## Running it
 
-You need OpenFOAM v2106, Python 3 with numpy and matplotlib, a passed
-[bridge validation](../validation/README.md) run (it provides the reference
-case), about 3.4 GB of disk for the model files and a few GB of RAM for the
-server.
+You need OpenFOAM v2012, v2106, v2212 or 8, Python 3.10 to 3.12 with numpy and
+matplotlib, a passed [bridge validation](../validation/README.md) run (it provides
+the reference case), about 3.4 GB of disk for the model files and a few GB of RAM for
+the server. The scripts take the version and the bashrc of an OpenFOAM already sourced,
+and use v2106 with none sourced; `OPENFOAM_BASHRC` and `POD_OPENFOAM_VERSION` choose
+another. Use one `POD_WORKSPACE` per version, or delete `llm-demo-work` in the workspace
+first: `run_demo.sh` builds there, and a build left by another version stops it. The solver
+links to `PYTHON` (default `python3` on `PATH`); if that is not the system Python, put its
+`lib` folder on `LD_LIBRARY_PATH`.
+
+The prebuilt `llama-server` needs GLIBCXX_3.4.30, as on Ubuntu 22.04. On an older system
+`setup_runtime.sh` stops with that message: put a newer libstdc++ on `LD_LIBRARY_PATH` or
+run in an image with one, then run it again; it reuses the downloads.
 
 ```bash
 cd Solver_Examples/PODFoam
@@ -505,7 +528,7 @@ python3 llm_demo/runtime.py standalone # optional: one request with a synthetic 
 python3 llm_demo/runtime.py stop       # when the server is no longer needed
 ```
 
-Environment variables: `OPENFOAM_BASHRC`, `PYTHON`, `POD_WORKSPACE`,
+Environment variables: `OPENFOAM_BASHRC`, `POD_OPENFOAM_VERSION`, `PYTHON`, `POD_WORKSPACE`,
 `POD_LLM_RUNTIME` (model directory, default `../llm-runtime` beside the
 checkout), `POD_LLM_PORT` (8088), `POD_REFERENCE_RUN` (newest passed
 validation run by default), `LLM_ANALYSIS_STEP`, `LLM_IMAGE_INPUT` (1/0),
@@ -560,9 +583,9 @@ cd Solver_Examples/PODFoam/llm_demo
 python3 -m unittest test_llm_client test_callback test_callback_main test_ablation_runner test_async test_picture_test test_instability_test test_wrong_setup_test -v
 ```
 
-152 tests on 2026-10-30 (Python 3.10 and 3.12), 125 on 2026-10-29 before the
-wrong-setup test (Python 3.11, numpy and matplotlib needed; 108 on
-2026-10-28 before the instability and slice tests were merged), with
+156 tests on 2026-10-30 (Python 3.10 and 3.12; job 24951126 on the merged `main`),
+125 on 2026-10-29 before the wrong-setup test (Python 3.11, numpy and matplotlib needed;
+108 on 2026-10-28 before the instability and slice tests were merged), with
 `TMPDIR` on a node's local disk and on NFS. `test_callback_main.py`
 compares with main's callback of 2026-10-27, kept at
 [docs/evidence/2026-10-28-callback/callback-main/python_module.py](../../../docs/evidence/2026-10-28-callback/callback-main/python_module.py);

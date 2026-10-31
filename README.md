@@ -2,11 +2,11 @@
 
 [![tests](https://github.com/seungminyome/PythonFOAM/actions/workflows/tests.yml/badge.svg)](https://github.com/seungminyome/PythonFOAM/actions/workflows/tests.yml)
 [![evidence](https://github.com/seungminyome/PythonFOAM/actions/workflows/evidence.yml/badge.svg)](https://github.com/seungminyome/PythonFOAM/actions/workflows/evidence.yml)
-![OpenFOAM v2106 | v2212](https://img.shields.io/badge/OpenFOAM-v2106%20%7C%20v2212-lightgrey)
+![OpenFOAM v2012 | v2106 | v2212 | 8](https://img.shields.io/badge/OpenFOAM-v2012%20%7C%20v2106%20%7C%20v2212%20%7C%208-lightgrey)
 ![Python 3.10 | 3.12](https://img.shields.io/badge/python-3.10%20%7C%203.12-lightgrey)
 [![license](https://img.shields.io/badge/license-Argonne%20OSS-blue.svg)](LICENSE)
 
-[Results page](https://seungminyome.github.io/PythonFOAM/) · [Latest report](docs/results-20261028.md) · [How to run](Solver_Examples/PODFoam/llm_demo/README.md) · [GPU nodes](Solver_Examples/PODFoam/llm_demo/hpc/README.md) · [Korean](https://github.com/seungminyome/PythonFOAM-Korean)
+[Results page](https://seungminyome.github.io/PythonFOAM/) · [Latest report](docs/results-20261030.md) · [How to run](Solver_Examples/PODFoam/llm_demo/README.md) · [GPU nodes](Solver_Examples/PODFoam/llm_demo/hpc/README.md) · [Korean](https://github.com/seungminyome/PythonFOAM-Korean)
 
 This fork of [PythonFOAM](https://github.com/argonne-lcf/PythonFOAM) adds an
 optional observer to the PODFoam example. During an OpenFOAM run the solver
@@ -35,7 +35,7 @@ developed backward-facing-step flow (t = 0.10125 s).*
   (`describe`, v2), with up to eight in flight.
 - MPI runs (fields gathered to the master rank) and 3D meshes (a plane slice
   in v2 pictures).
-- Verification against the same run without requests; 125 unit tests that
+- Verification against the same run without requests; 156 unit tests that
   need neither OpenFOAM nor a model.
 
 ## Results
@@ -72,30 +72,32 @@ sequenceDiagram
 
 ## Requirements
 
-- OpenFOAM v2106; `async_v2.slurm` and `periodic_v2.slurm` run v2212 in an
-  Apptainer image.
+- OpenFOAM v2012, v2106, v2212 or 8; `async_v2.slurm` and `periodic_v2.slurm`
+  run v2212 in an Apptainer image.
 - Python 3.10 to 3.12 (solver runs: 3.10 and 3.11) with numpy and
   matplotlib, and scipy for the v1 pictures of 3D cases.
 - llama.cpp b11429 and a vision model in GGUF format: Gemma 4 E2B Q4_0 on a
   CPU (about 3.4 GB of files) or Gemma 4 12B QAT on a GPU (about 8 GB with
-  the CUDA build of llama.cpp, after accepting the Gemma licence on Hugging
-  Face).
+  the CUDA build of llama.cpp). The Gemma licence applies; no token is needed.
 
 ## Quick start
 
-Unit tests and evidence hashes, without OpenFOAM or a model (125 tests, about 80 s):
+Unit tests and evidence hashes, without OpenFOAM or a model (156 tests, about 110 s):
 
 ```bash
 pip install -r Solver_Examples/PODFoam/llm_demo/requirements.txt
-make test          # or: cd Solver_Examples/PODFoam/llm_demo && python3 -m unittest
+make test
 make evidence      # every file in a manifest matches its hash
 ```
 
-On a workstation with OpenFOAM v2106, the synchronous five-case suite with
-Gemma 4 E2B on the CPU exercises the coupling, the deadlines and the
-verification:
+With an OpenFOAM sourced, the synchronous five-case suite with Gemma 4 E2B on
+the CPU exercises the coupling, the deadlines and the verification. The solver
+links to the Python named here:
 
 ```bash
+export PYTHON=<python>    # default: python3 on PATH
+export PATH=$(dirname "$PYTHON"):$PATH
+export LD_LIBRARY_PATH=$(dirname "$PYTHON")/../lib:$LD_LIBRARY_PATH   # if not the system Python
 cd Solver_Examples/PODFoam
 ./validation/run_v2106.sh        # bridge check; its passed run is the reference case
 ./llm_demo/setup_runtime.sh      # Gemma 4 E2B Q4_0, image projector, llama.cpp b11429
@@ -106,17 +108,15 @@ python3 llm_demo/runtime.py stop
 ```
 
 On a Slurm GPU node, `async_v2.slurm` runs the asynchronous suite with v2
-pictures and Gemma 4 12B, and `periodic_v2.slurm` the run with a request
-every N steps and the same run without requests. The required variables, the
-bridge validation inside the image and the developed flow the runs start from
-(`LLM_LONG_START`) are in
+pictures and Gemma 4 12B (`async_v2_sweep.slurm` adds the describe sweep), and
+`periodic_v2.slurm` the run with a request every N steps and the same run
+without requests. The rest is in
 [llm_demo/hpc/README.md](Solver_Examples/PODFoam/llm_demo/hpc/README.md).
 
 ```bash
-export HF_TOKEN=hf_... POD_LLM_RUNTIME=$PWD/llm-runtime-12b
+export POD_LLM_RUNTIME=$PWD/llm-runtime-12b PYTHON=<python>
 bash Solver_Examples/PODFoam/llm_demo/hpc/setup_12b.sh   # llama.cpp b11429 (CUDA), Gemma 4 12B QAT
-export SIF=<of2212.sif> PYTHON=<python 3 with numpy and matplotlib>
-export POD_REFERENCE_RUN=<pod-v2212.XXXXXX> LLM_LONG_START=<developed case>/0.1
+export SIF=<of2212.sif> POD_REFERENCE_RUN=<pod-v2212.XXXXXX> LLM_LONG_START=<developed case>/0.1
 sbatch --account=<account> --partition=<partition> Solver_Examples/PODFoam/llm_demo/hpc/async_v2.slurm
 POD_SUITE_RUN=<pod-llm-async.XXXXXX of a PASSed async_v2.slurm run> \
   sbatch --account=<account> --partition=<partition> Solver_Examples/PODFoam/llm_demo/hpc/periodic_v2.slurm
@@ -151,19 +151,18 @@ In the case directory:
   each request has its own folder in `llm_requests/`, listed in
   `llm_requests/index.json`.
 - `telemetry.jsonl`: one line per time step.
-- `llm_errors.jsonl`: the callback's own errors (a refused setting, a failed
-  telemetry write), one line each; the solver does not stop.
+- `llm_errors.jsonl`: the callback's own errors; the solver does not stop.
 
 ## Limitations
 
-- Only positions and fixed-vocabulary words (trends, stability) are scored,
-  not the descriptions. Gemma 4 E2B does not give usable answers.
-- Tested on 2D laminar flows and one extruded 3D case, on 2 MPI ranks
-  without a model request, and with up to two requests in flight; no model
-  has read a slice picture. This version of PODFoam has been built only with
-  OpenFOAM v2212.
-- In the instability test no model warned of a crash more than 5 steps
-  ahead.
+- Only positions and fixed-vocabulary words are scored. Gemma 4 E2B gives no
+  usable answers.
+- Tested on 2D laminar flows, one extruded 3D case and 2 MPI ranks without a
+  model request. No model has read a slice picture. No model suite ran on v2012
+  or 8.
+- No model warned of a crash more than 5 steps ahead.
+- Wrong setup: 31B 67 of 80, others 41 to 45, constant answer 40, peak |U| rule
+  56; without two runs, 31B 55 and the rule 56 of 64.
 
 ## Documentation and reports
 
@@ -171,12 +170,12 @@ In the case directory:
   [GPU nodes](Solver_Examples/PODFoam/llm_demo/hpc/README.md),
   [bridge validation](Solver_Examples/PODFoam/validation/README.md).
 - [Results page](https://seungminyome.github.io/PythonFOAM/): the main
-  results in one table and all reports, with evidence links and downloads.
-- The latest reports: [October 28](docs/results-20261028.md) (two requests
-  in flight, 3D slices, instability test), [October 27](docs/results-20261027.md)
-  (trend reading, a cylinder flow, a request every 250 steps),
-  [October 22, continued](docs/results-20261022-live.md) (v2 pictures from the
-  running solver).
+  results and all reports, with evidence links and downloads.
+- The latest reports: [October 30](docs/results-20261030.md) (OpenFOAM versions,
+  upstream's PODFoam, wrong-setup test), [October 28](docs/results-20261028.md)
+  (two requests in flight, 3D slices, instability test),
+  [October 27](docs/results-20261027.md) (trend reading, a cylinder flow, a
+  request every 250 steps).
 - [Evidence index](docs/evidence/README.md) (every folder has a hash
   manifest, checked in CI) · [Changelog](CHANGELOG.md) ·
   [Korean repository](https://github.com/seungminyome/PythonFOAM-Korean).

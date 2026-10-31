@@ -11,10 +11,10 @@ The paired replay has been run once, on MedicineBow (2026-10-19): see
 
 | Script | Does |
 |---|---|
-| `setup_12b.sh` | Downloads llama.cpp b11429 (CUDA build) and the 12B weights + image projector from `google/gemma-4-12B-it-qat-q4_0-gguf`, records SHA-256 of these and of the `llama-server` in use. About 8 GB. |
+| `setup_12b.sh` | Downloads llama.cpp b11429 (CUDA build) and the 12B weights + image projector from `google/gemma-4-12B-it-qat-q4_0-gguf`, records SHA-256 of these and of the `llama-server` in use. About 8 GB. If `HF_TOKEN` is set it is sent with the download; no token is needed. |
 | `start_server.sh` / `stop_server.sh` | llama-server on the node's GPU with the same settings as the E2B runs (context 2048, one slot, 256 image tokens requested, reasoning off), all layers on the GPU. Writes `server.pid`. With the 12B projector the server lowers the image-token limit to 128 because `--ubatch-size` is 128. |
 | `replay_12b.slurm` | Paired replay of the 2026-10-17 step-5 state: three pairs, numbers only vs numbers + image, seed 20261017. No OpenFOAM needed. |
-| `demo_12b.slurm` | Bridge validation, the five solver conditions, verification, and the paired replay of the new state. Needs OpenFOAM v2106 on the node. |
+| `demo_12b.slurm` | Bridge validation, the five solver conditions, verification, and the paired replay of the new state. Needs OpenFOAM on the node (v2106 by default; see the [validation README](../../validation/README.md) for the others). |
 | `picture_test.slurm`, `fetch_models.sh`, `models.tsv` | The picture-reading test for several model sizes (prepared 2026-10-21, run 2026-10-22); see [below](#picture-reading-test-run-2026-10-22). |
 | `window_test.slurm` | The random-window picture test (`window_test.py`) for the models in `MODELS`; see [below](#random-window-test-and-qwen-models-run-2026-10-22). |
 | `async_v2.slurm` | The asynchronous suite with v2 pictures from the running solver and Gemma 4 12B, started from a developed flow (`async_v2_sweep.slurm`: then the describe sweep); OpenFOAM in an Apptainer image, llama-server on the host GPU; see [below](#v2-pictures-from-the-running-solver-async_v2slurm-run-2026-10-22). |
@@ -36,15 +36,17 @@ nothing else. If compute nodes have no internet, run the download once on the
 login node before submitting:
 
 ```bash
-export HF_TOKEN=hf_... POD_LLM_RUNTIME=$PWD/llm-runtime-12b
+export POD_LLM_RUNTIME=$PWD/llm-runtime-12b
 bash Solver_Examples/PODFoam/llm_demo/hpc/setup_12b.sh
 ```
 
 ## Before submitting
 
-1. Accept the Gemma licence on
-   [huggingface.co/google/gemma-4-12B-it-qat-q4_0-gguf](https://huggingface.co/google/gemma-4-12B-it-qat-q4_0-gguf)
-   and create a read token. `export HF_TOKEN=hf_...` in the shell you submit from.
+1. The Gemma licence applies to the weights: see
+   [huggingface.co/google/gemma-4-12B-it-qat-q4_0-gguf](https://huggingface.co/google/gemma-4-12B-it-qat-q4_0-gguf).
+   The repository answers without a token
+   ([record](../../../../docs/evidence/2026-10-30-versions/hf-no-token.txt)). If
+   `HF_TOKEN` is set, it is sent with the download.
 2. Edit the site lines in the `.slurm` file (CUDA 12.8 or 13.4 and a Python 3
    with numpy; matplotlib and OpenFOAM v2106 for the demo). `LLAMA_CUDA=13.4`
    selects the CUDA 13 build, which needs a driver of version 580 or newer.
@@ -59,14 +61,11 @@ bash Solver_Examples/PODFoam/llm_demo/hpc/setup_12b.sh
    the runs below.
 3. Check the partition and `--gres` syntax match the cluster; give the account
    and partition on the `sbatch` command line.
-4. `HF_TOKEN` is needed only while the weights are not yet in
-   `POD_LLM_RUNTIME`.
 
 ## Submit
 
 ```bash
 # from the repository root (or the tarball root)
-export HF_TOKEN=hf_...
 sbatch Solver_Examples/PODFoam/llm_demo/hpc/replay_12b.slurm   # 1 GPU; 35 s on an A30 once the runtime is in place
 sbatch Solver_Examples/PODFoam/llm_demo/hpc/demo_12b.slurm     # only if OpenFOAM v2106 is available
 # from the tarball the path is PODFoam/llm_demo/hpc/...
@@ -355,9 +354,13 @@ the asynchronous suite ran in the v2212 image instead), the prebuilt CUDA
 binaries, `LLAMA_CUDA=13.4` and the tarball layout of the
 12B scripts (`picture_test.slurm` ran from its own bundle with the same layout
 on 2026-10-22).
-`async_v2.slurm` and `periodic_v2.slurm` as they are now (settings from the
-environment, `site.txt`) have run
-only with stub commands, not on a GPU node; the jobs named above ran the earlier
-text of these scripts, which held the site's paths and modules.
+`periodic_v2.slurm` as it is now (settings from the environment, `site.txt`) has run
+only with stub commands, not on a GPU node; the jobs named above ran its earlier text,
+which held the site's paths and modules. `async_v2.slurm` as it is now ran unedited on
+a GPU with 12B and a source-built server, with `LLM_LONG_STEPS=1000` from a developed
+state, and its check passed (jobs 24950817 on an A30 and 24949283 on an L40S,
+[evidence](../../../../docs/evidence/2026-10-30-versions/README.md)); its default 6000
+steps were not run in this form, and neither was `async_v2_sweep.slurm`.
+`setup_12b.sh` has run in this form only with a stand-in `curl`, not with a real download.
 `start_server.sh` fails fast if the server does not answer `/health` within ten
 minutes; the log is in `llm-runtime-12b/server-*.log`.

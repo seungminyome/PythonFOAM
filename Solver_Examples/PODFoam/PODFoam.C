@@ -136,7 +136,8 @@ int main(int argc, char *argv[])
 
         runTime++;
 
-        // Info<< "Start Time = " << runTime.timeName() << nl << endl;
+        Info<< "Time = " << runTime.timeName()
+            << " deltaT = " << runTime.deltaTValue() << nl << endl;
         clock_gettime(CLOCK_MONOTONIC, &tw1); // POSIX
 
         // --- Pressure-velocity PIMPLE corrector loop

@@ -16,9 +16,11 @@
         FatalErrorInFunction << "POD requires a fixed cell count: started with "
             << num_cells << " cells, now " << mesh.nCells() << exit(FatalError);
     }
-    // A write step runs the SVD if snapshots have been collected since the last
-    // SVD, and collects a snapshot otherwise.
-    const bool writeStepSvd = runTime.outputTime();
+    // podSvdInterval 0: a write step runs the SVD if snapshots have been
+    // collected since the last SVD, and collects a snapshot otherwise. Above 0,
+    // every step collects a snapshot and the SVD runs every podSvdInterval
+    // snapshots.
+    const bool writeStepSvd = !podSvdInterval && runTime.outputTime();
     const bool collectSnapshot = !writeStepSvd || !podSnapshotsSinceSvd;
     if (collectSnapshot)
     {
@@ -69,7 +71,9 @@
             << " time=" << runTime.timeName() << " cells=" << num_cells << endl;
     }
 
-    const bool computeSvd = writeStepSvd && !collectSnapshot;
+    const bool computeSvd = podSvdInterval
+        ? (podSnapshotCount % podSvdInterval == 0)
+        : writeStepSvd && !collectSnapshot;
     if (computeSvd)
     {
         podSnapshotsSinceSvd = 0;

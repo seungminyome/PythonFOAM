@@ -72,6 +72,14 @@ if (truncation < 1)
     FatalErrorInFunction << "podTruncation must be at least 1, not " << truncation
         << exit(FatalError);
 }
+// Zero: the SVD runs at write steps. Above zero: every podSvdInterval snapshots.
+const label podSvdInterval =
+    runTime.controlDict().lookupOrDefault<label>("podSvdInterval", 0);
+if (podSvdInterval < 0)
+{
+    FatalErrorInFunction << "podSvdInterval must be 0 or positive, not " << podSvdInterval
+        << exit(FatalError);
+}
 label podSnapshotCount = 0;
 label podSnapshotsSinceSvd = 0;
 bool podTruncationWarned = false;

@@ -26,7 +26,8 @@ Application
 
 Description
     Transient solver for incompressible, turbulent flow of Newtonian fluids,
-    with optional mesh motion and mesh topology changes.
+    with optional mesh motion and mesh topology changes. The POD step needs a
+    fixed cell count, so a topology change that alters it stops the run.
 
     Turbulence modelling is generic, i.e. laminar, RAS or LES may be selected.
 
@@ -52,6 +53,7 @@ Description
 
 // Some time related libraries
 #include <ctime>
+#include <cmath>
 
 /*The following stuff is for Python interoperability*/
 #include <Python.h>
@@ -59,8 +61,23 @@ Description
 #define PY_ARRAY_UNIQUE_SYMBOL POD_ARRAY_API
 #include <numpy/arrayobject.h>
 
-void init_numpy() {
-  import_array1();
+static int init_numpy() {
+  import_array1(-1);
+  return 0;
+}
+
+// Prints and clears the pending Python error. Not PyErr_Print: on SystemExit
+// that ends the process with the exit's own status, often 0.
+static void printPythonError()
+{
+    PyObject *errorType = nullptr, *errorValue = nullptr, *errorTrace = nullptr;
+    PyErr_Fetch(&errorType, &errorValue, &errorTrace);
+    PyErr_NormalizeException(&errorType, &errorValue, &errorTrace);
+    if (errorType) PyErr_Display(errorType, errorValue, errorTrace);
+    Py_XDECREF(errorType);
+    Py_XDECREF(errorValue);
+    Py_XDECREF(errorTrace);
+    PyErr_Clear();
 }
 /*Done importing Python functionality*/
 
@@ -208,6 +225,19 @@ int main(int argc, char *argv[])
         //     << nl << endl;
     }
 
+    // The function references go first; finalization then waits for any
+    // non-daemon thread of the module. A failed flush of Python's stdio at
+    // exit is reported, not fatal: the fields are already written.
+    Py_DECREF(snapshot_func);
+    Py_DECREF(svd_func);
+    if (Py_FinalizeEx() < 0)
+    {
+        WarningInFunction << "Python finalization reported an error" << endl;
+    }
+    else
+    {
+        Info<< "Python finalized successfully" << nl;
+    }
     Info<< "End\n" << endl;
 
     return 0;

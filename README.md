@@ -35,6 +35,8 @@ A module of your own needs what it imports.
 
 	   `validation/run.sh` builds PODFoam and checks the C++/Python round trip in about one minute on one core. [Its README](Solver_Examples/PODFoam/validation/README.md) says what `python_module.py` must provide and what changes in PODFoam. PODFoam builds and passes this validation on OpenFOAM v2012, v2106, v2212 and 8.
 
+	   [HOOKS.md](Solver_Examples/PODFoam/HOOKS.md) describes two optional functions, `mesh_func` and `analysis_func`, that see the running solver. They change neither U nor p, but with `analysis_func` the POD step collects a snapshot at every time step. `llm_demo/` is an example module that asks a local vision-language model about the running solver; see [its README](Solver_Examples/PODFoam/llm_demo/README.md).
+
 	2. `APMOSFoam/`: A `pimpleFoam` solver with in-situ collection of snapshot data for a parallelized singular value decomposition. While the previous example performs the SVD on data only on one rank - this solver performs a global, but distributed, SVD. However, SVD updates are not streaming.
 
 	3. `AEFoam/`: A `pimpleFoam` solver with in-situ collection of snapshot data for training a deep learning autoencoder. 

@@ -50,10 +50,14 @@ Description
 #include "fvOptions.H"
 #include "localEulerDdtScheme.H"
 #include "fvcSmooth.H"
+#include "emptyPolyPatch.H"
 #include "PythonCompat.H"
+#include "PythonGather.H"
+#include "PythonSlice.H"
 
 // Some time related libraries
 #include <ctime>
+#include <chrono>
 #include <cmath>
 #include <cfenv>
 
@@ -228,6 +232,7 @@ int main(int argc, char *argv[])
         PythonFpeOff pythonFpe;
         Py_DECREF(snapshot_func);
         Py_DECREF(svd_func);
+        Py_XDECREF(analysis_func);
         if (Py_FinalizeEx() < 0)
         {
             WarningInFunction << "Python finalization reported an error" << endl;

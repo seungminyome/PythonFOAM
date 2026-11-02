@@ -48,7 +48,14 @@ while (pimple.correctNonOrthogonal())
 
     pEqn.setReference(pRefCell, pRefValue);
 
+    #if OPENFOAM
+    // The p solver until the final corrector and pFinal there, as pimpleFoam
+    // does in v2012, v2106 and v2212. A plain solve() selects pFinal throughout
+    // the last outer iteration, which with one outer corrector is every corrector.
+    pEqn.solve(mesh.solver(p.select(pimple.finalInnerIter())));
+    #else
     pEqn.solve();
+    #endif
 
     if (pimple.finalNonOrthogonalIter())
     {

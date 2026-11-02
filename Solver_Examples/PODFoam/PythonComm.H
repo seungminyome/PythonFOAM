@@ -17,11 +17,12 @@
             << num_cells << " cells, now " << mesh.nCells() << exit(FatalError);
     }
     // podSvdInterval 0: a write step runs the SVD if snapshots have been
-    // collected since the last SVD, and collects a snapshot otherwise. Above 0,
-    // every step collects a snapshot and the SVD runs every podSvdInterval
-    // snapshots.
+    // collected since the last SVD, and collects a snapshot otherwise; with
+    // analysis_func, every step collects a snapshot and a write step also runs
+    // the SVD. Above 0, every step collects a snapshot and the SVD runs every
+    // podSvdInterval snapshots.
     const bool writeStepSvd = !podSvdInterval && runTime.outputTime();
-    const bool collectSnapshot = !writeStepSvd || !podSnapshotsSinceSvd;
+    const bool collectSnapshot = analysis_func || !writeStepSvd || !podSnapshotsSinceSvd;
     if (collectSnapshot)
     {
         clock_gettime(CLOCK_MONOTONIC, &tw1); // POSIX
@@ -73,7 +74,7 @@
 
     const bool computeSvd = podSvdInterval
         ? (podSnapshotCount % podSvdInterval == 0)
-        : writeStepSvd && !collectSnapshot;
+        : writeStepSvd && (analysis_func || !collectSnapshot);
     if (computeSvd)
     {
         podSnapshotsSinceSvd = 0;
@@ -190,5 +191,7 @@
             << " modes=" << nModes << " finite=true time="
             << runTime.timeName() << endl;
     }
+    // The hook's return value is not used.
+    #include "PythonAnalysis.H"
     std::feclearexcept(FE_ALL_EXCEPT);
 }

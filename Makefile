@@ -14,7 +14,7 @@ links:           ## relative links in docs resolve
 	$(PY) docs/check_links.py
 
 validate:        ## bridge validation run (builds PODFoam, ~minutes)
-	cd $(POD) && ./validation/run_v2106.sh
+	cd $(POD) && ./validation/run.sh
 
 runtime:         ## download model + llama.cpp, start the server
 	cd $(POD) && ./llm_demo/setup_runtime.sh && $(PY) llm_demo/runtime.py start

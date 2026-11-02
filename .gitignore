@@ -132,3 +132,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Slurm output of the fork-only scripts in Solver_Examples/PODFoam/llm_demo/hpc
+# (all but async_v2.slurm), submitted from the repository root
+/pod-*.out

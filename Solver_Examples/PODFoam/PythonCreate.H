@@ -1,73 +1,75 @@
 // Copyright (C) 2021 UChicago Argonne, LLC
+// Copyright (C) 2026 Seungmin Yome
 // SPDX-License-Identifier: (other)
 //
 // Python-OpenFOAM integration
 //
-// Initialize python, load module and create some scratch space etc.
+// Initialize the interpreter, import python_module and check its functions.
 
-Info<< "initialize python" << endl;
 Py_Initialize();
-Info<< "python initialize successful" << endl;
-
-// initialize numpy array library
-init_numpy();
-Info<< "numpy initialize successful" << endl;
-
-PyRun_SimpleString("import sys");
-PyRun_SimpleString("sys.path.append(\".\")");
-
-
-
-// if (PyErr_Occurred()) {
-//     Info<< "Failed to import numpy Python module(s)." << endl;
-//     return NULL; // Or some suitable return value to indicate failure.
-// }
-// assert(PyArray_API);
-
-
-
-PyObject* pName = PyUnicode_DecodeFSDefault("python_module"); // Python filename
-PyObject* pModule = PyImport_Import(pName);
-Py_DECREF(pName);
-
-if (!pModule)
+if (init_numpy() < 0)
 {
-    FatalErrorInFunction
-        << "Errors loading python_module (missing imports?)" << nl
-        << exit(FatalError);
+    printPythonError();
+    FatalErrorInFunction << "NumPy initialization failed" << exit(FatalError);
 }
 
-Info<< "    get snapshot_func" << endl;
+// sys.path: the case folder first, so that -case finds the case's module. In a
+// parallel run the case path is processorN/, so the undecomposed case folder
+// goes in front of it; in a serial run the two are the same folder and it is
+// inserted once. The launch folder follows them.
+{
+    const fileName casePath = runTime.path();
+    const fileName globalPath = runTime.rootPath()/runTime.globalCaseName();
+    const auto insertPath = [](const fileName& dir)
+    {
+        PyObject* text = PyUnicode_DecodeFSDefault(dir.c_str());
+        if (!text || PyList_Insert(PySys_GetObject("path"), 0, text) < 0)
+        {
+            printPythonError();
+            FatalErrorInFunction << "Cannot add " << dir << " to Python path"
+                << exit(FatalError);
+        }
+        Py_DECREF(text);
+    };
+    insertPath(casePath);
+    if (globalPath != casePath)
+    {
+        insertPath(globalPath);
+    }
+}
+if (PyRun_SimpleString("import sys; sys.path.append('.')") < 0)
+{
+    FatalErrorInFunction << "Cannot add the launch folder to Python path" << exit(FatalError);
+}
+
+PyObject* pModule = PyImport_ImportModule("python_module");
+if (!pModule)
+{
+    printPythonError();
+    FatalErrorInFunction << "Cannot import python_module" << exit(FatalError);
+}
 PyObject* snapshot_func = PyObject_GetAttrString(pModule, "snapshot_func");
-PyObject* snapshot_args = PyTuple_New(2);
-
-Info<< "    get svd_func" << endl;
-PyObject *svd_func = PyObject_GetAttrString(pModule, "svd_func");
-PyObject *svd_args = PyTuple_New(1);
-
+PyObject* svd_func = snapshot_func ? PyObject_GetAttrString(pModule, "svd_func") : nullptr;
+if (!snapshot_func || !svd_func
+ || !PyCallable_Check(snapshot_func) || !PyCallable_Check(svd_func))
+{
+    printPythonError();
+    FatalErrorInFunction << "snapshot_func and svd_func must be callable"
+        << exit(FatalError);
+}
 Py_DECREF(pModule);
-Info<< "..." << endl;
 
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-// Datastructures - will be overwritten
-volScalarField upod_(U.component(vector::X));
-volScalarField vpod_(U.component(vector::Y));
-volScalarField wpod_(U.component(vector::Z));
-
-// To pass rank to Python interpreter
-int rank = Pstream::myProcNo();
-PyObject *rank_val = PyLong_FromLong(rank);
-PyObject *array_2d(nullptr);
-
-///int encode_mode = 0;
-
-// Number of POD modes
-int truncation = 5;
-
-// Placeholder to grab data before sending to Python
-int num_cells = mesh.cells().size();
-auto input_vals = new double[num_cells][3];
-
-// ************************************************************************* //
+const int rank = Pstream::myProcNo();
+const label num_cells = mesh.nCells();
+// The modes written per component; the shipped module returns 5.
+const label truncation =
+    runTime.controlDict().lookupOrDefault<label>("podTruncation", 5);
+if (truncation < 1)
+{
+    FatalErrorInFunction << "podTruncation must be at least 1, not " << truncation
+        << exit(FatalError);
+}
+label podSnapshotCount = 0;
+label podSnapshotsSinceSvd = 0;
+bool podTruncationWarned = false;
+Info<< "Python and NumPy initialized successfully" << endl;

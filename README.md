@@ -8,6 +8,8 @@ OpenFOAM versions that should compile without changes:
 - openfoam.com versions: v2012, v2106
 - openfoam.org versions: 8
 
+`PODFoam`, `PODFoam_Debug`, `APMOSFoam` and `AEFoam` build on v2012, v2106, v2212 and 8.
+
 You can find an extensive hands-on tutorial, courtesy of the ALCF PythonFOAM workshop, here: https://www.youtube.com/watch?v=-Sa2OEssru8
 
 ## Prerequisites
@@ -18,9 +20,20 @@ You can find an extensive hands-on tutorial, courtesy of the ALCF PythonFOAM wor
 - matplotlib (python)
 - python-dev-tools (python)
 
+The solvers themselves need Python 3 with numpy, and the headers of both. PODFoam calls `Py_FinalizeEx`, so it needs Python 3.6 or newer. Its validation passed with Python 3.6.9 in the Docker image below. The `python_module.py` that these four solvers ship imports more:
+
+- `PODFoam`: numpy and matplotlib
+- `PODFoam_Debug`: numpy and matplotlib; its module is in the solver folder, not in `Run_Case/`
+- `APMOSFoam`: numpy, matplotlib and mpi4py
+- `AEFoam`: numpy, matplotlib and tensorflow 2.1
+
+A module of your own needs what it imports.
+
 ## Contents
 1. `Solver_Examples/`
 	1. `PODFoam/`: A `pimpleFoam` solver with in-situ collection of snapshot data for a streaming singular value decomposition. Python bindings are used to utilize a Python Streaming-SVD class object from OpenFOAM.
+
+	   `validation/run.sh` builds PODFoam and checks the C++/Python round trip in about one minute on one core. [Its README](Solver_Examples/PODFoam/validation/README.md) says what `python_module.py` must provide and what changes in PODFoam. PODFoam builds and passes this validation on OpenFOAM v2012, v2106, v2212 and 8.
 
 	2. `APMOSFoam/`: A `pimpleFoam` solver with in-situ collection of snapshot data for a parallelized singular value decomposition. While the previous example performs the SVD on data only on one rank - this solver performs a global, but distributed, SVD. However, SVD updates are not streaming.
 
@@ -31,7 +44,7 @@ You can find an extensive hands-on tutorial, courtesy of the ALCF PythonFOAM wor
 
 ## To compile and run
 
-Inspect `prep_env.sh` to set paths to various Python, numpy headers and libraries and to source your OpenFOAM 8 installation. **Replace these with the include/lib paths to your personal Python environments.** The Python module within `Run_Case/` directories of different `Solvers/` require the use of `numpy`, `matplotlib`, and `tensorflow` so ensure that your environment has these installed. The best way to obtain these is to `pip install tensorflow==2.1` which will automatically find the right numpy dependency and then `pip install matplotlib` to obtain plot capability. You will also need to install `mpi4py` which you can using `pip install mpi4py`.
+Inspect `prep_env.sh` to set paths to various Python, numpy headers and libraries and to source your OpenFOAM installation. Its `source .../etc/bashrc` lines must point at the OpenFOAM version you build with: v2012, v2106, v2212 or 8. **Replace these with the include/lib paths to your personal Python environments.** The Python module within `Run_Case/` directories of different `Solvers/` require the use of `numpy`, `matplotlib`, and `tensorflow` so ensure that your environment has these installed. The best way to obtain these is to `pip install tensorflow==2.1` which will automatically find the right numpy dependency and then `pip install matplotlib` to obtain plot capability. You will also need to install `mpi4py` which you can using `pip install mpi4py`.
 
 1. Solvers: After running `source prep_env.sh`, to run the solver examples go into the respective folder (for example `PODFoam/`) and use `wclean && wmake` to build your model. Run your solver example from `Run_Case/`. Note the presence of `python_module.py` within `Run_Case/`.
 

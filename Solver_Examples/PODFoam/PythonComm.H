@@ -7,8 +7,10 @@
 // Each step hands a snapshot of U to snapshot_func, or, at a write step with
 // snapshots collected, asks svd_func for the modes and writes them as fields.
 // The snapshot is an array that NumPy owns and fills from U, so a view the
-// module keeps cannot alias the next step's values.
+// module keeps cannot alias the next step's values. The floating-point traps
+// are off while Python runs and come back at the end of the block.
 {
+    PythonFpeOff pythonCallFpe;
     if (mesh.nCells() != num_cells)
     {
         FatalErrorInFunction << "POD requires a fixed cell count: started with "
@@ -184,4 +186,5 @@
             << " modes=" << nModes << " finite=true time="
             << runTime.timeName() << endl;
     }
+    std::feclearexcept(FE_ALL_EXCEPT);
 }

@@ -5,7 +5,10 @@
 // Python-OpenFOAM integration
 //
 // Initialize the interpreter, import python_module and check its functions.
+// NumPy's machine-limit probes overflow on purpose during import, so the
+// floating-point traps are off until the end of this file.
 
+PythonFpeOff pythonInitFpe;
 Py_Initialize();
 if (init_numpy() < 0)
 {
@@ -72,4 +75,6 @@ if (truncation < 1)
 label podSnapshotCount = 0;
 label podSnapshotsSinceSvd = 0;
 bool podTruncationWarned = false;
+std::feclearexcept(FE_ALL_EXCEPT);
+pythonInitFpe.restore();
 Info<< "Python and NumPy initialized successfully" << endl;

@@ -50,10 +50,12 @@ Description
 #include "fvOptions.H"
 #include "localEulerDdtScheme.H"
 #include "fvcSmooth.H"
+#include "PythonCompat.H"
 
 // Some time related libraries
 #include <ctime>
 #include <cmath>
+#include <cfenv>
 
 /*The following stuff is for Python interoperability*/
 #include <Python.h>
@@ -87,19 +89,12 @@ int main(int argc, char *argv[])
 {
 
 
-    // create argument list
-    Foam::argList args(argc, argv, true,true,/*initialise=*/false);
-    if (!args.checkRootCase())
-    {
-        Foam::FatalError.exit();
-    }
-
     // Some time related variables
     struct timespec tw1, tw2;
     double posix_wall;
 
     #include "postProcess.H"
-    // #include "setRootCaseLists.H"
+    #include "setRootCaseLists.H"
     #include "createTime.H"
     #include "createDynamicFvMesh.H"
     #include "initContinuityErrs.H"
@@ -228,15 +223,19 @@ int main(int argc, char *argv[])
     // The function references go first; finalization then waits for any
     // non-daemon thread of the module. A failed flush of Python's stdio at
     // exit is reported, not fatal: the fields are already written.
-    Py_DECREF(snapshot_func);
-    Py_DECREF(svd_func);
-    if (Py_FinalizeEx() < 0)
     {
-        WarningInFunction << "Python finalization reported an error" << endl;
-    }
-    else
-    {
-        Info<< "Python finalized successfully" << nl;
+        PythonFpeOff pythonFpe;
+        Py_DECREF(snapshot_func);
+        Py_DECREF(svd_func);
+        if (Py_FinalizeEx() < 0)
+        {
+            WarningInFunction << "Python finalization reported an error" << endl;
+        }
+        else
+        {
+            Info<< "Python finalized successfully" << nl;
+        }
+        std::feclearexcept(FE_ALL_EXCEPT);
     }
     Info<< "End\n" << endl;
 

@@ -1,6 +1,6 @@
 # November 2 evidence: round 2 and the final PR branches
 
-Slurm jobs of 2026-11-01 and 2026-11-02 on MedicineBow, University of Wyoming. The
+Slurm jobs of 2026-11-01 to 2026-11-03 on MedicineBow, University of Wyoming. The
 folders below hold the records of each check: the pressure line, the three sibling
 solvers, the error scenarios and the POD schedule on v2012 and v2212, and the cause of
 the OpenFOAM 8 difference.

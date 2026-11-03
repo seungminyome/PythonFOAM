@@ -89,7 +89,7 @@ sequenceDiagram
 ## Quick start
 
 Unit tests and evidence hashes need neither OpenFOAM nor a model. The 165 tests take
-about 90 to 120 s:
+about 85 to 120 s:
 
 ```bash
 pip install -r Solver_Examples/PODFoam/llm_demo/requirements.txt

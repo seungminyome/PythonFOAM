@@ -3,6 +3,14 @@
 Dates are when a run or change happened. Where a run is recorded, the code
 revision that produced it is given.
 
+## 2026-11-03, the schedule comparison covers all 26 rows
+
+- `compare_sched4_ranks.py` keys the POD schedule rows with the rank count. All 26
+  rows agree on v2012, v2106, v2212 and 8. The earlier key left out the rank count
+  and compared 21 rows.
+- The Docker commands of the PR texts ran on `pr/podfoam-fix` and
+  `pr/podfoam-observer` cloned from GitHub after the push: PASS on both (job 25098200).
+
 ## 2026-11-02, report of November 2; final PR branches `473c802` and `cd23736`
 
 - `main` merges `pr/podfoam-observer` at `cd23736` in `8a7b628`. Every file of that

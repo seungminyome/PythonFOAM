@@ -7,7 +7,7 @@ b11429 (commit `d812350`) on the host GPU serving Gemma 4 12B QAT Q4_0. Code:
 the checkout at `354caf9` with uncommitted changes ([job/code-state/](job/code-state/)).
 
 [Report](../../results-20261022-live.md) ·
-[How it is run](../../../Solver_Examples/PODFoam/llm_demo/hpc/README.md#v2-pictures-from-the-running-solver-async_v2slurm-run-2026-10-22) ·
+[How it is run](https://github.com/seungminyome/PythonFOAM/blob/6677bac/Solver_Examples/PODFoam/llm_demo/hpc/README.md#v2-pictures-from-the-running-solver-async_v2slurm-run-2026-10-22) ·
 [Release with the complete outputs](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-v2-2026-10-22) ·
 [Picture tests and the developed flow](../2026-10-22-window-test/README.md)
 

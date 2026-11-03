@@ -7,7 +7,7 @@ of `picture_test.py` were sent to each of seven Gemma 4 models in turn. No
 solver ran. Code `58e00d9`.
 
 [Report](../../results-20261022.md) ·
-[How the set is built and run](../../../Solver_Examples/PODFoam/llm_demo/hpc/README.md#picture-reading-test-run-2026-10-22) ·
+[How the set is built and run](https://github.com/seungminyome/PythonFOAM/blob/6677bac/Solver_Examples/PODFoam/llm_demo/hpc/README.md#picture-reading-test-run-2026-10-22) ·
 [Release with both archives](https://github.com/seungminyome/PythonFOAM/releases/tag/picture-test-2026-10-22)
 
 ## Files

@@ -2,12 +2,12 @@
 
 Slurm jobs 24757327, 24757344, 24757382 to 24757384, 24757459 and 24757460 on MedicineBow, each on one NVIDIA RTX A6000 (49,140 MiB); the flow runs 24757337 and 24757429 on CPU nodes · llama.cpp b11429 (commit `d812350`) · 2026-10-22, 03:14 to 11:38 MDT · code: [Records](#records)
 
-[README](../README.md) · [Evidence: picture tests](evidence/2026-10-22-window-test/README.md) · [Evidence: solver run](evidence/2026-10-22-live-v2/README.md) · [How to run](../Solver_Examples/PODFoam/llm_demo/README.md#v2-pictures-from-the-solver-llm_image_stylev2) · Downloads: [picture tests](https://github.com/seungminyome/PythonFOAM/releases/tag/picture-test-2026-10-22), [solver run](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-v2-2026-10-22) · [Korean](https://github.com/seungminyome/PythonFOAM-Korean/blob/main/docs/results-20261022-live.md)
+[README](../README.md) · [Evidence: picture tests](evidence/2026-10-22-window-test/README.md) · [Evidence: solver run](evidence/2026-10-22-live-v2/README.md) · [How to run](https://github.com/seungminyome/PythonFOAM/blob/6677bac/Solver_Examples/PODFoam/llm_demo/README.md#v2-pictures-from-the-solver-llm_image_stylev2) · Downloads: [picture tests](https://github.com/seungminyome/PythonFOAM/releases/tag/picture-test-2026-10-22), [solver run](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-v2-2026-10-22) · [Korean](https://github.com/seungminyome/PythonFOAM-Korean/blob/main/docs/results-20261022-live.md)
 
 The [first October 22 report](results-20261022.md) left two gaps. The solver
-still drew the v1 picture, and in the saved flow states one fixed answer
-scored as well as any model, because the fastest flow and the lowest pressure
-stayed at the step corner. Since then:
+still drew the v1 picture. In the saved flow states one fixed answer scored as well
+as any model, because the fastest flow and the lowest pressure stayed at the step
+corner. This report covers:
 
 - The callback draws v2 pictures and sends them in `describe` and `sequence`
   requests (`LLM_IMAGE_STYLE=v2`), built by the same code as the picture test.
@@ -18,8 +18,8 @@ stayed at the step corner. Since then:
   different steps, each with its own window.
 - The picture test was repeated with the plotted window placed at random
   around the fastest cell, so that the right answer moves from picture to
-  picture: eleven models, three window seeds, a larger image-token limit and
-  a developed flow.
+  picture. It used eleven models, three window seeds, a larger image-token
+  limit and a developed flow.
 - Four Qwen models answered the 308 requests of the first picture test.
 
 ## The solver draws the v2 picture
@@ -43,7 +43,7 @@ the arrays. A unit test rebuilds two of the published picture-test requests
 from their pictures and gets the same bytes, and pins five more by hash.
 The suite now has 92 unit tests. On a MedicineBow compute node with Python
 3.10, 3.11 and 3.12 the new tests pass; the three timing tests named in
-[hpc/README.md](../Solver_Examples/PODFoam/llm_demo/hpc/README.md#v2-pictures-from-the-running-solver-async_v2slurm-run-2026-10-22)
+[hpc/README.md](https://github.com/seungminyome/PythonFOAM/blob/6677bac/Solver_Examples/PODFoam/llm_demo/hpc/README.md#v2-pictures-from-the-running-solver-async_v2slurm-run-2026-10-22)
 fail there in some runs, as they did before these changes.
 With the published code, the 152 v2 and 120 v1 bodies of the first picture
 test rebuilt from their pictures, the first report regenerated from its
@@ -208,9 +208,9 @@ checked by hash) and ran 6000 steps of 5×10⁻⁶ s to t = 0.13 s, written ever
 250 steps; the Courant number stayed at or below 0.347. The plotted window
 was x 0 to 0.12 m, y 0 to 0.04 m (the pictures above).
 
-| Run | Request at step | Reply recorded at step | Solver wait at the request step | Model wait | Files equal to baseline |
+| Run | Request at step | Reply recorded at step | Solver wait at the request step | Model wait | Files equal to the run with no model requests |
 |---|---:|---:|---:|---:|---:|
-| Model off (baseline: request built, not sent) | 3750 | 3763 | 0.003 s | - | - |
+| No model requests (request built, not sent) | 3750 | 3763 | 0.003 s | - | - |
 | Describe one snapshot | 250 | 320 | 0.004 s | 3.17 s | 432 / 432 |
 | Sequence of three snapshots (steps 3000, 3250, 3750) | 3750 | 3823 | 0.004 s | 3.15 s | 432 / 432 |
 | Connection refused | 250 | 261 | 0.004 s | 0.011 s | 432 / 432 |
@@ -221,8 +221,8 @@ at most 0.007 s at the steps without a request or reply, 0.023 to 0.044 s at
 the step at which a reply or error was recorded, and about 0.19 s at the last
 step, where the telemetry is written. The describe request had 998 prompt
 tokens, the sequence request 2,168; neither used the prompt cache. Every
-written field of every case equals the baseline's: the requests changed nothing
-in the computation.
+written field of every case equals that of the run with no model requests: the
+requests changed nothing in the computation.
 
 What the model said:
 
@@ -247,9 +247,9 @@ connection-refused and stall cases (same frame, same request).
 After the suite, `run_live_sweep.py` ran eleven more cases from the same start
 state, each with one describe request at step R = 500, 1000, ..., 5500 and
 stopping 300 steps later. Each window was placed at random around the fastest
-cell of the baseline's state at R, by the rule of the window test: 0.09 to
-0.32 m wide, 0.037 to 0.106 m high, 6,154 to 10,793 cells. Two cases ran at a
-time.
+cell of the state at R in the run with no model requests, by the rule of the
+window test: 0.09 to 0.32 m wide, 0.037 to 0.106 m high, 6,154 to 10,793
+cells. Two cases ran at a time.
 
 | Request at step | Reply recorded at step | Fastest flow, distance | Lowest pressure, distance |
 |---:|---:|---:|---:|
@@ -271,9 +271,9 @@ than 10 %.
 - All eleven answers arrived while the solver was running, 69 to 93 steps
   after the request (2.85 to 3.39 s of model time). The solver's callback took
   at most 0.005 s at a request step.
-- Every request body equals the builder applied to the frame on disk, byte
-  for byte, and every frame's arrays equal the baseline's written fields at
-  that step.
+- Every request body equals the builder applied to the frame on disk, byte for
+  byte, and every frame's arrays equal the written fields of the run with no
+  model requests at that step.
 - 9 of 11 fastest-flow and 10 of 11 lowest-pressure answers were within
   10 %, with median distances of 3.5 % and 2.2 %. One fixed answer for all
   eleven would get 4 and 4.
@@ -285,12 +285,12 @@ than 10 %.
   named the other minimum (-337 against -359 m²/s²).
 
 In every written directory of the eleven cases, U, p, phi and the time files
-are byte-identical to the baseline's (858 files). The POD mode files that
-PODFoam writes from its own SVD (upod, vpod, wpod; 2,145 files) differ from
-the baseline's by at most 9.4×10⁻¹² of their largest value, while in the
-suite, whose cases ran one at a time, they were identical. The cause was not
-isolated. The sweep cases ran two at a time without a thread limit; the
-published sweep script runs each case with one BLAS thread.
+are byte-identical to those of the run with no model requests (858 files). The
+POD mode files that PODFoam writes from its own SVD (upod, vpod, wpod; 2,145
+files) differ from those of that run by at most 9.4×10⁻¹² of their largest
+value, while in the suite, whose cases ran one at a time, they were identical.
+The cause was not isolated. The sweep cases ran two at a time without a thread
+limit; the published sweep script runs each case with one BLAS thread.
 
 ## Time and memory
 
@@ -301,7 +301,7 @@ published sweep script runs each case with one BLAS thread.
 | 12B answer, suite and sweep | 2.85 to 3.39 s (describe 998 prompt tokens, sequence 2,168) |
 | GPU memory, whole job (sampled every second) | 7,966 to 7,996 MiB of 49,140 |
 | Solver with Python callback and worker, peak resident memory | 560 to 582 MiB |
-| llama-server, peak resident memory on the host | 1.3 GiB (baseline case) to 2.8 GiB |
+| llama-server, peak resident memory on the host | 1.3 GiB (run with no model requests) to 2.8 GiB |
 | Job 24757460: build, five cases, eleven sweep cases | 68 min |
 | Developed flow, `pimpleFoam`, 21,108 steps (job 24757429) | 18 min |
 | Window tests, six to eleven models each (jobs 24757344, 24757382 to 24757384) | 56 to 70 min |
@@ -320,8 +320,9 @@ Shown:
 - The solver draws the v2 pictures and asks a GPU-served 12B model during the
   run without changing the computation. In the fifteen runs with a request
   (four suite cases, eleven sweep cases) the written flow fields are
-  byte-identical to the baseline run, the callback took at most 0.005 s at a
-  request step, and every answer arrived within 93 steps (about 3 s).
+  byte-identical to the run with no model requests, the callback took at most
+  0.005 s at a request step, and every answer arrived within 93 steps
+  (about 3 s).
 - What the solver sends is what was tested: every live request body equals
   the picture-test builder applied to the frame on disk, byte for byte.
 - With random windows, where one fixed answer gets 7 to 10 of 48, 12B, 26B-A4B,
@@ -385,12 +386,13 @@ Not shown:
   developed run's settings, and a recount without the test code that
   reproduces every count cell of the six reports.
 - [Evidence for the solver run](evidence/2026-10-22-live-v2/README.md):
-  settings, verification, timings, per case the request, reply and result,
-  the request bodies, the frames (pictures and arrays), compressed logs and
+  settings, verification, timings, per case the request, reply and result, the
+  request bodies, the frames (pictures and arrays), compressed logs and
   telemetry; the sweep's plan, summary, frames and replies; the comparison of
-  every sweep field with the baseline; the job script, its output, the server
-  records and the code state; and a check script that rebuilds every request
-  body from its frame and recomputes every score from the arrays.
+  every sweep field with the run with no model requests; the job script, its
+  output, the server records and the code state; and a check script that
+  rebuilds every request body from its frame and recomputes every score from
+  the arrays.
 - Downloads. [picture-test-2026-10-22](https://github.com/seungminyome/PythonFOAM/releases/tag/picture-test-2026-10-22):
   the archives of all window and Qwen jobs and their test sets.
   [pod-insitu-v2-2026-10-22](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-v2-2026-10-22):

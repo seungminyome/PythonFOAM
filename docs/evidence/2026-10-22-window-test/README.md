@@ -6,7 +6,7 @@ flow runs whose states they use. No solver ran in these jobs; the solver run
 with v2 pictures is in [2026-10-22-live-v2](../2026-10-22-live-v2/README.md).
 
 [Report](../../results-20261022-live.md) ·
-[How the sets are built and run](../../../Solver_Examples/PODFoam/llm_demo/hpc/README.md#random-window-test-and-qwen-models-run-2026-10-22) ·
+[How the sets are built and run](https://github.com/seungminyome/PythonFOAM/blob/6677bac/Solver_Examples/PODFoam/llm_demo/hpc/README.md#random-window-test-and-qwen-models-run-2026-10-22) ·
 [Release with every archive](https://github.com/seungminyome/PythonFOAM/releases/tag/picture-test-2026-10-22)
 
 ## Jobs

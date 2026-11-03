@@ -3,6 +3,47 @@
 Dates are when a run or change happened. Where a run is recorded, the code
 revision that produced it is given.
 
+## 2026-11-02, report of November 2; final PR branches `473c802` and `cd23736`
+
+- `main` merges `pr/podfoam-observer` at `cd23736` in `8a7b628`. Every file of that
+  branch replaces main's copy, and `validation/run_v2106.sh` becomes
+  `validation/run.sh`. The experiment scripts, their tests and the reports stay.
+- `pr/podfoam-fix` at `473c802` holds the PODFoam fix alone. It has owned snapshots
+  with checked calls into Python, the same copy in the three sibling solvers, standard
+  arguments with traps off around Python, `podSvdInterval`, the pressure line of
+  `pimpleFoam` and the bridge validation.
+- `pr/podfoam-observer` at `cd23736` adds the `analysis_func` and `mesh_func` hooks
+  with `HOOKS.md`, the observer example and its GPU scripts.
+- The second instability round is on `main` as `89733c6`: `instability_test2.py` and
+  the `show_time` option of the picture functions. The new module
+  `test_instability_test2` joins CI, which now runs 165 tests in nine modules (job
+  25092222).
+- The fork-only Slurm scripts call `validation/run.sh` and look for the 12B runtime
+  beside the repository, as `async_v2.slurm` does. `test_callback_main` passes the
+  snapshot count that `_summarize` now checks.
+- New [docs/results-20261102.md](docs/results-20261102.md) and
+  [docs/evidence/2026-11-02-round2/](docs/evidence/2026-11-02-round2/README.md). The
+  final branches build and validate there on OpenFOAM v2012, v2106, v2212 and 8, and
+  pass every other check.
+- Solver findings of round 2: on openfoam.com a plain `pEqn.solve()` uses `pFinal` for
+  every pressure solve when there is one outer corrector. At `6fde869` the three
+  sibling solvers kept a stale first snapshot, as PODFoam did.
+- OpenFOAM 8 differs from v2212 because it applies the case's `relaxationFactors`
+  with one outer corrector. The flaky unit test came from a `scipy.spatial` import in
+  the forked worker.
+- Model runs of round 2: a 12B request from a run on 2 ranks is sent by rank 0 only.
+  The 12B suite passes on v2012 and 8, and the 6,000-step default on v2212.
+- `setup_12b.sh` fetched 7.9 GB without a token; its prebuilt server needs a newer
+  glibc than the cluster has. On the 3D slice pictures 12B beat the constant baseline
+  in the 48 random windows drawn after the runs. On the 24 frames the solver drew, the
+  baseline was right every time.
+- Without stated times, each model answered 69 of the 70 October 28 triples as before.
+- Docs: the README, the Pages site, the October 30 and November 2 reports and the
+  evidence index are rewritten in plainer prose with the same facts. "The original
+  PODFoam" names argonne-lcf's code at `6fde869`.
+- The October 30 report's limitations name the runs that followed. The record of the
+  `async_v2.slurm` change is a plain `git diff`.
+
 ## 2026-10-30, report of October 30; versions at the final code (`cabcfc6`, PR tree `bf7a06e`)
 
 - `compat-final` (`cabcfc6`) merged into `main`. PR tree: branch `pr/podfoam-observer`, `bf7a06e`.
@@ -10,7 +51,7 @@ revision that produced it is given.
   ([code-identity.txt](docs/evidence/2026-10-30-versions/code-identity.txt)).
 - New [docs/results-20261030.md](docs/results-20261030.md) and
   [docs/evidence/2026-10-30-versions/](docs/evidence/2026-10-30-versions/README.md).
-  On v2012, v2106, v2212 and 8: validation and observer with no model, 2D and 3D, serial and
+  On v2012, v2106, v2212 and 8: validation and observer with no model requests, 2D and 3D, serial and
   2 ranks (jobs 24950780 to 24950783), suites against a stand-in server (24950794 to 24950797),
   one 12B request (24950818, A30; 24949167, L40S). 12B suite on v2212 (24950817, A30; 24949283,
   L40S), the PR tree's E2B quick start on v2106 (24950804), upstream's Docker image (24950798).
@@ -84,7 +125,7 @@ revision that produced it is given.
 - What these counts rest on, computed after the answers were read: without the
   viscosity run and the moving-wall run, whose change is not in the pictures,
   31B gets 55 and the rule 56 of 64. The largest Courant number above 1 flags
-  three of the five wrong runs with no reference run (64 of 80), and given a
+  three of the five wrong runs with no normal run (64 of 80), and given a
   normal run the colour bars' numbers alone get 75 of 80 (68 with each normal
   run held out). The viscosity run is the only change that models seem to
   notice and no such number flags; it is one run, and most of the reasons deny a

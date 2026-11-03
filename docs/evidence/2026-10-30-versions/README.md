@@ -1,22 +1,23 @@
-# October 30 evidence: OpenFOAM versions and upstream's PODFoam
+# October 30 evidence: OpenFOAM versions and the original PODFoam
 
-Slurm jobs of 2026-10-30 on MedicineBow (University of Wyoming): PODFoam with the
-observer on OpenFOAM v2012, v2106, v2212 and 8, each in an Apptainer image, and the
-comparison with upstream's PODFoam at `6fde869`. The report is
-[results-20261030.md](../../results-20261030.md).
+Slurm jobs of 2026-10-30 on MedicineBow, University of Wyoming. They ran PODFoam with
+the observer on OpenFOAM v2012, v2106, v2212 and 8, each in an Apptainer image. They
+also compared it with the original PODFoam, argonne-lcf/PythonFOAM at `6fde869`. The
+report is [results-20261030.md](../../results-20261030.md).
 [report_numbers.py](report_numbers.py) reads the report's numbers from the records here
 and writes [report-numbers.json](report-numbers.json).
 
 ## Code
 
-Most jobs ran `b17763d`, a local commit of the PR tree (branch `pr/podfoam-observer`
-with an earlier README) that is not on GitHub. Its code equals `bf7a06e` and `main`:
+Most jobs ran `b17763d`, a local commit of the PR tree that is not on GitHub. It is
+the tree of `bf7a06e`, which was branch `pr/podfoam-observer` on 2026-10-30, with
+earlier versions of two READMEs. Its code also equals `main` at `6677bac`.
 [code-identity.txt](code-identity.txt) lists the blob of each of the 64 files under
 `Solver_Examples/PODFoam`, without the three READMEs, read from git objects. Under that
 folder, only `llm_demo/README.md` and `llm_demo/hpc/README.md` differ between `b17763d` and
 `bf7a06e`.
-The 24 files that only `main` has (experiment scripts, their tests) are listed there as
-well. No job here runs them, apart from the unit tests.
+The 24 files that only `main` has, the experiment scripts and their tests, are listed
+there as well. No job here runs them, apart from the unit tests.
 
 Each job's folder has its `HEAD`; `git-status.txt` is empty for every job that records it.
 
@@ -24,7 +25,7 @@ Each job's folder has its `HEAD`; `git-status.txt` is empty for every job that r
 
 | Folder | Jobs | Code | What ran | Result |
 |---|---|---|---|---|
-| `matrix/` | 24950780 to 24950783 | `b17763d` | [version_check.sbatch](scripts/matrix/version_check.sbatch): build and bridge validation, then the observer with no model (`LLM_ENABLED=0`), v2 frame at step 100, 110 steps from t = 0.1 s: `serial2d`, `serial3d`, `par2d`, `par3d` | [compare.out](compare.out), [version-compare.json](version-compare.json); all PASS, all four cases end on all four versions |
+| `matrix/` | 24950780 to 24950783 | `b17763d` | [version_check.sbatch](scripts/matrix/version_check.sbatch): build and bridge validation, then the observer with no model requests (`LLM_ENABLED=0`), v2 frame at step 100, 110 steps from t = 0.1 s: `serial2d`, `serial3d`, `par2d`, `par3d` | [compare.out](compare.out), [version-compare.json](version-compare.json); all PASS, all four cases end on all four versions |
 | `commits/` | 24950784 to 24950791 | `2a93911`, `69cc2c1` | [try_version.sh](scripts/try_version.sh): the validation at commits 2 and 3 of the PR tree | PASS on all four |
 | `stand-in/` | 24950794 to 24950797 | `b17763d` | [suites.sbatch](scripts/stand-in/suites.sbatch): validation, `run_demo.sh` both suites and the v2 asynchronous suite, against [stub_server.py](scripts/stand-in/stub_server.py) | all exit 0 with `PASS` |
 | `documented-commands/` | 24950840 to 24950843 | `b17763d` | [doc_commands.sh](scripts/refix-jobs/doc_commands.sh): the observer commands of the PR tree's `llm_demo/README.md` in a fresh copy | 45 of 45 files equal, `DOC COMMANDS PASS` |
@@ -33,12 +34,12 @@ Each job's folder has its `HEAD`; `git-status.txt` is empty for every job that r
 | `gpu-suite-24949283/` | 24949283 | `fae10ba` | The same at `fae10ba`, whose `async_v2.slurm` and code differ from `b17763d`, on an NVIDIA L40S | `async-verification.json` PASS |
 | `gpu-versions-24950818/` | 24950818 | `b17763d` | [part_a.sbatch](scripts/gpu/part_a.sbatch): one server on the host GPU, each image in turn, one real `describe` request at step 100 of 110, NVIDIA A30 | `part-a.json`: `ok` on all four |
 | `gpu-versions-24949167/` | 24949167 | `fae10ba` | The same on an NVIDIA L40S | `part-a.json`: `ok` on all four |
-| `docker-24950798/` | 24950798 | `b17763d` | [docker_inner.sh](scripts/refix-jobs/docker_inner.sh): upstream's image `romitmaulik1/pythonfoam_docker` (Ubuntu 18.04, OpenFOAM 8, Python 3.6.9): validation with only OpenFOAM sourced, `wclean && wmake`, the shipped `Run_Case` for 120 s | PASS; exit 0; 1,349 steps, stopped by the timeout |
-| `upstream-comparison/` | 24951136 to 24951140 | `bf7a06e` | [pod_account.sbatch](scripts/matrix/pod_account.sbatch): upstream's and this fork's build, upstream's module, each difference accounted for | `account.json` in each folder |
+| `docker-24950798/` | 24950798 | `b17763d` | [docker_inner.sh](scripts/refix-jobs/docker_inner.sh): the project's Docker image `romitmaulik1/pythonfoam_docker` (Ubuntu 18.04, OpenFOAM 8, Python 3.6.9): validation with only OpenFOAM sourced, `wclean && wmake`, the shipped `Run_Case` for 120 s | PASS; exit 0; 1,349 steps, stopped by the timeout |
+| `upstream-comparison/` | 24951136 to 24951140 | `bf7a06e` | [pod_account.sbatch](scripts/matrix/pod_account.sbatch): the original code's and this fork's build, the original module, each difference accounted for | `account.json` in each folder |
 | | 24951141 | `bf7a06e` | [upstream_regression.sbatch](scripts/matrix/upstream_regression.sbatch): shipped `Run_Case` with `LESModel` added, v2106 | `regression.json`: exit 1 in step 89, exit 136 in step 86 (its `steps` counts Courant lines, one more than time steps) |
 | | 24950800 to 24950803 | `2a93911` | The comparison at commit 2 of the PR tree, which has no hooks: shipped and stabilised on 8, stabilised on v2106 and v2212 | the same counts and sizes |
 | | 24948188 to 24948191 | `adcaec7` | The same on v2012, v2106, v2212, and the regression on v2106. The C++ of `adcaec7` differs from `bf7a06e` | the same counts and sizes |
-| `schedule/` | 24950748, 24950749 | `ef78700` | [schedule.py](scripts/schedule/schedule.py): the POD schedule against a table predicted from the stated rule, 20 runs of this fork and 6 of upstream's build, v2106 and 8; [scenarios.py](scripts/schedule/scenarios.py): 46 failure and edge cases | `schedule.json`: 0 problems; `scenarios.json` |
+| `schedule/` | 24950748, 24950749 | `ef78700` | [schedule.py](scripts/schedule/schedule.py): the POD schedule against a table predicted from the stated rule, 20 runs of this fork and 6 of the original code's build, v2106 and 8; [scenarios.py](scripts/schedule/scenarios.py): 46 failure and edge cases | `schedule.json`: 0 problems; `scenarios.json` |
 | | 24949780, 24949782 | `fae10ba` | The schedule check at `fae10ba`, which differs from `b17763d` | 24949782: 0 problems. 24949780 (v2106): 2 log-count problems on 2 ranks (`step 4: 0 snapshots in C++ log, expected 1` and the same at step 1), cause not examined; none in 24950748 |
 | `dev2212-24952019/` | 24952019 | `d9d1109` | [dev2212_validation.sbatch](dev2212-24952019/dev2212_validation.sbatch): the bridge validation in the image pulled from `docker://opencfd/openfoam-dev:2212`, the image `hpc/README.md` names; the other v2212 jobs use `of2212.sif` | PASS, exit 0 |
 | `unit-tests/` | 24951126 | merged `main` (`41ca1bf`) | [unit_merged.sbatch](scripts/unit_merged.sbatch), a fresh clone, Python 3.10.22 and 3.12.15: the module list of `tests.yml`, then `make test` | 156 tests, OK, four times |
@@ -65,13 +66,15 @@ telemetry differs only in `end_time_s` and `run_id`.
 by hash at every written time. When they differ, it takes the largest difference over the
 numbers in the file, so for U a difference in one component. It compares each POD mode's
 cell values, and each module's saved snapshot matrices column by column. The modules are
-in each folder: `module-recording.py` is upstream's with the save added, and
-`module-overwrite.py` also reproduces upstream's overwrite of the first column in Python.
-`fork-plainp` is this fork's solver with the `#ifdef` of `pEqn.H` replaced by upstream's
+in each folder: `module-recording.py` is the original module with the save added, and
+`module-overwrite.py` also reproduces the original code's overwrite of the first column in Python.
+`fork-plainp` is this fork's solver with the `#ifdef` of `pEqn.H` replaced by the original code's
 plain `pEqn.solve()`. In the shipped `Run_Case`, [pod_account_inner.sh](scripts/matrix/pod_account_inner.sh)
 and [upstream_regression_inner.sh](scripts/matrix/upstream_regression_inner.sh) set `endTime` to
 1.5e-4, `startFrom` to `startTime` and `writePrecision` to 12, and remove `0/uniform/time`. The
-Docker job runs the case unchanged.
+Docker job runs the case unchanged. Ubuntu 18.04.5 and Python 3.6.9 are what `/etc/os-release`
+and `python3 --version` printed in job 24949654, which pulled that image into an Apptainer file
+on 2026-10-30 (its output is not kept here).
 
 Jobs 24950817 and 24950818 were submitted with `--constraint='l40s|a6000'`, as in
 [submit_suite.sh](scripts/gpu/submit_suite.sh), and started with `l40s|a6000|a30`, on
@@ -86,8 +89,10 @@ solver builds, the time directories and frames, the request bodies, the model fi
 records are as recorded.
 
 [hf-no-token.txt](hf-no-token.txt) records two requests without a token for the 12B weights and
-projector, both answered 200. `setup_12b.sh` itself ran only with a stand-in `curl` (job
-24950752, not kept here); it has not fetched the files in this form.
+projector, both answered 200. `setup_12b.sh` itself ran here only with a stand-in `curl` (job
+24950752, not kept here). On 2026-11-02 it fetched the four files on a login node without a
+token, 7.9 GB in 46.5 s ([November 2 report](../../results-20261102.md#setup_12bsh-with-a-real-download),
+[round-2 evidence](../2026-11-02-round2/README.md)).
 
 [sacct.txt](sacct.txt) has each job's state, node, partition and time, apart from the
 wrong-setup jobs ([their sacct.txt](../2026-10-30-wrong-setup/job/sacct.txt)) and the runs that

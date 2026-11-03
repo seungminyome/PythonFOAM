@@ -1,20 +1,15 @@
 # Evidence
 
-Recorded runs, one directory per test date (`2026-10-30-versions` and
-`2026-10-30-wrong-setup` hold the runs of October 30, `2026-10-28-inflight`,
-`2026-10-28-callback`, `2026-10-28-3d` and `2026-10-28-instability` hold
-the tests of October 28, `2026-10-27-solver` and
-`2026-10-27-picture-tests` hold the solver runs and the picture tests of
-October 27, `2026-10-19-12b` holds that
-day's 12B replay on a GPU node, `2026-10-22-picture-test` the picture-reading
-test, `2026-10-22-window-test` the later picture tests, `2026-10-22-live-v2`
-the solver run with v2 pictures). Requests, responses, arrays and
-logs keep their recorded bytes (in 2026-10-20 the solver logs and telemetry
-are gzip copies); each directory has a hash manifest.
+Recorded runs, one folder per test, named by date. The table lists each folder with
+its jobs, code and report. Requests, responses and arrays keep their recorded bytes.
+Logs and other large text records are gzip copies in 13 of the 18 folders, and each
+manifest marks these files as kind `gzip copy`. Each folder has a hash manifest, and
+`check_manifest.py` checks it.
 
 | Directory | Run | Code | Report |
 |---|---|---|---|
-| [2026-10-30-versions/](2026-10-30-versions/README.md) | Slurm jobs 24950780 to 24950783: build, bridge validation and the observer with no model on OpenFOAM v2012, v2106, v2212 and 8; 24950794 to 24950797: the suites against a stand-in server; 24950818, 24950817, 24950804: runs with a model; 24951136 to 24951141: comparison with upstream's PODFoam; POD schedule, upstream's Docker image, unit tests | `b17763d` (code equal to `bf7a06e` and `main`), recorded per job | [results-20261030.md](../results-20261030.md) |
+| [2026-11-02-round2/](2026-11-02-round2/README.md) | Slurm jobs of November 1 and 2. 25080017: which pressure dictionary a plain `pEqn.solve()` picks, four versions. 25080208 to 25080213, 25088384 to 25088390, 25088463: `PODFoam_Debug`, `APMOSFoam`, `AEFoam` on 8 and v2106. 25080002, 25080003, 25088377 to 25088380: error scenarios and POD schedule on v2012 and v2212, extra sets on all four. 25080020 to 25080025, 25080040, 25080041, 25080389: why OpenFOAM 8 differs. 25080033, 25080034, 25080195 to 25080203, 25088401, 25088402: the flaky test under load. 25080066: one 12B request from 2 MPI ranks. 25080015, 25080035 to 25080037: 12B suites on v2012 and 8, and the 6,000-step default on v2212. 25080013: `setup_12b.sh` with a real download. 25080032, 25088316: 12B on 72 slice pictures. 25080121, 25080221: instability test without times. 25090304 to 25090963 without 25090624, and 25092222: the final PR branches and the fork's `main`; 25089961 to 25089963, 25090624, 25092824, 25093622: load runs of the November tree `276ea8e` and the PR texts' Docker commands; all in `final-branches/` | `bf7a06e`, the PR tree of October 30; `6fde869`, the original PODFoam; the final branches `473c802` and `cd23736`; the round-2 branches named in the README | [results-20261102.md](../results-20261102.md) |
+| [2026-10-30-versions/](2026-10-30-versions/README.md) | Slurm jobs 24950780 to 24950783: build, bridge validation and the observer with no model requests on OpenFOAM v2012, v2106, v2212 and 8; 24950794 to 24950797: the suites against a stand-in server; 24950818, 24950817, 24950804: runs with a model; 24951136 to 24951141: comparison with the original PODFoam; POD schedule, the project's Docker image, unit tests | `b17763d`, whose code equals `bf7a06e` and `main` at `6677bac`; recorded per job | [results-20261030.md](../results-20261030.md) |
 | [2026-10-30-wrong-setup/](2026-10-30-wrong-setup/README.md) | Slurm job 24947089: can a model see that a run was set up wrong? 80 one-frame requests from five normal and five wrongly set-up pimpleFoam runs, four models; job 24946879: the runs; 24946942: the set's build; answer key, leak check, the reasons judged by one AI agent, what the frames hold and a recount | `97db7eb` (what the counts rest on: `bc90034`) | [results-20261030.md](../results-20261030.md) |
 | [2026-10-29-merged-check/](2026-10-29-merged-check/README.md) | Slurm job 24936949: the merged code built and validated, a 2D and a 3D v2 frame equal to earlier runs | `eff951b` | [results-20261028.md](../results-20261028.md) |
 | [2026-10-28-inflight/](2026-10-28-inflight/README.md) | Slurm job 24929296: a describe request every 50 steps with two in flight and a two-slot server, 6,000 steps, and its twin; comparison with the one-in-flight run of October 27 | `2ed6da2` (summary rebuilt with `c85c79c`) | [results-20261028.md](../results-20261028.md) |
@@ -32,18 +27,21 @@ are gzip copies); each directory has a hash manifest.
 | [2026-10-17/](2026-10-17/README.md) | `pod-llm-demo.LRfJBN`: five solver cases and the paired image/no-image replay | `23089bb` | [results.md](../results.md) |
 | [2026-10-13/](2026-10-13/README.md) | `pod-llm-demo.SwwR2e`: first five-case run with the image path | `9ae54d0` | [results-20261013.md](../results-20261013.md) |
 
-The October 27 archives (the five picture jobs, the two new test sets, the
-cylinder runs, the periodic run without time directories, the MPI and
-POD-file runs, the unstable attempts) are assets of the
-[tests-2026-10-27](https://github.com/seungminyome/PythonFOAM/releases/tag/tests-2026-10-27)
-release. The picture tests' archives (the input bundles with all requests and answer
-keys, and each job's results with every raw reply) are assets of the
-[picture-test-2026-10-22](https://github.com/seungminyome/PythonFOAM/releases/tag/picture-test-2026-10-22)
-release; the v2 solver run's complete outputs, the trial run and the developed
-flow are assets of
-[pod-insitu-v2-2026-10-22](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-v2-2026-10-22). Complete solver outputs (all time directories) are release assets, not in the
-repository (for 2026-10-20 the five cases of `pod-llm-async.pp7agC`; the
-windowed frame run `pod-llm-async.8YC6bG` is not in the release, and this
-repository has its frames and run records but not its time directories): [2026-10-20](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-async-2026-10-20),
-[2026-10-17](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-tests-2026-10-17),
-[2026-10-13](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-demo-2026-10-13).
+Release assets hold what the repository leaves out:
+
+- [tests-2026-10-27](https://github.com/seungminyome/PythonFOAM/releases/tag/tests-2026-10-27):
+  the October 27 archives. They hold the five picture jobs, the two new test sets, the
+  cylinder runs, the periodic run without time directories, the MPI and POD-file runs
+  and the unstable attempts.
+- [picture-test-2026-10-22](https://github.com/seungminyome/PythonFOAM/releases/tag/picture-test-2026-10-22):
+  the picture tests' archives. They hold the input bundles with all requests and
+  answer keys, and each job's results with every raw reply.
+- [pod-insitu-v2-2026-10-22](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-v2-2026-10-22):
+  the complete outputs of the v2 solver run, the trial run and the developed flow.
+- [2026-10-20](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-async-2026-10-20),
+  [2026-10-17](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-tests-2026-10-17) and
+  [2026-10-13](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-demo-2026-10-13):
+  complete solver outputs with all time directories. For 2026-10-20 these are the five
+  cases of `pod-llm-async.pp7agC`. The windowed frame run `pod-llm-async.8YC6bG` is not
+  in the release; this repository has its frames and run records but not its time
+  directories.

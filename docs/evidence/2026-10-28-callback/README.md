@@ -6,7 +6,7 @@ image `of2212.sif`) with the Python callback of `main` (`2ed6da2`, copied in
 [callback-main/](callback-main/python_module.py)) and of the branch
 `callback-telemetry-trends` (`16d665e`), on the same case with the same
 settings. The changes are described in
-[llm_demo/README.md](../../../Solver_Examples/PODFoam/llm_demo/README.md#telemetryjsonl).
+[llm_demo/README.md](https://github.com/seungminyome/PythonFOAM/blob/6677bac/Solver_Examples/PODFoam/llm_demo/README.md#telemetryjsonl).
 
 ## What ran
 

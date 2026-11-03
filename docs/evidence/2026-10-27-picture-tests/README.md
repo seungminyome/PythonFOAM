@@ -6,7 +6,7 @@ states one of them uses. No solver ran in these jobs; the solver runs of the
 same day are in [2026-10-27-solver](../2026-10-27-solver/README.md).
 
 [Report](../../results-20261027.md) ·
-[How the sets are built and run](../../../Solver_Examples/PODFoam/llm_demo/README.md#trend-test-on-a-developed-flow-sequence_testpy) ·
+[How the sets are built and run](https://github.com/seungminyome/PythonFOAM/blob/6677bac/Solver_Examples/PODFoam/llm_demo/README.md#trend-test-on-a-developed-flow-sequence_testpy) ·
 [Release with every archive](https://github.com/seungminyome/PythonFOAM/releases/tag/tests-2026-10-27)
 
 ## Jobs

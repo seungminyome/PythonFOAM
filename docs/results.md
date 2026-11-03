@@ -10,17 +10,17 @@ Serial PODFoam on OpenFOAM v2106, 20,540 cells, ten steps of 1e-7 s. After
 step 5 the callback sends that step's numbers and a |U|/p image to the model,
 stores the reply and returns. Nothing in the reply goes back into the solver.
 
-| Run | Model | Steps | Files equal to baseline | Callback time |
+| Run | Model | Steps | Files equal to the run with no model requests | Callback time |
 |---|---|---:|---:|---:|
-| No request (baseline) | off | 10 | - | 0.493 s |
+| No model requests | off | 10 | - | 0.493 s |
 | Numbers + image | reply stored | 10 | 45 / 45 | 78.256 s |
 | Numbers only | reply stored | 10 | 45 / 45 | 39.672 s |
 | Connection refused | error stored | 10 | 45 / 45 | 0.509 s |
 | Server made to stall (4 s deadline) | timeout stored | 10 | 45 / 45 | 4.013 s |
 
 The 45 files are U, p and phi for each of the ten steps plus the 15 POD mode
-fields written at the end. The baseline run still builds the summary and
-renders the image, which is where its half second goes.
+fields written at the end. The run with no model requests still builds the
+summary and renders the image, which is where its half second goes.
 
 Callback time is measured in C++ around the Python call. Inside the image
 callback: summary 0.006 s, rendering 0.438 s, waiting for the server 77.560 s.
@@ -76,7 +76,7 @@ between requests, so those times do not isolate the cost of the image.
 Server settings are in [runtime-summary.json](evidence/2026-10-17/runtime-summary.json):
 four threads, context 2048, one slot, image tokens capped at 256, reasoning off.
 
-Both conditions also received the [SVD summary](../Solver_Examples/PODFoam/llm_demo/README.md#svd-summary)
+Both conditions also received the [SVD summary](https://github.com/seungminyome/PythonFOAM/blob/6677bac/Solver_Examples/PODFoam/llm_demo/README.md#svd-summary)
 (singular values only, no spatial modes). Whether it helps has not been tested.
 
 The 25 cm error reported for October 13 was measured along x only; the
@@ -98,14 +98,15 @@ conditions were not.
 
 The five cases and the paired replay were run again on the same machine and
 server two days later ([evidence](evidence/2026-10-19/README.md)). Step-5
-arrays and image have the same hashes and all 45 files again match the
-baseline. The image reply from inside the solver is the same text as on
-October 17 and all six replay answers give the same coordinates, so the
-position errors are unchanged. The numbers-only reply and the wording of five
-replay answers changed, although the requests differed only in the run id.
-Callback times were 0.517 / 72.256 / 40.587 / 0.813 / 4.026 s. As on October
-17, both solver requests started from a cold prompt cache: prompt processing
-took 58.6 s with the image (1541 tokens) and 30.2 s without (1080 tokens).
+arrays and image have the same hashes and all 45 files again match the run
+with no model requests. The image reply from inside the solver is the same
+text as on October 17 and all six replay answers give the same coordinates, so
+the position errors are unchanged. The numbers-only reply and the wording of
+five replay answers changed, although the requests differed only in the run
+id. Callback times were 0.517 / 72.256 / 40.587 / 0.813 / 4.026 s. As on
+October 17, both solver requests started from a cold prompt cache: prompt
+processing took 58.6 s with the image (1541 tokens) and 30.2 s without (1080
+tokens).
 
 ## Same replay with Gemma 4 12B on a GPU (2026-10-19)
 

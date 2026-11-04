@@ -89,7 +89,10 @@ own steps 6000 and 8000 differ by 0.107):
 No pilot run is in the final set and no model saw a pilot frame.
 ## Deviations
 
-- 2026-11-03, before any model request: B06-W (lowerWall and upperWall slip on the base with
-  27.9 m/s and nu 1.02e-5) diverged in step 4643 (floating point exception, Courant number
-  7.7e16; job 25106926_11). As the plan says, the pair B06 is dropped: 29 pairs, 58 runs remain,
-  walls 6 (lower 4, both 2). design.json keeps the dropped entries under dropped_pairs.
+- 2026-11-03, before any model request: B06-W (viscosity 0.0102 m^2/s, 1000 times the base's
+  1.02e-5, on the base with 27.9 m/s) diverged in step 4643 (floating point exception, Courant
+  number 7.7e16; job 25106926_11). As the plan says, the pair B06 is dropped: 29 pairs, 58 runs
+  remain, viscosity 8 (factors 0.1, 3, 5, 10, 20, 30, 100, 300), walls 7. The `why` text in
+  design.json's `dropped_pairs` names the change wrongly as slip walls; its `entries` hold the
+  run's real change, and the file is left as the build hashed it. This note was corrected on
+  2026-11-04, after the model answers, and changes no count.

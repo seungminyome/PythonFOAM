@@ -3,6 +3,18 @@
 Dates are when a run or change happened. Where a run is recorded, the code
 revision that produced it is given.
 
+## 2026-11-03, wrong-setup test 2
+
+- `wrong_setup_test2.py` and its unit tests: 29 pairs of pimpleFoam runs of the step
+  case, one base setup run as written and with one change; three states per run; stated
+  and blind notes; temperature 0 and 0.7; baselines on the same pictures with
+  leave-one-pair-out; exact McNemar test and a bootstrap over pairs. The plan, the
+  request set and the baselines were committed before the GPU job.
+- Gemma 4 31B on 1,044 requests (job 25107731): 44 of 58 on the primary frames with the
+  setup stated, against 45 for the labels baseline (p = 1); blind 28. Report
+  [November 3](docs/results-20261103.md), evidence
+  [2026-11-03-wrong-setup-2](docs/evidence/2026-11-03-wrong-setup-2/README.md).
+
 ## 2026-11-03, the schedule comparison covers all 26 rows
 
 - `compare_sched4_ranks.py` keys the POD schedule rows with the rank count. All 26

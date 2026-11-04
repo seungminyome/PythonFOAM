@@ -6,7 +6,7 @@
 ![Python 3.10 | 3.12](https://img.shields.io/badge/python-3.10%20%7C%203.12-lightgrey)
 [![license](https://img.shields.io/badge/license-Argonne%20OSS-blue.svg)](LICENSE)
 
-[Results page](https://seungminyome.github.io/PythonFOAM/) · [Latest report](docs/results-20261102.md) · [How to run](Solver_Examples/PODFoam/llm_demo/README.md) · [GPU nodes](Solver_Examples/PODFoam/llm_demo/hpc/README.md) · [Korean](https://github.com/seungminyome/PythonFOAM-Korean)
+[Results page](https://seungminyome.github.io/PythonFOAM/) · [Latest report](docs/results-20261103.md) · [How to run](Solver_Examples/PODFoam/llm_demo/README.md) · [GPU nodes](Solver_Examples/PODFoam/llm_demo/hpc/README.md) · [Korean](https://github.com/seungminyome/PythonFOAM-Korean)
 
 This fork of [PythonFOAM](https://github.com/argonne-lcf/PythonFOAM) adds an
 optional observer to the PODFoam example. During an OpenFOAM run the solver hands
@@ -168,8 +168,11 @@ In the case directory:
   were in flight.
 - On the scored items, no model warned of a crash more than 5 steps ahead, with or
   without the frames' times in the request.
-- Wrong setup: 31B was right for 67 of 80 frames and a rule on the peak |U| for 56.
-  The lead of 31B rests on two runs, the viscosity run and the moving wall.
+- Wrong setup, first test: 31B was right for 67 of 80 frames and a rule on the peak |U|
+  for 56. The lead of 31B rests on two runs, the viscosity run and the moving wall.
+- Wrong setup, second test with 29 pairs of runs and a design fixed before any request:
+  31B right for 44 of 58 runs, a logistic regression on the colour-bar labels for 45.
+  That the model does better than the rules is not shown.
 
 ## Documentation and reports
 
@@ -180,6 +183,8 @@ In the case directory:
 - [Fork-only experiment scripts, README of October 30](https://github.com/seungminyome/PythonFOAM/blob/6677bac/Solver_Examples/PODFoam/llm_demo/README.md).
 - [Results page](https://seungminyome.github.io/PythonFOAM/): all reports, evidence and
   downloads.
+- [November 3](docs/results-20261103.md): wrong-setup test 2, 29 pairs of runs against
+  baselines on the same pictures.
 - [November 2](docs/results-20261102.md): the PR branches built and validated on four
   versions, why OpenFOAM 8 differs, 12B on slice pictures and the instability test
   without times.

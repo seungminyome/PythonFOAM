@@ -8,58 +8,48 @@
 
 [Results page](https://seungminyome.github.io/PythonFOAM/) · [Latest report](docs/results-20261103.md) · [How to run](Solver_Examples/PODFoam/llm_demo/README.md) · [GPU nodes](Solver_Examples/PODFoam/llm_demo/hpc/README.md) · [Korean](https://github.com/seungminyome/PythonFOAM-Korean)
 
-This fork of [PythonFOAM](https://github.com/argonne-lcf/PythonFOAM) adds an
-optional observer to the PODFoam example. During an OpenFOAM run the solver hands
-its state to Python. Python draws |U| and p and asks a vision-language model, a
-model that reads pictures and text, to describe them. The model runs locally under
-[llama.cpp](https://github.com/ggml-org/llama.cpp). The answers are recorded with the
-arrays they came from, and nothing from the model goes back into the solver. The
-repository measures how well such models read solver fields and what the requests
-cost the run.
+While OpenFOAM runs, Python draws the flow and asks a local picture-reading model
+what it sees. This repository shows what such a model can and cannot read from
+solver pictures. It builds on the PODFoam example of
+[PythonFOAM](https://github.com/argonne-lcf/PythonFOAM); the model runs under
+[llama.cpp](https://github.com/ggml-org/llama.cpp) on the same machine, and nothing
+it says goes back into the solver.
+
+## What we found
+
+The model was Gemma 4 (12B for most tests, E2B and 31B where named). It got the two
+pictures below, |U| and p of one time step, and a question.
+
+| Question put to the model | What happened | Verdict |
+|---|---|---|
+| Where is the flow fastest, and where is the pressure lowest? | In most pictures it points at the right spot. Always guessing the usual spot does far worse. | Works |
+| Can it do that while the solver is running? | Yes. A request every 250 steps adds under 1 % to the run time, and every file the solver writes stays the same. | Works |
+| Between snapshots, is the flow speeding up or slowing down? | It reads the trend when the change is 2 % or more. Smaller changes it misreads. | Works for clear changes |
+| Is this run about to crash? | It only says so once the field has already blown up. A simple rule on the numbers does as well or better. | No |
+| Was this run set up wrong? | A first test looked promising. A second, fairer test (29 pairs of runs, the plan fixed before any request) shows no lead over a simple rule. The model catches more wrong runs but also calls normal runs wrong. | Not shown |
+| Does a bigger model help? | The small E2B model gives no usable answers. 12B is enough for positions. 31B sees small pressure spots better, and is no better at judging setups. | Partly |
+
+Every line rests on a recorded run with its counts and a baseline: the
+[results page](https://seungminyome.github.io/PythonFOAM/) has them, and the
+[evidence folders](docs/evidence/README.md) hold the raw answers with hash manifests.
+The latest report, [November 3](docs/results-20261103.md), is the second wrong-setup
+test.
 
 <img src="docs/evidence/2026-10-22-live-v2/suite/async-describe/llm_observation/step-000250/U.png" width="415" alt="|U| at t = 0.10125 s in the window x 0 to 0.12 m, y 0 to 0.04 m: a row of vortices behind the step"> <img src="docs/evidence/2026-10-22-live-v2/suite/async-describe/llm_observation/step-000250/p.png" width="415" alt="p at the same time: low-pressure vortex cores at y about 20 to 30 %">
 
-*The two v2 pictures the running solver sent to Gemma 4 12B at step 250 of a
-developed backward-facing-step flow, at t = 0.10125 s.*
+*What the model sees: |U| and p of step 250 of a developed backward-facing-step
+flow, drawn by the running solver and sent to Gemma 4 12B.*
 
-## Features
-
-- A Python hook once per time step, `analysis_func`, and one at start-up,
-  `mesh_func`. Modules with only `snapshot_func` and `svd_func` still work.
-- Two picture styles. v1 is the solver's two-panel picture; v2 draws one field per
-  picture, with axes in percent of the plotted range.
-- Three request modes. `observe` sends the step's numbers and its v1 picture,
-  `describe` asks where the fastest flow and the lowest pressure are, and `sequence`
-  asks for trends over two to six snapshots, at most three with v2.
-- Synchronous or asynchronous requests, at one time step or every N steps, with up
-  to eight in flight.
-- MPI runs gather the fields to the master rank, and 3D meshes are drawn through a
-  plane slice in v2 pictures.
-- Verification against the same run with no model requests, and 165 unit tests that
-  need neither OpenFOAM nor a model. 85 of them come with the observer example. The
-  other 80 are fork-only. Two of them compare the callback with main's callback at
-  `2ed6da2`, and the rest test the experiment scripts.
-
-## Results
-
-Gemma 4 12B, v2 pictures. Right means within 10 % of the plotted range; the baseline
-is the best constant answer for each row's pictures.
-
-| Pictures | Right: fastest flow / lowest pressure | Baseline |
-|---|---|---|
-| 140 random windows of a developed flow | 108 / 130 | 16 / 17 |
-| One window, every 250 steps of a running solver | 65 / 89 of 96 | 53 / 65 |
-| 3D case: 24 slice frames the solver drew | 21 / 24 of 24 | 24 / 24 |
-| 3D case: 48 random windows drawn afterwards from them | 39 / 47 of 48 | 11 / 8 |
-
-Requests every 250 steps cost 0.7 % wall time beyond drawing the pictures.
+Two things to keep in mind. All tests used 2D laminar flows and one extruded 3D
+case, so other flows may read differently. Only positions and fixed words are
+scored; the free-text descriptions are not.
 
 ## How it works
 
-With `LLM_ASYNC=1` the callback forks a worker at a request step. The worker draws
-the step's pictures and posts the request to llama-server, the HTTP server of
-llama.cpp. The solver keeps stepping, and the answer is read and recorded at a
-later step.
+The solver calls a Python hook once per time step. At a request step the hook forks
+a worker, which draws the pictures and posts them to llama-server, the HTTP server
+of llama.cpp. The solver keeps stepping, and the answer is read and recorded at a
+later step together with the arrays it came from.
 
 ```mermaid
 sequenceDiagram
@@ -75,31 +65,24 @@ sequenceDiagram
     W-->>P: answer, read at a later step
 ```
 
-## Requirements
-
-- OpenFOAM v2012, v2106, v2212 or 8. `async_v2.slurm` and `periodic_v2.slurm` run
-  v2212 in an Apptainer image.
-- Python 3.10 to 3.12 with numpy, matplotlib and scipy. The observer's solver runs
-  used 3.10 and 3.11.
-- llama.cpp b11429 and a vision-language model in GGUF format. Gemma 4 E2B Q4_0 runs
-  on a CPU with about 3.4 GB of files. Gemma 4 12B QAT runs on a GPU with about 8 GB,
-  the CUDA build of llama.cpp included.
-- The Gemma licence applies, and no token is needed.
+The requests can be synchronous or asynchronous, once or every N steps, with up to
+eight in flight. MPI runs gather the fields to the master rank, and 3D meshes are
+drawn through a plane slice. The three request modes, the two picture styles and
+every setting are in [llm_demo/README.md](Solver_Examples/PODFoam/llm_demo/README.md).
 
 ## Quick start
 
-Unit tests and evidence hashes need neither OpenFOAM nor a model. The 165 tests take
-about 85 to 120 s:
+Unit tests and evidence hashes need neither OpenFOAM nor a model:
 
 ```bash
 pip install -r Solver_Examples/PODFoam/llm_demo/requirements.txt
-make test
+make test          # 165 tests, about 2 minutes
 make evidence      # every file in a manifest matches its hash
 ```
 
-With an OpenFOAM sourced, the synchronous five-case suite with Gemma 4 E2B on the CPU
-exercises the coupling, the deadlines and the verification. The solver links to the
-Python named here:
+With an OpenFOAM sourced (v2012, v2106, v2212 or 8) and Python 3.10 to 3.12, the
+five-case suite with the small Gemma 4 E2B model on the CPU exercises the coupling
+and the verification. The model files are about 3.4 GB, and no token is needed:
 
 ```bash
 export PYTHON=<python>    # default: python3 on PATH
@@ -109,96 +92,35 @@ cd Solver_Examples/PODFoam
 ./validation/run.sh              # bridge check; its passed run is the reference run
 ./llm_demo/setup_runtime.sh      # Gemma 4 E2B Q4_0, image projector, llama.cpp b11429
 python3 llm_demo/runtime.py start
-python3 llm_demo/runtime.py standalone   # optional: one request with a synthetic plot
 ./llm_demo/run_demo.sh           # builds PODFoam, runs the five cases, verifies
 python3 llm_demo/runtime.py stop
 ```
 
-On a Slurm GPU node, `async_v2.slurm` runs the asynchronous suite with v2 pictures and
-Gemma 4 12B, and `async_v2_sweep.slurm` adds the describe sweep. `periodic_v2.slurm`
-runs a request every N steps next to the run with no model requests. The details are
+The GPU runs of the reports, with Gemma 4 12B and v2 pictures on a Slurm node, are
 in [llm_demo/hpc/README.md](Solver_Examples/PODFoam/llm_demo/hpc/README.md).
 
-```bash
-export POD_LLM_RUNTIME=$PWD/../llm-runtime-12b PYTHON=<python>
-bash Solver_Examples/PODFoam/llm_demo/hpc/setup_12b.sh   # llama.cpp b11429 (CUDA), Gemma 4 12B QAT
-export SIF=<of2212.sif> POD_REFERENCE_RUN=<pod-v2212.XXXXXX> LLM_LONG_START=<developed case>/0.1
-sbatch --account=<account> --partition=<partition> Solver_Examples/PODFoam/llm_demo/hpc/async_v2.slurm
-POD_SUITE_RUN=<pod-llm-async.XXXXXX of a PASSed async_v2.slurm run> \
-  sbatch --account=<account> --partition=<partition> Solver_Examples/PODFoam/llm_demo/hpc/periodic_v2.slurm
-```
+## Reports
 
-## Settings
+Each report records the setup, hardware, code revision and Slurm jobs of its runs.
 
-| Setting | Default | GPU solver runs |
-|---|---|---|
-| `LLM_MODE` | `observe` | `describe` or `sequence` |
-| `LLM_IMAGE_STYLE` | `v1` | `v2` |
-| `LLM_ASYNC` | `0`: the solver waits for the reply or the deadline, 120 s | `1` |
-| `LLM_ANALYSIS_STEP`, `LLM_ANALYSIS_EVERY` | one request at time index 5 | one request at a chosen time index, or a `describe` request every N steps |
-| `LLM_ASYNC_MAX_PENDING` | 1 | 1 or 2 |
-| `LLM_MODEL` | Gemma 4 E2B Q4_0 | Gemma 4 12B QAT |
-| `POD_SLICE_Z` | 3D cases: the middle of the z range | – |
-
-All settings are in [llm_demo/README.md](Solver_Examples/PODFoam/llm_demo/README.md).
-
-## Outputs
-
-In the case directory:
-
-- `llm_observation/step-NNNNNN/` holds the v2 pictures and arrays of one time step:
-  `U.png`, `p.png`, `fields.npz` and `readable-metadata.json`.
-- v1 writes `state.png`, `fields.npz` and `image-metadata.json` into
-  `llm_observation/`, and the earlier frames of a v1 sequence into `step-NNNNNN/`.
-- `llm_request.json`, `llm_request_body.json`, `llm_response.json` and
-  `llm_result.json` hold the request, the exact body sent, the server's reply and the
-  result with status, parsed answer and timings.
-- With `LLM_ANALYSIS_EVERY`, each request has its own folder in `llm_requests/`,
-  listed in `llm_requests/index.json`.
-- `telemetry.jsonl` has one line per time step.
-- `llm_errors.jsonl` holds the callback's own errors; the solver does not stop.
-
-## Limitations
-
-- Only positions and fixed-vocabulary words are scored. Gemma 4 E2B gives no usable
-  answers.
-- The tests used 2D laminar flows and one extruded 3D case, whose four slices agree on
-  both positions to 0.1 %.
-- Parallel runs used 2 MPI ranks with one model request, and at most two requests
-  were in flight.
-- On the scored items, no model warned of a crash more than 5 steps ahead, with or
-  without the frames' times in the request.
-- Wrong setup, first test: 31B was right for 67 of 80 frames and a rule on the peak |U|
-  for 56. The lead of 31B rests on two runs, the viscosity run and the moving wall.
-- Wrong setup, second test with 29 pairs of runs and a design fixed before any request:
-  31B right for 44 of 58 runs, a logistic regression on the colour-bar labels for 45.
-  That the model does better than the rules is not shown.
-
-## Documentation and reports
-
-- [How to run and all settings](Solver_Examples/PODFoam/llm_demo/README.md),
-  [GPU nodes](Solver_Examples/PODFoam/llm_demo/hpc/README.md),
-  [bridge validation](Solver_Examples/PODFoam/validation/README.md) and
-  [the two hooks](Solver_Examples/PODFoam/HOOKS.md).
-- [Fork-only experiment scripts, README of October 30](https://github.com/seungminyome/PythonFOAM/blob/6677bac/Solver_Examples/PODFoam/llm_demo/README.md).
-- [Results page](https://seungminyome.github.io/PythonFOAM/): all reports, evidence and
-  downloads.
-- [November 3](docs/results-20261103.md): wrong-setup test 2, 29 pairs of runs against
-  baselines on the same pictures.
-- [November 2](docs/results-20261102.md): the PR branches built and validated on four
-  versions, why OpenFOAM 8 differs, 12B on slice pictures and the instability test
-  without times.
-- [October 30](docs/results-20261030.md): OpenFOAM versions, the original PODFoam and
-  the wrong-setup test.
-- [October 28](docs/results-20261028.md): two requests in flight, 3D slices and the
-  instability test.
-- [Evidence index](docs/evidence/README.md) with hash manifests · [Changelog](CHANGELOG.md) ·
-  [Korean repository](https://github.com/seungminyome/PythonFOAM-Korean).
+- [November 3](docs/results-20261103.md): wrong-setup test 2, 29 pairs of runs
+  against rules on the same pictures.
+- [November 2](docs/results-20261102.md): the PR branches on four OpenFOAM versions,
+  why OpenFOAM 8 differs, 3D slice pictures, the crash test without times.
+- [October 30](docs/results-20261030.md): OpenFOAM versions, the original PODFoam,
+  the first wrong-setup test.
+- [October 28](docs/results-20261028.md): two requests in flight, 3D slices, the
+  crash test.
+- [Results page](https://seungminyome.github.io/PythonFOAM/) with all reports and
+  downloads · [Evidence index](docs/evidence/README.md) ·
+  [Changelog](CHANGELOG.md) · [Korean repository](https://github.com/seungminyome/PythonFOAM-Korean).
 
 The observer lives in `Solver_Examples/PODFoam/`: the `Python*.H` hooks and
-`llm_demo/`. `PODFoam_Debug`, `APMOSFoam` and `AEFoam` take PODFoam's snapshot copy;
-the other examples are as in argonne-lcf/PythonFOAM. Branch `pr/podfoam-fix` holds the
-PODFoam fix alone, and `pr/podfoam-observer` adds the hooks and the observer.
+`llm_demo/`. The other examples are as in argonne-lcf/PythonFOAM. Branch
+`pr/podfoam-fix` holds the PODFoam fix alone, and `pr/podfoam-observer` adds the
+hooks and the observer. [HOOKS.md](Solver_Examples/PODFoam/HOOKS.md) describes the
+two hooks and the [validation README](Solver_Examples/PODFoam/validation/README.md)
+the bridge check.
 
 ## Citation
 

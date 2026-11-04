@@ -468,7 +468,7 @@ def build(args):
                                "permutation of (run, step)."},
                 "variants": [{"tag": t, "temperature": temp, "seed": s} for t, temp, s in VARIANTS],
                 "runs": runs, "code_sha256": code, "matplotlib": matplotlib.__version__, "numpy": np.__version__,
-                "extra": {"flow_states": flow_states}, "identical_arrays_hard_linked": linked,
+                "extra": {"oct17_numeric_summary": None, "flow_states": flow_states}, "identical_arrays_hard_linked": linked,
                 "truth_withheld_from_model": True, "model_name_in_bodies": pt.DEFAULT_MODEL,
                 "note": "Each state is drawn once (frames/<run>/<time>/). The runner replaces only the model name."}
     write_json(builder.output / "manifest.json", manifest)

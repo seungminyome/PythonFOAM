@@ -23,6 +23,7 @@ and p of one time step, and a question.
 | Question | What happened | Verdict |
 |---|---|---|
 | Where is the flow fastest, and where is the pressure lowest? | In most pictures it points at the right spot, far more often than a fixed guess does. | Works |
+| Does the picture style matter? | Yes. With one field per picture and axes in percent, the models placed both the fastest flow and the lowest pressure in 45 to 48 of 48 pictures. With the solver's original two-panel picture they found it in 2 to 17. | A lot |
 | Can it do that while the solver is running? | Yes. Asking every 250 steps adds under 1 % to the run time, and every file the solver wrote stayed the same. | Works |
 | Between snapshots, is the flow speeding up or slowing down? | It reads the trend when the change is clear, about 2 % or more. Smaller changes it misreads. | Works for clear changes |
 | Is this run about to crash? | It warns only one to five steps before the crash, when the field has already blown up. A simple rule on the numbers does as well. | No |

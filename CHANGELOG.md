@@ -9,14 +9,15 @@ revision that produced it is given.
   case, one base setup run as written and with one change. Three states per run, a note
   with the setup stated or without it, temperature 0 and 0.7. Baselines on the same
   pictures, three of them regressions fitted while leaving one pair out at a time; exact
-  McNemar test and a bootstrap over pairs. The plan, the request set and the baselines were committed
-  before the GPU job. CI runs 177 tests in ten modules.
+  McNemar test and a bootstrap over pairs. The plan, the request set's manifest and the
+  baselines were committed before the GPU job. CI runs 177 tests in ten modules.
 - Gemma 4 31B on 1,044 requests (job 25107731): on the last state of each run with the
   setup stated, 44 of 58 against 45 for the regression on the colour-bar numbers (p = 1);
-  without the setup stated, 28. The messages of `a15b832` and `b77a2a0` name edits of
-  index.html and CHANGELOG that landed in `232e26e`. Report
+  without the setup stated, 28. Report
   [November 3](docs/results-20261103.md), evidence
   [2026-11-03-wrong-setup-2](docs/evidence/2026-11-03-wrong-setup-2/README.md).
+- The message of `a15b832` names edits of index.html and CHANGELOG that landed in
+  `232e26e`.
 
 ## 2026-11-03, the schedule comparison covers all 26 rows
 

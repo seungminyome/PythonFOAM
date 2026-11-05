@@ -9,7 +9,10 @@ request was sent.
 Gemma 4 31B, QAT Q4_0, answered 1,044 requests. In one condition the note states the intended inlet
 speed and viscosity, in the other it does not. Each condition ran at temperature 0 and at 0.7 with two
 seeds, on three states of each run. t0 is temperature 0; t07a and t07b are temperature 0.7 with seeds
-a and b. The colour-bar numbers are the four numbers printed at the ends of the two colour bars. The labels baseline of report.md is a logistic regression on five inputs: the two |U| numbers divided by the stated speed, the two p numbers divided by the square of the stated speed, and the logarithm of the stated viscosity. It is fitted while leaving one pair out at a time.
+a and b. The labels baseline of report.md is a logistic regression on five inputs made from the
+colour-bar numbers, the four numbers printed at the ends of the two colour bars: the two |U| numbers
+divided by the stated speed, the two p numbers divided by the square of the stated speed, and the
+logarithm of the stated viscosity. It is fitted while leaving one pair out at a time.
 
 In short (counts from [results/report.md](results/report.md)):
 
@@ -49,7 +52,7 @@ Start and end times are in [job/sacct.txt](job/sacct.txt). The report and the re
 login node on 2026-11-04 with `wrong_setup_test2.py report`. The note inside test-set/manifest.json
 dates the added key "2026-11-03 21:20"; the commit that holds it, `3363525`, is from 21:14:12 MST, and
 the note's time is wrong. Commits: `97c3c41` (the plan), `33553c4`
-(unit tests), `3bc6d51` (B06 dropped), `91544e6` (the request set and the baselines), `3363525` (the
+(unit tests), `3bc6d51` (B06 dropped), `91544e6` (the request set's manifest and the baselines), `3363525` (the
 manifest key, after job 25107037 and before 25107731). The job scripts are in [jobs/](jobs/).
 
 ## Runs
@@ -59,9 +62,9 @@ cells with the settings of the first test: a fixed Δt of 5×10⁻⁶ s, 8,000 s
 t = 0.14 s, every 500th step written. Each run starts from a written state of the developed flow of
 October 22 (t = 0.06 to 0.1 s), copied to a directory named `0.1`. The inlet speed of the base is set
 on the inlet patch and the viscosity in `transportProperties`; the developed flow itself ran at
-32.2 m/s and 1.56×10⁻⁵ m²/s. The step corner is at x = 0, y = 0.0127 m, the window is x 0 to 0.12 m,
-y 0 to 0.04 m, so the step's face is the window's left edge below 32 % of its height, and the inlet and
-the upper wall are outside the window.
+32.2 m/s and 1.56×10⁻⁵ m²/s. The step corner is at x = 0, y = 0.0127 m. The window is x 0 to 0.12 m, y 0 to 0.04 m. The step's
+face is therefore the window's left edge below 32 % of its height, and the inlet and the upper wall lie
+outside the window.
 
 `flow-check` ([flow-check.json](flow-check.json)) accepted all 58 runs: each ended with `End` after
 8,000 steps, and the last written U and `transportProperties` hold the design's entries. The largest
@@ -70,7 +73,8 @@ comes in steps 2 to 41: the start state is the developed flow at 32.2 m/s and th
 differs, so the first steps adjust. B10-W, with the lower wall slipping, reaches 1.51 at step 5371.
 From the first frame on (steps 6000 to 8000) the normal runs stay at or below 0.43 and ten wrong runs
 lie above 0.5: the seven slip-wall runs (0.81 to 2.05), viscosity ×100 (23.5) and ×300 (172), and inlet
-speed ×1.5 (0.505). The table gives each run with its answers at step 8000 in the six sets. t0 is
+speed ×1.5 (0.505). The table gives each run with its answers at step 8000 in the six sets; the step of the whole-run Courant
+maximum is in parentheses. t0 is
 temperature 0; t07a and t07b are temperature 0.7 with seeds a and b. `C` is `consistent`, `I` is
 `inconsistent`, and the word after the colon is the cause the model named.
 
@@ -139,10 +143,10 @@ temperature 0; t07a and t07b are temperature 0.7 with seeds a and b. `C` is `con
 
 The plan is [PLAN.md](PLAN.md); [design.json](design.json) is the drawn design with the dropped pair
 under `dropped_pairs`. The changes: inlet speed factors 0.1, 0.2, 0.3, 0.5, 0.7, 0.8, 1.25 and 1.5;
-viscosity factors 0.1, 3, 5, 10, 20, 30, 100 and 300 (the ×1000 run diverged, Deviations in the plan);
-`lowerWall` `slip` (4) or both walls `slip` (3); the lowest 0.25, 0.5 or 0.75 of the inlet faces at
-velocity 0 (each twice). Inlet direction and start state were in the draft and were dropped after the
-pilot ([pilot/](pilot/)): neither leaves a visible trace in the window.
+viscosity factors 0.1, 3, 5, 10, 20, 30, 100 and 300, the ×1000 run having diverged as the plan's
+Deviations records; `lowerWall` `slip` in 4 pairs and both walls `slip` in 3; the lowest 0.25, 0.5 or
+0.75 of the inlet faces at velocity 0, each twice. Inlet direction and start state were in the draft and were dropped after the
+pilot, recorded in [pilot/](pilot/): neither leaves a visible trace in the window.
 
 - **Pictures.** The two v2 pictures of one written state, |U| and p each on its own colour scale, in the
   solver's window (`picture_test.render_v2`). Steps 6000, 7000 and 8000 of each run: 174 frames.
@@ -152,8 +156,8 @@ pilot ([pilot/](pilot/)): neither leaves a visible trace in the window.
   goes on: "The note gives the intended inlet speed and kinematic viscosity. Judge whether the
   pictures are consistent with this setup." In the blind condition: "The intended inlet speed and
   viscosity are not given. Judge whether the pictures are consistent with a run of this case set up
-  as described." The rest of the prompt is the same in both. It asks for `reason` (under 300 characters), `assessment` (`consistent`, `inconsistent`,
-  `cannot_tell`) and `cause` (`none`, `inlet_speed`, `viscosity`, `walls`, `inlet_profile`,
+  as described." The rest of the prompt is the same in both. It asks for `reason`, under 300 characters; `assessment`, one of `consistent`, `inconsistent` and
+  `cannot_tell`; and `cause`, one of `none`, `inlet_speed`, `viscosity`, `walls`, `inlet_profile`,
   `inlet_direction`, `start_state`, `other`). In the stated condition the note holds
   `intended_setup` with the base's inlet speed and viscosity; the blind note has no such field, and
   its task line says "the case as described" where the stated one says "the intended setup". Both
@@ -193,6 +197,7 @@ frame.
 - **Slip walls.** Smooth layered bands instead of spots; with `lowerWall` slip the flow along the
   bottom edge is not dark. The |U| maximum is as in a normal run; the |U| minimum is 0.026 to
   0.16 m/s in six of the seven runs, against at most 0.0061 m/s in a normal run.
+- **Viscosity ×0.1.** Like a normal run, with more and smaller spots and low-pressure cores.
 - **Viscosity ×3 to ×30.** Smooth layers, no spots, a smooth p. ×100 and ×300 are not developed
   flows: the ×300 run's colour bar ends at 359 m/s against a stated 28.4 m/s and shows a jet along
   the bottom. It ended normally with a Courant number of 379 at step 25.
@@ -206,8 +211,9 @@ frame.
 All 1,044 requests were answered with valid JSON, none with `cannot_tell` and none with an error.
 Median time per answer on the A6000 was 4.00 s; the model time of the job was 70.0 min of 71.5.
 [results/report.md](results/report.md) is the report of `wrong_setup_test2.py report`;
-[results/reasons.jsonl](results/reasons.jsonl) lists each `inconsistent` answer on a wrong run's
-primary frame with its reason, the run's change and the cause named. The raw answers are in
+[results/reasons.jsonl](results/reasons.jsonl) lists each `inconsistent` answer on a wrong run's primary
+frame in all six sets, 154 rows, with its reason,
+the run's change and the cause named. The raw answers are in
 `results/<set>/metrics.jsonl`.
 
 Primary frames (58), right, and wrong runs caught by cause:
@@ -256,8 +262,7 @@ Read from `results/wrong-setup2-stated-t0/metrics.jsonl`, step 8000:
 - Of the 11 false alarms, 9 reasons say there is no backward-facing step in the picture: "no step
   geometry (white area)", "no sudden expansion or separation zone", "not constrained by a
   backward-facing step". One says the pressure field shows checkerboarding, one that the separation
-  zone is missing without saying the step is missing. The causes named are `other` (9) and
-  `walls` (2).
+  zone is missing without saying the step is missing. The causes named are `other` for 9 and `walls` for 2.
 - All 18 normal runs answered `consistent` name a separation or recirculation zone behind a step;
   12 of them also compare the maximum velocity with the stated speed. 6 of these 12 give a
   number: 4 the colour bar's maximum, 2 the stated speed alone.
@@ -270,15 +275,14 @@ Read from `results/wrong-setup2-stated-t0/metrics.jsonl`, step 8000:
   recirculation zone", cause `other`; ×10, ×20 and ×30 "uniform flow" or "no backward-facing step",
   cause `walls`; ×100 "a jet-like structure", `inlet_profile`; ×300 the 359 m/s maximum, `inlet_speed`.
   None names viscosity.
-- The 7 slip-wall runs: 4 caught, 2 with cause `walls` and 2 with `other` ("a simple channel"); the 3
+- The 7 slip-wall runs: 4 caught, 2 with cause `walls` and 2 with `other`, "a simple channel"; the 3
   missed, both walls slip twice and lower wall once, are answered with "a recirculation zone and
   reattachment after a step" and "consistent with a backward-facing step flow at the given Reynolds
   number", with a sentence on the pressure field between them.
 
 ## Checks outside the design
 
-- A threshold on the largest Courant number after the first frame, between the normal runs' largest
-  (0.43) and 0.5, flags 10 of the 29 wrong runs with no false alarm: all 7 slip-wall runs, viscosity
+- A threshold on the largest Courant number after the first frame, between 0.43, the normal runs' largest, and 0.5, flags 10 of the 29 wrong runs with no false alarm: all 7 slip-wall runs, viscosity
   ×100 and ×300 and inlet speed ×1.5. It needs the solver log, not a picture, and it was chosen after
   the counts were seen.
 - The whole-run Courant number of the first test flagged its wrong runs; here it is above 1 in 21 of

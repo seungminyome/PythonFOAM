@@ -1,14 +1,15 @@
 # November 3 evidence: wrong-setup test 2
 
-The first wrong-setup test, of October 30, had five wrong runs, one per kind of change, eight correlated
-frames of each, and a one-number rule as the only competitor. This test has 29 pairs of pimpleFoam runs
-of the 2D step case. Each pair is one base setup drawn at random, run as written, the normal run, and
-with one change, the wrong run. One run is one sample. The [plan](PLAN.md), the scoring, the baselines
-and the request set were committed at `97c3c41` and `91544e6` before any model request was sent.
+The first wrong-setup test, of October 30, had five wrong runs, one per kind of change, eight frames of
+each that look alike, and a one-number rule as the only competitor. This test has 29 pairs of pimpleFoam
+runs of the 2D step case. Each pair is one base setup drawn at random. Run as written it is the normal
+run; run with one change it is the wrong run. One run is one sample. The [plan](PLAN.md), the scoring,
+the baselines and the request set's manifest were committed at `97c3c41` and `91544e6` before any model
+request was sent.
 Gemma 4 31B, QAT Q4_0, answered 1,044 requests. In one condition the note states the intended inlet
 speed and viscosity, in the other it does not. Each condition ran at temperature 0 and at 0.7 with two
 seeds, on three states of each run. t0 is temperature 0; t07a and t07b are temperature 0.7 with seeds
-a and b. The labels baseline of report.md is a logistic regression on five numbers from the colour bars and the note: the |U| ends divided by the stated speed, the p ends divided by its square, and the logarithm of the stated viscosity, fitted while leaving one pair out at a time.
+a and b. The colour-bar numbers are the four numbers printed at the ends of the two colour bars. The labels baseline of report.md is a logistic regression on five inputs: the two |U| numbers divided by the stated speed, the two p numbers divided by the square of the stated speed, and the logarithm of the stated viscosity. It is fitted while leaving one pair out at a time.
 
 In short (counts from [results/report.md](results/report.md)):
 
@@ -214,7 +215,7 @@ Primary frames (58), right, and wrong runs caught by cause:
 | Answers from | Stated | Blind | Normal right (stated, of 29) | Speed (of 8) | Viscosity (of 8) | Walls (of 7) | Profile (of 6) |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | constant | 29 | 29 | 29 | 0 | 0 | 0 | 0 |
-| peak rule | 43 | | 29 | 6 | 2 | 0 | 6 |
+| peak \|U\| rule | 43 | | 29 | 6 | 2 | 0 | 6 |
 | labels | 45 | 45 | 28 | 4 | 2 | 7 | 4 |
 | labels + pixels | 44 | 44 | 25 | 4 | 4 | 7 | 4 |
 | pixels only | 44 | 44 | 25 | 4 | 5 | 7 | 3 |

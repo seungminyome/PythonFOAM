@@ -28,10 +28,10 @@ and a question.
 | Between snapshots, is the flow speeding up or slowing down? | It reads the peak-speed trend when the change is 2 % or more, 29 of 30 times; the pressure trend less often, 28 of 38. | Works for clear changes |
 | Is this run about to crash? | It says so one step before the crash, when the field has already blown up, and never more than 5 steps ahead. A simple rule on the numbers does as well or better. | No |
 | Was this run set up wrong? | In a first test 31B looked promising. A second test with 29 pairs of runs and the plan fixed before any request shows no lead of 31B over a regression on the colour-bar numbers. 31B catches more wrong runs but calls 11 of 29 normal runs wrong. | Not shown |
-| Does a bigger model help? | The small E2B model gives no usable answers. 12B is enough for positions. 31B finds a small pressure spot in 38 of 40 pictures of the flow past a cylinder where 12B finds 18, and it beat 12B in the first wrong-setup test. The second test ran 31B alone, and there it did no better than the regression on the colour-bar numbers. | Partly |
+| Does a bigger model help? | The small E2B model is not shown to read the solver's pictures; on 32 synthetic pictures it got 1 to 12 right against 5 or 6 for the constant baseline. 12B is enough for positions. 31B finds a small pressure spot in 38 of 40 pictures of the flow past a cylinder where 12B finds 18, and it beat 12B in the first wrong-setup test. The second test ran 31B alone, and there it did no better than the regression on the colour-bar numbers. | Partly |
 
-Every row rests on recorded runs with their counts; the scored rows also have a
-baseline. The [results page](https://seungminyome.github.io/PythonFOAM/) has them, and
+Every row rests on recorded runs with their counts, and every row but the second, the
+run-time check, also has a baseline. The [results page](https://seungminyome.github.io/PythonFOAM/) has them, and
 the [evidence folders](docs/evidence/README.md) hold the raw answers with hash manifests.
 
 <img src="docs/evidence/2026-10-22-live-v2/suite/async-describe/llm_observation/step-000250/U.png" width="415" alt="|U| at t = 0.10125 s in the window x 0 to 0.12 m, y 0 to 0.04 m: a row of vortices behind the step"> <img src="docs/evidence/2026-10-22-live-v2/suite/async-describe/llm_observation/step-000250/p.png" width="415" alt="p at the same time: low-pressure vortex cores at y about 20 to 30 %">

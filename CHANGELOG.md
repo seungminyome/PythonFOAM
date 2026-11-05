@@ -13,7 +13,8 @@ revision that produced it is given.
   before the GPU job. CI runs 177 tests in ten modules.
 - Gemma 4 31B on 1,044 requests (job 25107731): on the last state of each run with the
   setup stated, 44 of 58 against 45 for the regression on the colour-bar numbers (p = 1);
-  without the setup stated, 28. Report
+  without the setup stated, 28. The messages of `a15b832` and `b77a2a0` name edits of
+  index.html and CHANGELOG that landed in `232e26e`. Report
   [November 3](docs/results-20261103.md), evidence
   [2026-11-03-wrong-setup-2](docs/evidence/2026-11-03-wrong-setup-2/README.md).
 

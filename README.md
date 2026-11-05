@@ -17,23 +17,22 @@ it says goes back into the solver.
 
 ## What we found
 
-The model was Gemma 4 (12B for most tests, E2B and 31B where named). It got the two
-pictures below, |U| and p of one time step, and a question.
+The model was Gemma 4 12B unless a row names another size. It got two pictures of one
+time step, |U| and p, or a short sequence of them for the trend and crash questions,
+and a question.
 
-| Question put to the model | What happened | Verdict |
+| Question | What happened | Verdict |
 |---|---|---|
-| Where is the flow fastest, and where is the pressure lowest? | In most pictures it points at the right spot. Always guessing the usual spot does far worse. | Works |
-| Can it do that while the solver is running? | Yes. A request every 250 steps adds under 1 % to the run time, and every file the solver writes stays the same. | Works |
-| Between snapshots, is the flow speeding up or slowing down? | It reads the trend when the change is 2 % or more. Smaller changes it misreads. | Works for clear changes |
-| Is this run about to crash? | It only says so once the field has already blown up. A simple rule on the numbers does as well or better. | No |
-| Was this run set up wrong? | A first test looked promising. A second, fairer test (29 pairs of runs, the plan fixed before any request) shows no lead over a simple rule. The model catches more wrong runs but also calls normal runs wrong. | Not shown |
-| Does a bigger model help? | The small E2B model gives no usable answers. 12B is enough for positions. 31B sees small pressure spots better, and is no better at judging setups. | Partly |
+| Where is the flow fastest, and where is the pressure lowest? | In most pictures it points at the right spot: 108 and 130 of 140 pictures of a developed flow, each a window cut from the domain at random, against 16 and 17 for the constant baseline, one fixed answer for every picture. On the 24 slice frames the solver drew, the constant baseline did as well or better. | Works |
+| Can it do that while the solver is running? | Yes. A request every 250 steps adds 0.7 % to the run time beyond drawing the pictures, and all 2,016 field files it wrote equal those of the run without requests. | Works |
+| Between snapshots, is the flow speeding up or slowing down? | It reads the peak-speed trend when the change is 2 % or more, 29 of 30 times; the pressure trend less often, 28 of 38. | Works for clear changes |
+| Is this run about to crash? | It says so one step before the crash, when the field has already blown up, and never more than 5 steps ahead. A simple rule on the numbers does as well or better. | No |
+| Was this run set up wrong? | In a first test 31B looked promising. A second test with 29 pairs of runs and the plan fixed before any request shows no lead of 31B over a regression on the colour-bar numbers. 31B catches more wrong runs but calls 11 of 29 normal runs wrong. | Not shown |
+| Does a bigger model help? | The small E2B model gives no usable answers. 12B is enough for positions. 31B finds a small pressure spot in 38 of 40 pictures of the flow past a cylinder where 12B finds 18, and it beat 12B in the first wrong-setup test. The second test ran 31B alone, and there it did no better than a rule. | Partly |
 
-Every line rests on a recorded run with its counts and a baseline: the
-[results page](https://seungminyome.github.io/PythonFOAM/) has them, and the
-[evidence folders](docs/evidence/README.md) hold the raw answers with hash manifests.
-The latest report, [November 3](docs/results-20261103.md), is the second wrong-setup
-test.
+Every row rests on recorded runs with their counts; the scored rows also have a
+baseline. The [results page](https://seungminyome.github.io/PythonFOAM/) has them, and
+the [evidence folders](docs/evidence/README.md) hold the raw answers with hash manifests.
 
 <img src="docs/evidence/2026-10-22-live-v2/suite/async-describe/llm_observation/step-000250/U.png" width="415" alt="|U| at t = 0.10125 s in the window x 0 to 0.12 m, y 0 to 0.04 m: a row of vortices behind the step"> <img src="docs/evidence/2026-10-22-live-v2/suite/async-describe/llm_observation/step-000250/p.png" width="415" alt="p at the same time: low-pressure vortex cores at y about 20 to 30 %">
 
@@ -66,7 +65,7 @@ sequenceDiagram
 ```
 
 The requests can be synchronous or asynchronous, once or every N steps, with up to
-eight in flight. MPI runs gather the fields to the master rank, and 3D meshes are
+eight unanswered at a time. MPI runs gather the fields to the master rank, and 3D meshes are
 drawn through a plane slice. The three request modes, the two picture styles and
 every setting are in [llm_demo/README.md](Solver_Examples/PODFoam/llm_demo/README.md).
 
@@ -76,28 +75,28 @@ Unit tests and evidence hashes need neither OpenFOAM nor a model:
 
 ```bash
 pip install -r Solver_Examples/PODFoam/llm_demo/requirements.txt
-make test          # 165 tests, about 2 minutes
+make test          # 177 tests, about 2 minutes
 make evidence      # every file in a manifest matches its hash
 ```
 
 With an OpenFOAM sourced (v2012, v2106, v2212 or 8) and Python 3.10 to 3.12, the
 five-case suite with the small Gemma 4 E2B model on the CPU exercises the coupling
-and the verification. The model files are about 3.4 GB, and no token is needed:
+and the verification. The downloads, the model, its image projector and llama.cpp,
+are about 3.4 GB, and no token is needed:
 
 ```bash
-export PYTHON=<python>    # default: python3 on PATH
+export PYTHON=${PYTHON:-$(command -v python3)}   # or the path of another Python
 export PATH=$(dirname "$PYTHON"):$PATH
 export LD_LIBRARY_PATH=$(dirname "$PYTHON")/../lib:$LD_LIBRARY_PATH   # if not the system Python
 cd Solver_Examples/PODFoam
-./validation/run.sh              # bridge check; its passed run is the reference run
+./validation/run.sh              # checks the C++ to Python bridge; its run is the suite's reference
 ./llm_demo/setup_runtime.sh      # Gemma 4 E2B Q4_0, image projector, llama.cpp b11429
 python3 llm_demo/runtime.py start
 ./llm_demo/run_demo.sh           # builds PODFoam, runs the five cases, verifies
 python3 llm_demo/runtime.py stop
 ```
 
-The GPU runs of the reports, with Gemma 4 12B and v2 pictures on a Slurm node, are
-in [llm_demo/hpc/README.md](Solver_Examples/PODFoam/llm_demo/hpc/README.md).
+The GPU runs of the reports, Gemma 4 12B to 31B on a Slurm node, are in [llm_demo/hpc/README.md](Solver_Examples/PODFoam/llm_demo/hpc/README.md).
 
 ## Reports
 
@@ -111,14 +110,15 @@ Each report records the setup, hardware, code revision and Slurm jobs of its run
   the first wrong-setup test.
 - [October 28](docs/results-20261028.md): two requests in flight, 3D slices, the
   crash test.
-- [Results page](https://seungminyome.github.io/PythonFOAM/) with all reports and
-  downloads · [Evidence index](docs/evidence/README.md) ·
-  [Changelog](CHANGELOG.md) · [Korean repository](https://github.com/seungminyome/PythonFOAM-Korean).
+- [Evidence index](docs/evidence/README.md) · [Changelog](CHANGELOG.md).
+
+## Where the code is
 
 The observer lives in `Solver_Examples/PODFoam/`: the `Python*.H` hooks and
 `llm_demo/`. The other examples are as in argonne-lcf/PythonFOAM. Branch
-`pr/podfoam-fix` holds the PODFoam fix alone, and `pr/podfoam-observer` adds the
-hooks and the observer. [HOOKS.md](Solver_Examples/PODFoam/HOOKS.md) describes the
+`pr/podfoam-fix` holds the PODFoam fix alone, and `pr/podfoam-observer` adds the hooks
+and the observer. The [November 2 report](docs/results-20261102.md) says what the fix
+changes. [HOOKS.md](Solver_Examples/PODFoam/HOOKS.md) describes the
 two hooks and the [validation README](Solver_Examples/PODFoam/validation/README.md)
 the bridge check.
 

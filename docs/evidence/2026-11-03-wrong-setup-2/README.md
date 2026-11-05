@@ -1,38 +1,37 @@
 # November 3 evidence: wrong-setup test 2
 
-The first wrong-setup test (October 30) had five wrong runs, one per kind of change, eight correlated
+The first wrong-setup test, of October 30, had five wrong runs, one per kind of change, eight correlated
 frames of each, and a one-number rule as the only competitor. This test has 29 pairs of pimpleFoam runs
 of the 2D step case. Each pair is one base setup drawn at random, run as written, the normal run, and
 with one change, the wrong run. One run is one sample. The [plan](PLAN.md), the scoring, the baselines
 and the request set were committed at `97c3c41` and `91544e6` before any model request was sent.
-Gemma 4 31B (QAT Q4_0) answered 1,044 requests. In one condition the note states the intended inlet
+Gemma 4 31B, QAT Q4_0, answered 1,044 requests. In one condition the note states the intended inlet
 speed and viscosity, in the other it does not. Each condition ran at temperature 0 and at 0.7 with two
 seeds, on three states of each run. t0 is temperature 0; t07a and t07b are temperature 0.7 with seeds
-a and b. The labels baseline of report.md is a logistic regression on the four colour-bar numbers
-scaled by the stated speed and on the stated viscosity, fitted while leaving one pair out at a time.
+a and b. The labels baseline of report.md is a logistic regression on five numbers from the colour bars and the note: the |U| ends divided by the stated speed, the p ends divided by its square, and the logarithm of the stated viscosity, fitted while leaving one pair out at a time.
 
 In short (counts from [results/report.md](results/report.md)):
 
 - Primary result, stated setup, temperature 0, last state of each run: 31B is right for 44 of 58.
-  The baseline with most right answers, the labels baseline, is right for 45. They disagree on 27 frames, 14 for the
+  The baseline with most right answers, the labels baseline, is right for 45. They disagree on 27 runs, 14 for the
   baseline and 13 for the model: exact McNemar p = 1. By the plan's criterion the conclusion
   "the model does better than the rules" is not shown.
-- 31B catches wrong runs: 26 of 29 (inlet speed 8 of 8, viscosity 8 of 8, inlet profile 6 of 6,
-  walls 4 of 7). The labels baseline catches 17 (walls 7 of 7, speed 4, viscosity 2, profile 4).
+- 31B catches wrong runs: 26 of 29. By kind, inlet speed 8 of 8, viscosity 8 of 8, inlet profile 6
+  of 6, walls 4 of 7. The labels baseline catches 17: walls 7 of 7, speed 4, viscosity 2, profile 4.
 - 31B raises false alarms: 11 of 29 normal runs are answered `inconsistent`. Nine of the eleven
   reasons say the picture shows no backward-facing step: "no step geometry (white area)", "no
   sudden expansion or separation zone". The window begins at the step's corner, so no picture of
   this test has a white area. These two phrases appear in 4 reasons on wrong runs, and 7 wrong-run
   reasons say there is no step. The labels baseline has one false alarm.
-- Right for the right reason: 27 of 58, the 18 normal runs answered `consistent` and 9 wrong runs
-  (speed 7, walls 2). No viscosity run got the cause `viscosity` (named: walls 3, other 3, inlet
-  speed 1, inlet profile 1). All 6 profile runs got `inlet_speed`, with the colour bar's maximum
+- Right for the right reason: 27 of 58, the 18 normal runs answered `consistent` and 9 wrong runs,
+  speed 7 and walls 2. No viscosity run got the cause `viscosity`; the causes named were walls 3,
+  other 3, inlet speed 1, inlet profile 1. All 6 profile runs got `inlet_speed`, with the colour bar's maximum
   below the stated speed as the reason.
-- Without the stated numbers (blind) 31B answers `inconsistent` on 51 of 58 frames and is right for
+- Blind, without the stated numbers, 31B answers `inconsistent` on 51 of 58 frames and is right for
   28, below the constant baseline's 29. The pixel baseline, which also sees no number, gets 44.
 - Temperature 0.7 changes 10 of the 58 stated answers in each variant, and both variants are worse:
   34 and 38 of 58.
-- The earlier states (steps 6000 and 7000, stated, temperature 0): 37 and 42 of 58. All 174 stated
+- The earlier states, steps 6000 and 7000, stated, temperature 0: 37 and 42 of 58. All 174 stated
   frames: 123.
 
 ## Jobs
@@ -166,10 +165,11 @@ pilot ([pilot/](pilot/)): neither leaves a visible trace in the window.
   cause is the run's own. The primary score is on the step 8000 frames. Exact McNemar test against the baseline with most
   right answers, bootstrap over pairs for the interval.
 - **Baselines**, computed by `wrong_setup_test2.py baselines` before the GPU job
-  ([baselines.json](baselines.json)): constant; the peak rule of the first test (peak |U| between 1 and
-  2 times the stated speed); logistic regression with leave-one-pair-out on the colour-bar labels
-  (U max, U min, p min, p max scaled by the stated speed, and the stated viscosity), on the labels plus
-  three pixel shares, and on the pixel shares alone.
+  ([baselines.json](baselines.json)): constant; the peak rule of the first test, peak |U| between 1 and
+  2 times the stated speed; logistic regression with leave-one-pair-out on the labels, five numbers:
+  U max and U min divided by the stated speed, p min and p max divided by its square, and the
+  logarithm of the stated viscosity; on the labels plus three pixel shares; and on the pixel shares
+  alone.
 
 ## Leak check
 

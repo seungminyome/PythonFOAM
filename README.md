@@ -23,12 +23,12 @@ and a question.
 
 | Question | What happened | Verdict |
 |---|---|---|
-| Where is the flow fastest, and where is the pressure lowest? | In most pictures it points at the right spot: 108 and 130 of 140 pictures of a developed flow, each a window cut from the domain at random, against 16 and 17 for the constant baseline, one fixed answer for every picture. On the 24 slice frames the solver drew, the constant baseline did as well or better. | Works |
+| Where is the flow fastest, and where is the pressure lowest? | In most pictures it points at the right spot. On 140 windows cut at random from a developed flow it is right 108 times for the fastest flow and 130 for the lowest pressure; the constant baseline, one fixed answer for every picture, gets 16 and 17. On the 24 slice frames the solver drew, the constant baseline did as well or better. | Works |
 | Can it do that while the solver is running? | Yes. A request every 250 steps adds 0.7 % to the run time beyond drawing the pictures, and all 2,016 field files it wrote equal those of the run without requests. | Works |
 | Between snapshots, is the flow speeding up or slowing down? | It reads the peak-speed trend when the change is 2 % or more, 29 of 30 times; the pressure trend less often, 28 of 38. | Works for clear changes |
 | Is this run about to crash? | It says so one step before the crash, when the field has already blown up, and never more than 5 steps ahead. A simple rule on the numbers does as well or better. | No |
 | Was this run set up wrong? | In a first test 31B looked promising. A second test with 29 pairs of runs and the plan fixed before any request shows no lead of 31B over a regression on the colour-bar numbers. 31B catches more wrong runs but calls 11 of 29 normal runs wrong. | Not shown |
-| Does a bigger model help? | The small E2B model gives no usable answers. 12B is enough for positions. 31B finds a small pressure spot in 38 of 40 pictures of the flow past a cylinder where 12B finds 18, and it beat 12B in the first wrong-setup test. The second test ran 31B alone, and there it did no better than a rule. | Partly |
+| Does a bigger model help? | The small E2B model gives no usable answers. 12B is enough for positions. 31B finds a small pressure spot in 38 of 40 pictures of the flow past a cylinder where 12B finds 18, and it beat 12B in the first wrong-setup test. The second test ran 31B alone, and there it did no better than the regression on the colour-bar numbers. | Partly |
 
 Every row rests on recorded runs with their counts; the scored rows also have a
 baseline. The [results page](https://seungminyome.github.io/PythonFOAM/) has them, and

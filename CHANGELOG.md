@@ -3,6 +3,21 @@
 Dates are when a run or change happened. Where a run is recorded, the code
 revision that produced it is given.
 
+## 2026-11-10, downloads of wrong-setup test 2, the README diagram, a wording and accuracy pass
+
+- Release [wrong-setup-2-2026-11-03](https://github.com/seungminyome/PythonFOAM/releases/tag/wrong-setup-2-2026-11-03)
+  holds the 1,044 requests, the answer key, every raw answer of job 25107731 and the
+  60 run cases. The [November 3 report](docs/results-20261103.md), its
+  [evidence README](docs/evidence/2026-11-03-wrong-setup-2/README.md) and the evidence
+  index link it.
+- The How-it-works diagram in README.md numbers its arrows 1 to 6, and the text above it
+  names the mode it shows, the asynchronous mode `LLM_ASYNC=1`. The text below it adds
+  that in the synchronous mode, the default, the solver waits for the answer until a
+  deadline of 120 s by default.
+- A wording and accuracy pass went over README.md, the results page, the reports of
+  October 27 to November 3 and the November 3 evidence README. Statements that disagreed
+  with the records were corrected; the other changes are wording and definitions.
+
 ## 2026-11-04, the pages lead with the results
 
 - README.md and the results page open with a table of the questions put to the model,
@@ -15,13 +30,14 @@ revision that produced it is given.
 
 - `wrong_setup_test2.py` and its unit tests: 29 pairs of pimpleFoam runs of the step
   case, one base setup run as written and with one change. Three frames per run, a note
-  with the setup stated or without it, temperature 0 and 0.7. Baselines on the same
-  pictures, three of them regressions fitted while leaving one pair out at a time; exact
-  McNemar test and a bootstrap over pairs. The plan, the request set's manifest and the
-  baselines were committed before the GPU job. CI runs 177 tests in ten modules.
-- Gemma 4 31B on 1,044 requests (job 25107731): on the last frame of each run with the
-  setup stated, 44 of 58 against 45 for the regression on the colour-bar numbers (p = 1);
-  without the setup stated, 28. Report
+  with the setup stated or without it, sampling temperature 0 and 0.7. Baselines on the
+  same pictures, three of them regressions fitted while leaving one pair out at a time;
+  exact McNemar test and a bootstrap over pairs. The plan, the request set's manifest and
+  the baselines were committed before the GPU jobs. CI runs 177 tests in ten modules.
+- Gemma 4 31B answered the 1,044 requests in job 25107731. On the last frame of each run,
+  with the setup stated and at sampling temperature 0, it was right for 44 of 58 runs,
+  against 45 for the regression on the colour-bar numbers (p = 1). Without the setup
+  stated, it was right for 28. Report
   [November 3](docs/results-20261103.md), evidence
   [2026-11-03-wrong-setup-2](docs/evidence/2026-11-03-wrong-setup-2/README.md).
 - The message of `a15b832` names edits of index.html and CHANGELOG that landed in
@@ -29,11 +45,14 @@ revision that produced it is given.
 
 ## 2026-11-03, the schedule comparison covers all 26 rows
 
-- `compare_sched4_ranks.py` keys the POD schedule rows with the rank count. All 26
-  rows agree on v2012, v2106, v2212 and 8. The earlier key left out the rank count
-  and compared 21 rows.
+- `compare_sched4_ranks.py`, in `scenarios/` of the
+  [round-2 evidence](docs/evidence/2026-11-02-round2/README.md), keys the POD schedule
+  rows with the rank count. All 26 rows agree on v2012, v2106, v2212 and 8. The earlier
+  key left out the rank count and compared 21 rows. The November 2 report gives the 26
+  rows.
 - The Docker commands of the PR texts ran on `pr/podfoam-fix` and
   `pr/podfoam-observer` cloned from GitHub after the push: PASS on both (job 25098200).
+  The records are in `final-branches/docker-e2e/github/` of the round-2 evidence.
 
 ## 2026-11-02, report of November 2; final PR branches `473c802` and `cd23736`
 

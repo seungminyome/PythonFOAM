@@ -22,7 +22,7 @@ below, |U| and p of one time step, or a short sequence of them, and a question.
 
 | Question | What happened | Verdict |
 |---|---|---|
-| Where is the flow fastest, and where is the pressure lowest? | In most pictures it points at the right spot, far more often than a fixed guess does. | Works |
+| Where is the flow fastest, and where is the pressure lowest? | In most pictures it points at the right spot, more often than a fixed guess does. | Works |
 | Does the picture style matter? | Yes. With one field per picture and axes in percent, four models placed both the fastest flow and the lowest pressure in 45 to 48 of 48 pictures. With the solver's original two-panel picture they placed each in 2 to 17. | A lot |
 | Can it do that while the solver is running? | Yes. A request every 250 steps adds under 1 % to the run time of the same run with no model requests. The solver wrote identical files in both runs. | Works |
 | Between snapshots, is the flow speeding up or slowing down? | It reads a change in peak speed of 2 % or more. It misreads most smaller changes. | Works for clear changes |
@@ -33,8 +33,9 @@ below, |U| and p of one time step, or a short sequence of them, and a question.
 The fixed guess is the best single answer given to every picture. The four models are
 Gemma 4 12B, 26B-A4B and 31B, and Qwen3.5-35B-A3B. The exact counts, with a baseline
 for each test, are on the [results page](https://seungminyome.github.io/PythonFOAM/)
-and in the reports below. The [evidence folders](docs/evidence/README.md) hold every
-raw answer with a hash manifest.
+and in the reports below. The models' answers are in the
+[evidence folders](docs/evidence/README.md) and in the releases they link, and each
+folder has a hash manifest.
 
 <img src="docs/evidence/2026-10-22-live-v2/suite/async-describe/llm_observation/step-000250/U.png" width="415" alt="|U| at t = 0.10125 s in the window x 0 to 0.12 m, y 0 to 0.04 m: a row of vortices behind the step"> <img src="docs/evidence/2026-10-22-live-v2/suite/async-describe/llm_observation/step-000250/p.png" width="415" alt="p at the same time: low-pressure vortex cores at y about 20 to 30 %">
 

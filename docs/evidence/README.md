@@ -1,14 +1,14 @@
 # Evidence
 
 Recorded runs, one folder per test, named by date. The table lists each folder with
-its jobs, code and report. Requests, responses and arrays keep their recorded bytes.
-Logs and other large text records are gzip copies in 14 of the 19 folders, and each
-manifest marks these files as kind `gzip copy`. Each folder has a hash manifest, and
-`check_manifest.py` checks it.
+its jobs, code and report. Each folder has a hash manifest, and `check_manifest.py`
+checks it. Requests, responses and arrays keep their recorded bytes. Logs and other
+large text records are gzip copies in 14 of the 19 folders, and the folder's manifest
+marks these files as kind `gzip copy`.
 
 | Directory | Run | Code | Report |
 |---|---|---|---|
-| [2026-11-03-wrong-setup-2/](2026-11-03-wrong-setup-2/README.md) | Slurm job 25107731: wrong-setup test 2, Gemma 4 31B on 1,044 requests from 29 pairs of pimpleFoam runs, each pair one base setup run as written and with one change, in six sets: the note with the setup stated or without it, each at temperature 0 with one seed and at 0.7 with two seeds on an RTX A6000; 25106926: the 60 runs of 30 pairs, the wrong run of one pair diverged; 25107036: flow check, request set, baselines; 25106856, 25106882: the pilot; the plan fixed before any request, the answer key's hash, leak check, the report and the reasons | `97c3c41` (plan), `91544e6` (request set's manifest and baselines), `3363525` (manifest key, between the GPU jobs) | [results-20261103.md](../results-20261103.md) |
+| [2026-11-03-wrong-setup-2/](2026-11-03-wrong-setup-2/README.md) | Slurm job 25107731 on an RTX A6000: wrong-setup test 2, Gemma 4 31B on 1,044 requests from 29 pairs of pimpleFoam runs, each pair one base setup run as written and with one change. Six sets: the note with the setup stated or without it, each at sampling temperature 0 with one seed and at 0.7 with two seeds. 25107037: a first GPU job, stopped before any request. 25106926: the 60 runs of 30 pairs; the wrong run of one pair diverged. 25107036: flow check, request set, baselines. 25106856, 25106882: the pilot. The folder also holds the plan, fixed before any request, the answer key's hash, the leak check, the report and the reasons | `97c3c41` (plan), `91544e6` (request set's manifest and baselines), `3363525` (manifest key, between the GPU jobs) | [results-20261103.md](../results-20261103.md) |
 | [2026-11-02-round2/](2026-11-02-round2/README.md) | Slurm jobs of November 1 to 3. 25080017: which pressure dictionary a plain `pEqn.solve()` picks, four versions. 25080208 to 25080213, 25088384 to 25088390, 25088463: `PODFoam_Debug`, `APMOSFoam`, `AEFoam` on 8 and v2106. 25080002, 25080003, 25088377 to 25088380: error scenarios and POD schedule on v2012 and v2212, extra sets on all four. 25080020 to 25080025, 25080040, 25080041, 25080389: why OpenFOAM 8 differs. 25080033, 25080034, 25080195 to 25080203, 25088401, 25088402: the flaky test under load. 25080066: one 12B request from 2 MPI ranks. 25080015, 25080035 to 25080037: 12B suites on v2012 and 8, and the 6,000-step default on v2212. 25080013: `setup_12b.sh` with a real download. 25080032, 25088316: 12B on 72 slice pictures. 25080121, 25080221: instability test without times. 25090304 to 25090963 without 25090624, and 25092222: the final PR branches and the fork's `main`; 25089961 to 25089963, 25090624, 25092824, 25093622, 25098200: load runs of the November tree `276ea8e` and the PR texts' Docker commands; all in `final-branches/` | `bf7a06e`, the PR tree of October 30; `6fde869`, the original PODFoam; the final branches `473c802` and `cd23736`; the round-2 branches named in the README | [results-20261102.md](../results-20261102.md) |
 | [2026-10-30-versions/](2026-10-30-versions/README.md) | Slurm jobs 24950780 to 24950783: build, bridge validation and the observer with no model requests on OpenFOAM v2012, v2106, v2212 and 8; 24950794 to 24950797: the suites against a stand-in server; 24950818, 24950817, 24950804: runs with a model; 24951136 to 24951141: comparison with the original PODFoam; POD schedule, the project's Docker image, unit tests | `b17763d`, whose code equals `bf7a06e` and `main` at `6677bac`; recorded per job | [results-20261030.md](../results-20261030.md) |
 | [2026-10-30-wrong-setup/](2026-10-30-wrong-setup/README.md) | Slurm job 24947089: can a model see that a run was set up wrong? 80 one-frame requests from five normal and five wrongly set-up pimpleFoam runs, four models; job 24946879: the runs; 24946942: the set's build; answer key, leak check, the reasons judged by one AI agent, what the frames hold and a recount | `97db7eb` (what the counts rest on: `bc90034`) | [results-20261030.md](../results-20261030.md) |
@@ -31,16 +31,15 @@ manifest marks these files as kind `gzip copy`. Each folder has a hash manifest,
 Release assets hold what the repository leaves out:
 
 - [wrong-setup-2-2026-11-03](https://github.com/seungminyome/PythonFOAM/releases/tag/wrong-setup-2-2026-11-03):
-  wrong-setup test 2. It holds the 1,044 requests with the answer key, every raw answer of
+  wrong-setup test 2. It holds the 1,044 requests, the answer key, every raw answer of
   job 25107731 and the 60 run cases.
-
 - [tests-2026-10-27](https://github.com/seungminyome/PythonFOAM/releases/tag/tests-2026-10-27):
   the October 27 archives. They hold the five picture jobs, the two new test sets, the
   cylinder runs, the periodic run without time directories, the MPI and POD-file runs
   and the unstable attempts.
 - [picture-test-2026-10-22](https://github.com/seungminyome/PythonFOAM/releases/tag/picture-test-2026-10-22):
   the picture tests' archives. They hold the input bundles with all requests and
-  answer keys, and each job's results with every raw reply.
+  answer keys, and each job's results with every raw answer.
 - [pod-insitu-v2-2026-10-22](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-v2-2026-10-22):
   the complete outputs of the v2 solver run, the trial run and the developed flow.
 - [2026-10-20](https://github.com/seungminyome/PythonFOAM/releases/tag/pod-insitu-async-2026-10-20),

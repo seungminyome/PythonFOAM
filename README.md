@@ -17,8 +17,9 @@ and cannot read from solver pictures.
 
 ## What we found
 
-The model was Google's Gemma 4 12B unless a row says otherwise. It got the pictures
-below, |U| and p of one time step, or a short sequence of them, and a question.
+The model was Google's Gemma 4 12B unless a row says otherwise. It got a question
+together with the pictures below, |U| and p of one time step, or with a short sequence
+of them.
 
 | Question | What happened | Verdict |
 |---|---|---|
@@ -71,13 +72,14 @@ sequenceDiagram
 ```
 
 The worker draws |U| and p and posts them to llama-server, the HTTP server of llama.cpp.
-The answer is recorded together with the arrays the pictures came from. In the
-synchronous mode, the default, the solver waits for the answer instead, until a deadline of 120 s by default.
+The answer is recorded together with the arrays the pictures came from. The
+synchronous mode is the default. In it the solver waits for the answer instead, with a deadline of 120 s unless set otherwise.
 
 Requests go out once or every N steps. Up to eight requests can wait for an answer at
 a time. MPI runs gather the fields to the master rank, and 3D meshes are drawn through a
-plane slice. The request modes `observe`, `describe` and `sequence`, the two picture
-styles and every setting are in [llm_demo/README.md](Solver_Examples/PODFoam/llm_demo/README.md).
+plane slice. [llm_demo/README.md](Solver_Examples/PODFoam/llm_demo/README.md) describes
+the request modes `observe`, `describe` and `sequence`, the two picture styles and every
+setting.
 
 ## Quick start
 
@@ -91,8 +93,8 @@ make evidence      # every file in a manifest matches its hash
 
 The commands below check the C++ to Python bridge, then run and verify five PODFoam
 cases with the small Gemma 4 E2B model on the CPU. They need OpenFOAM v2012, v2106,
-v2212 or 8 sourced and Python 3.10 to 3.12. The downloads, the model, its
-image projector and llama.cpp, are about 3.4 GB, and no token is needed:
+v2212 or 8 sourced and Python 3.10 to 3.12. The downloads are the model, its image
+projector and llama.cpp, about 3.4 GB in all. No token is needed:
 
 ```bash
 export PYTHON=${PYTHON:-$(command -v python3)}   # or the path of another Python
@@ -163,10 +165,10 @@ If you use the observer, please cite PythonFOAM and this repository:
 
 ## Acknowledgements
 
-This extends the PODFoam example of [PythonFOAM](https://github.com/argonne-lcf/PythonFOAM)
-by Argonne National Laboratory; its original description and setup notes are
+This repository extends the PODFoam example of [PythonFOAM](https://github.com/argonne-lcf/PythonFOAM)
+by Argonne National Laboratory. PythonFOAM's original description and setup notes are
 in the [project reference](docs/upstream-project.md). The models are served
-with [llama.cpp](https://github.com/ggml-org/llama.cpp); the model weights
+with [llama.cpp](https://github.com/ggml-org/llama.cpp). The model weights
 are not part of this repository and come with their own licences. The GPU
 and CPU-node runs in the reports used the MedicineBow cluster of the
 University of Wyoming Advanced Research Computing Center.

@@ -10,7 +10,7 @@ revision that produced it is given.
   60 run cases. The [November 3 report](docs/results-20261103.md), its
   [evidence README](docs/evidence/2026-11-03-wrong-setup-2/README.md) and the evidence
   index link it.
-- The How-it-works diagram in README.md numbers its arrows 1 to 6, and the text above it
+- The How-it-works diagram in README.md numbers its arrows 1 to 6. The text above it
   names the mode it shows, the asynchronous mode `LLM_ASYNC=1`. The text below it adds
   that in the synchronous mode, the default, the solver waits for the answer until a
   deadline of 120 s by default.
@@ -22,22 +22,23 @@ revision that produced it is given.
 
 - README.md and the results page open with a table of the questions put to the model,
   what happened and a verdict. The results page then gives one row of key numbers per
-  test and six limitations; its long paragraphs moved out, and their numbers are in the
+  test and six limitations. Its long paragraphs moved out, and their numbers are in the
   reports.
 - The reports of October 27 to November 3 open with a short summary.
 
 ## 2026-11-03, wrong-setup test 2
 
 - `wrong_setup_test2.py` and its unit tests: 29 pairs of pimpleFoam runs of the step
-  case, one base setup run as written and with one change. Three frames per run, a note
-  with the setup stated or without it, sampling temperature 0 and 0.7. Baselines on the
-  same pictures, three of them regressions fitted while leaving one pair out at a time;
-  exact McNemar test and a bootstrap over pairs. The plan, the request set's manifest and
-  the baselines were committed before the GPU jobs. CI runs 177 tests in ten modules.
-- Gemma 4 31B answered the 1,044 requests in job 25107731. On the last frame of each run,
-  with the setup stated and at sampling temperature 0, it was right for 44 of 58 runs,
-  against 45 for the regression on the colour-bar numbers (p = 1). Without the setup
-  stated, it was right for 28. Report
+  case. In each pair, one base setup ran as written and with one change. Three frames
+  per run, a note with the setup stated or without it, sampling temperature 0 and 0.7.
+  Baselines on the same pictures, three of them regressions fitted while leaving one
+  pair out at a time. Exact McNemar test and a bootstrap over pairs. The plan, the
+  request set's manifest and the baselines were committed before the GPU jobs. CI runs
+  177 tests in ten modules.
+- Gemma 4 31B answered the 1,044 requests in job 25107731. With the setup stated and at
+  sampling temperature 0, 31B was right for 44 of 58 runs on the last frame of each run.
+  The regression on the colour-bar numbers was right for 45 of them (p = 1). Without the
+  setup stated, at the same sampling temperature, 31B was right for 28. Report
   [November 3](docs/results-20261103.md), evidence
   [2026-11-03-wrong-setup-2](docs/evidence/2026-11-03-wrong-setup-2/README.md).
 - The message of `a15b832` names edits of index.html and CHANGELOG that landed in

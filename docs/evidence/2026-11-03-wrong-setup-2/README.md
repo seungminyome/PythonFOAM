@@ -1,7 +1,7 @@
 # November 3 evidence: wrong-setup test 2
 
-The first wrong-setup test, of October 30, had five wrong runs, one per kind of change, eight frames of
-each that look alike, and a rule on one number, the peak |U|, as the only competitor. This test has 29
+The first wrong-setup test, of October 30, had five wrong runs, one per kind of change, and eight frames of
+each that look alike. Its only competitor was a rule on one number, the peak |U|. This test has 29
 pairs of pimpleFoam runs of the 2D backward-facing step case. Each pair is one base setup drawn at
 random. Run as written it is the normal run; run with one change it is the wrong run. One run is one
 sample. The [plan](PLAN.md), the scoring, the baselines and the request set's manifest were committed
@@ -15,10 +15,10 @@ t07a and t07b are temperature 0.7 with seeds a and b.
 
 An answer is right when it calls a normal run `consistent` or a wrong run `inconsistent`. It is right
 for the right reason when the cause it names is also the run's own change, `none` for a normal run.
-The labels baseline of report.md is a logistic regression on five inputs made from the colour-bar
-numbers, the four numbers printed at the ends of the two colour bars: the two |U| numbers divided by
-the stated speed, the two p numbers divided by the square of the stated speed, and the logarithm of
-the stated viscosity. It is fitted while leaving one pair out at a time.
+The labels baseline of report.md is a logistic regression on five inputs. The colour-bar numbers are
+the four numbers printed at the ends of the two colour bars. Four inputs come from them: the two |U|
+numbers divided by the stated speed and the two p numbers divided by the square of the stated speed.
+The fifth is the logarithm of the stated viscosity. It is fitted while leaving one pair out at a time.
 
 In short (counts from [results/report.md](results/report.md) and [Reasons](#reasons)):
 
@@ -33,7 +33,7 @@ In short (counts from [results/report.md](results/report.md) and [Reasons](#reas
   sudden expansion or separation zone". The plotted window begins at the step's corner, so no picture of
   this test has a white area. The same two phrases appear in 4 of the 26 reasons on caught wrong
   runs, and 7 of those 26 say there is no step. The labels baseline has one false alarm.
-- Right for the right reason: 27 of 58, the 18 normal runs answered `consistent` and 9 wrong runs,
+- Right for the right reason: 27 of 58. These are the 18 normal runs answered `consistent` and 9 wrong runs,
   speed 7 and walls 2. No viscosity run got the cause `viscosity`; the causes named were walls 3,
   other 3, inlet speed 1, inlet profile 1. All 6 profile runs got `inlet_speed`, with the colour bar's maximum
   below the stated speed as the reason.
@@ -57,10 +57,10 @@ In short (counts from [results/report.md](results/report.md) and [Reasons](#reas
 
 Start and end times are in [job/sacct.txt](job/sacct.txt). The report and the reasons were made on a
 login node on 2026-11-04 with `wrong_setup_test2.py report`. The note inside test-set/manifest.json
-dates the added key "2026-11-03 21:20"; the commit that holds it, `3363525`, is from 21:14:12 MST, and
+dates the added key "2026-11-03 21:20". The commit that holds it, `3363525`, is from 21:14:12 MST, so
 the note's time is wrong. Commits: the plan at `97c3c41`, the unit tests at `33553c4`, B06 dropped
 at `3bc6d51`, the request set's manifest and the baselines at `91544e6`, and the manifest key at
-`3363525`, after job 25107037 and before 25107731. The job scripts are in [jobs/](jobs/).
+`3363525`. That last commit came after job 25107037 and before 25107731. The job scripts are in [jobs/](jobs/).
 
 ## Runs
 
@@ -68,7 +68,7 @@ All runs are laminar pimpleFoam runs on OpenFOAM v2212, with PISO and upwind for
 mesh of 20,540 cells. They use the settings of the first test: a fixed Δt of 5×10⁻⁶ s, 8,000 steps from
 t = 0.1 s to t = 0.14 s, every 500th step written. Each run starts from a written state of the developed
 flow of October 22, between t = 0.06 and 0.1 s, copied to a directory named `0.1`. The inlet speed of the base is set
-on the inlet patch and the viscosity in `transportProperties`; the developed flow itself ran at
+on the inlet patch and the viscosity in `transportProperties`. The developed flow itself ran at
 32.2 m/s and 1.56×10⁻⁵ m²/s. The step corner is at x = 0, y = 0.0127 m. The window is x 0 to 0.12 m, y 0 to 0.04 m. The step's
 face is therefore the window's left edge below 32 % of its height, and the inlet and the upper wall lie
 outside the window.
@@ -76,7 +76,7 @@ outside the window.
 `flow-check` ([flow-check.json](flow-check.json)) accepted all 58 runs: each ended with `End` after
 8,000 steps, and the last written U and `transportProperties` hold the design's entries. The largest
 Courant number of a whole run is above 1 in 21 normal and 24 wrong runs. In 44 of them the maximum
-comes in steps 2 to 41: the start state is the developed flow at 32.2 m/s and the base's inlet speed
+comes in steps 2 to 41. The start state is the developed flow at 32.2 m/s and the base's inlet speed
 differs, so the first steps adjust. B10-W, with the lower wall slipping, reaches 1.51 at step 5371.
 From the first frame on, steps 6000 to 8000, the normal runs stay at or below 0.43 and ten wrong runs
 lie above 0.5. These are the seven slip-wall runs at 0.81 to 2.05, viscosity ×100 at 23.5, ×300 at 172,
@@ -150,10 +150,10 @@ temperature 0; t07a and t07b are temperature 0.7 with seeds a and b. `C` is `con
 
 The plan is [PLAN.md](PLAN.md); [design.json](design.json) is the drawn design with the dropped pair
 under `dropped_pairs`. The changes: inlet speed factors 0.1, 0.2, 0.3, 0.5, 0.7, 0.8, 1.25 and 1.5;
-viscosity factors 0.1, 3, 5, 10, 20, 30, 100 and 300, the ×1000 run having diverged as the plan's
-Deviations records; `lowerWall` `slip` in 4 pairs and both walls `slip` in 3; the lowest 0.25, 0.5 or
-0.75 of the inlet faces at velocity 0, each twice. Inlet direction and start state were in the draft and were dropped after the
-pilot, recorded in [pilot/](pilot/): neither leaves a visible trace in the window.
+viscosity factors 0.1, 3, 5, 10, 20, 30, 100 and 300; `lowerWall` `slip` in 4 pairs and both walls
+`slip` in 3; the lowest 0.25, 0.5 or 0.75 of the inlet faces at velocity 0, each twice. The ×1000
+viscosity run diverged, as the plan's Deviations records. Inlet direction and start state were in the draft and were dropped after the
+pilot, which is recorded in [pilot/](pilot/). Neither leaves a visible trace in the window.
 
 - **Pictures.** Two single-field pictures of one written state, |U| and p, each on its own colour scale,
   in the solver's window. These are the v2 pictures of `picture_test.render_v2`. Steps 6000, 7000 and
@@ -167,7 +167,7 @@ pilot, recorded in [pilot/](pilot/): neither leaves a visible trace in the windo
   as described." The rest of the prompt is the same in both. It asks for `reason`, under 300 characters; `assessment`, one of `consistent`, `inconsistent` and
   `cannot_tell`; and `cause`, one of `none`, `inlet_speed`, `viscosity`, `walls`, `inlet_profile`,
   `inlet_direction`, `start_state`, `other`. In the stated condition the note holds
-  `intended_setup` with the base's inlet speed and viscosity; the blind note has no such field, and
+  `intended_setup` with the base's inlet speed and viscosity. The blind note has no such field, and
   its task line says "the case as described" where the stated one says "the intended setup". Both
   runs of a pair get the same text.
 - **Request settings.** `max_tokens` 320, no prompt cache, `seed` 20261103 for t0, 20261107 for t07a
@@ -181,11 +181,13 @@ pilot, recorded in [pilot/](pilot/): neither leaves a visible trace in the windo
   interval of the share right. By the plan, the conclusion "the model does better than the rules"
   needs p < 0.05 on the primary frames in the stated condition at t0. Anything else is reported as
   "not shown".
-- **Baselines**, computed by `wrong_setup_test2.py baselines` before the GPU job
-  ([baselines.json](baselines.json)): constant, `consistent` on every run; the peak rule of the first
-  test, `consistent` when peak |U| lies between 1 and 2 times the stated speed; logistic regression
-  with leave-one-pair-out on the labels, five numbers: U max and U min divided by the stated speed, p min and p max divided by its square, and the
-  logarithm of the stated viscosity; on the labels plus three pixel shares; and on the pixel shares alone.
+- **Baselines**, computed by `wrong_setup_test2.py baselines` before the GPU jobs
+  ([baselines.json](baselines.json)). The constant baseline answers `consistent` on every run. The
+  peak rule of the first test answers `consistent` when peak |U| lies between 1 and 2 times the
+  stated speed. Three logistic regressions are fitted with leave-one-pair-out. One is on the labels,
+  five numbers: U max and U min divided by the stated speed, p min and p max divided by its square, and the
+  logarithm of the stated viscosity. Another is on the labels plus three pixel shares, and the last on
+  the pixel shares alone.
   The first and third pixel shares are the parts of the |U| and the p picture drawn in the
   lowest 15 % of their colour scales. The second is how far along x such |U| pixels reach in the
   lowest quarter of the picture, as a share of its width.
@@ -193,8 +195,8 @@ pilot, recorded in [pilot/](pilot/): neither leaves a visible trace in the windo
 ## Leak check
 
 `build` writes [test-set/leak-check.json](test-set/leak-check.json) and `check` runs before any GPU
-time: 1,044 requests, no problem. After the picture data and the step, time and `intended_setup`
-fields are removed, all 174 request bodies of a set are the same text. Within a pair the two runs
+time: 1,044 requests, no problem. All 174 request bodies of a set are the same text once the picture data and
+the step, time and `intended_setup` fields are removed. Within a pair the two runs
 have the same stated numbers, so any rule on the request text gets exactly 29 of 58 in each
 condition. No run name is in any request. The answer key is in the [release](https://github.com/seungminyome/PythonFOAM/releases/tag/wrong-setup-2-2026-11-03), and its hash is
 [test-set/truth.private.sha256](test-set/truth.private.sha256). Prompt tokens were 1,013 to 1,049 in
@@ -213,8 +215,8 @@ frame.
   0.16 m/s in six of the seven runs, against at most 0.0061 m/s in a normal run.
 - **Viscosity ×0.1.** Like a normal run, with more and smaller spots and low-pressure cores.
 - **Viscosity ×3 to ×30.** Smooth layers, no spots, a smooth p. ×100 and ×300 are not developed
-  flows: the ×300 run's colour bar ends at 359 m/s against a stated 28.4 m/s and shows a jet along
-  the bottom. It ended normally with a Courant number of 379 at step 25.
+  flows. The ×300 run's colour bar ends at 359 m/s against a stated 28.4 m/s. The ×300 pictures
+  show a jet along the bottom. It ended normally with a Courant number of 379 at step 25.
 - **Inlet speed and inlet profile.** The pattern of a normal run; the colour-bar numbers differ from
   the stated speed. The profile change does not reach the window as a shape; it shows as a lower
   flow rate.
@@ -250,9 +252,9 @@ stated speed.
 
 Stated, temperature 0, step 8000, 31B is compared with two baselines. Against the labels baseline,
 13 frames only the model has right and 14 only the baseline (p = 1). The 95 % bootstrap interval of
-the model's share right is 0.67 to 0.84, the baseline's 0.67 to 0.88. Against the constant baseline
-the model is right on 26 frames the constant is not, the wrong runs it catches, and the constant on 11, the false alarms:
-p = 0.020, computed from the answers. The report's constant row compares the constant with the
+the model's share right is 0.67 to 0.84, the baseline's 0.67 to 0.88. Against the constant baseline,
+the model is right on 26 frames the constant is not, the wrong runs it catches. The constant is right
+on 11 frames the model is not, the false alarms. Computed from the answers, p = 0.020. The report's constant row compares the constant with the
 labels baseline, 17 against 1, p = 0.000145.
 
 Right per step (of 58), stated and blind:
@@ -267,7 +269,7 @@ Right per step (of 58), stated and blind:
 | blind t07b | 28 | 28 | 28 |
 
 At step 8000 all three stated sets give the same assessment on 41 of 58 frames, t0 and t07a on
-48, t0 and t07b on 48; blind, in the same order, 46, 53 and 48.
+48, t0 and t07b on 48. Blind, in the same order, the counts are 46, 53 and 48.
 
 ## Reasons
 
@@ -280,7 +282,7 @@ Read from `results/wrong-setup2-stated-t0/metrics.jsonl`, step 8000:
 - All 18 normal runs answered `consistent` name a separation or recirculation zone behind a step;
   12 of them also compare the maximum velocity with the stated speed. 6 of these 12 give a
   number: 4 the colour bar's maximum, 2 the stated speed alone.
-- The 8 inlet-speed runs: 7 reasons compare the colour bar's maximum with the stated speed; the
+- The 8 inlet-speed runs: 7 reasons compare the colour bar's maximum with the stated speed. The
   ×1.25 run (B27-W) is caught with the false alarms' sentence, "no step geometry (white area)",
   cause `other`.
 - The 6 inlet-profile runs: all reasons compare the colour bar's maximum with the stated speed and
@@ -289,8 +291,8 @@ Read from `results/wrong-setup2-stated-t0/metrics.jsonl`, step 8000:
   recirculation zone", cause `other`; ×10, ×20 and ×30 "uniform flow" or "no backward-facing step",
   cause `walls`; ×100 "a jet-like structure", `inlet_profile`; ×300 the 359 m/s maximum, `inlet_speed`.
   None names viscosity.
-- The 7 slip-wall runs: 4 caught, 2 with cause `walls` and 2 with `other`, "a simple channel"; the 3
-  missed, both walls slip twice and lower wall once, are answered with "a recirculation zone and
+- The 7 slip-wall runs: 4 caught, 2 with cause `walls` and 2 with `other`, "a simple channel". The 3
+  missed runs, both walls slip twice and lower wall once, are answered with "a recirculation zone and
   reattachment after a step" and "consistent with a backward-facing step flow at the given Reynolds
   number", with a sentence on the pressure field between them.
 
@@ -316,6 +318,6 @@ Read from `results/wrong-setup2-stated-t0/metrics.jsonl`, step 8000:
   the report and the reasons. `runtime/` holds the llama.cpp version, the GPU, the model file hashes
   and the server log as a gzip copy.
 - [jobs/](jobs/): the three job scripts and the build job's output. [job/sacct.txt](job/sacct.txt)
-  and the GPU job's output as a gzip copy.
+  and the output of GPU job 25107731 as a gzip copy.
 - [make_manifest.py](make_manifest.py) writes [manifest.json](manifest.json) and compares each
   byte-preserved file with its source.

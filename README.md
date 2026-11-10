@@ -11,7 +11,7 @@
 While OpenFOAM runs, Python draws the flow and asks a local picture-reading model
 what it sees. This repository shows what such a model can and cannot read from
 solver pictures. It builds on the PODFoam example of
-[PythonFOAM](https://github.com/argonne-lcf/PythonFOAM); the model runs under
+[PythonFOAM](https://github.com/argonne-lcf/PythonFOAM). The model runs under
 [llama.cpp](https://github.com/ggml-org/llama.cpp) on the same machine, and nothing
 it says goes back into the solver.
 
@@ -23,11 +23,11 @@ and p of one time step, and a question.
 | Question | What happened | Verdict |
 |---|---|---|
 | Where is the flow fastest, and where is the pressure lowest? | In most pictures it points at the right spot, far more often than a fixed guess does. | Works |
-| Does the picture style matter? | Yes. With one field per picture and axes in percent, the models placed both the fastest flow and the lowest pressure in 45 to 48 of 48 pictures. With the solver's original two-panel picture they found it in 2 to 17. | A lot |
-| Can it do that while the solver is running? | Yes. Asking every 250 steps adds under 1 % to the run time, and every file the solver wrote stayed the same. | Works |
-| Between snapshots, is the flow speeding up or slowing down? | It reads the trend when the change is clear, about 2 % or more. Smaller changes it misreads. | Works for clear changes |
-| Is this run about to crash? | It warns only one to five steps before the crash, when the field has already blown up. A simple rule on the numbers does as well. | No |
-| Was this run set up wrong? | A first test looked promising. A second, stricter test with 29 pairs of runs shows no lead over a simple rule: the model catches more wrong runs but also calls normal runs wrong. | Not shown |
+| Does the picture style matter? | Yes. With one field per picture and axes in percent, the models placed both the fastest flow and the lowest pressure in 45 to 48 of 48 pictures. With the solver's original two-panel picture they placed each in 2 to 17. | A lot |
+| Can it do that while the solver is running? | Yes. A request every 250 steps adds under 1 % to the run time of the same run with no model requests. The solver wrote the same files in both runs. | Works |
+| Between snapshots, is the flow speeding up or slowing down? | It reads a change in peak speed of 2 % or more. It misreads most smaller changes. | Works for clear changes |
+| Is this run about to crash? | It warns at most five steps before the crash. Simple rules on the numbers do as well or better. | No |
+| Was this run set up wrong? | In a first test, the lead of Gemma 4 31B over a simple rule rested on two runs. A second, stricter test with 29 pairs of runs shows no lead: 31B catches more wrong runs but also calls normal runs wrong. | Not shown |
 | Does a bigger model help? | The small E2B model does not read these pictures reliably. 12B is enough for positions. 31B sees small pressure spots better, but at judging a setup it is no better than a simple rule. | Partly |
 
 The exact counts, with a baseline for each test, are on the
@@ -39,8 +39,8 @@ The exact counts, with a baseline for each test, are on the
 *What the model sees: |U| and p of step 250 of a developed backward-facing-step
 flow, drawn by the running solver and sent to Gemma 4 12B.*
 
-Two things to keep in mind. All tests used 2D laminar flows and one extruded 3D
-case, so other flows may read differently. Only positions and fixed words are
+All tests used 2D laminar flows and one extruded 3D case, so other flows may read
+differently. Only positions and fixed words are
 scored; the free-text descriptions are not.
 
 ## How it works
@@ -79,7 +79,7 @@ make test          # 177 tests, about 2 minutes
 make evidence      # every file in a manifest matches its hash
 ```
 
-With an OpenFOAM sourced (v2012, v2106, v2212 or 8) and Python 3.10 to 3.12, the
+With OpenFOAM v2012, v2106, v2212 or 8 sourced and Python 3.10 to 3.12, the
 five-case suite with the small Gemma 4 E2B model on the CPU exercises the coupling
 and the verification. The downloads, the model, its image projector and llama.cpp,
 are about 3.4 GB, and no token is needed:
@@ -105,11 +105,11 @@ Each report records the setup, hardware, code revision and Slurm jobs of its run
 - [November 3](docs/results-20261103.md): wrong-setup test 2, 29 pairs of runs
   against rules on the same pictures.
 - [November 2](docs/results-20261102.md): the PR branches on four OpenFOAM versions,
-  why OpenFOAM 8 differs, 3D slice pictures, the crash test without times.
+  why OpenFOAM 8 differs, 3D slice pictures, the instability test without stated times.
 - [October 30](docs/results-20261030.md): OpenFOAM versions, the original PODFoam,
   the first wrong-setup test.
 - [October 28](docs/results-20261028.md): two requests in flight, 3D slices, the
-  crash test.
+  instability test.
 - [Evidence index](docs/evidence/README.md) · [Changelog](CHANGELOG.md).
 
 ## Where the code is

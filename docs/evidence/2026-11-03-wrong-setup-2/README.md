@@ -7,8 +7,8 @@ run; run with one change it is the wrong run. One run is one sample. The [plan](
 the baselines and the request set's manifest were committed at `97c3c41` and `91544e6` before any model
 request was sent.
 Gemma 4 31B, QAT Q4_0, answered 1,044 requests. In one condition the note states the intended inlet
-speed and viscosity, in the other it does not. Each condition ran at temperature 0 and at 0.7 with two
-seeds, on three states of each run. t0 is temperature 0; t07a and t07b are temperature 0.7 with seeds
+speed and viscosity, in the other it does not. Each condition ran at the model's sampling temperature 0
+and at 0.7 with two seeds, on three states of each run. t0 is temperature 0; t07a and t07b are temperature 0.7 with seeds
 a and b. The labels baseline of report.md is a logistic regression on five inputs made from the
 colour-bar numbers, the four numbers printed at the ends of the two colour bars: the two |U| numbers
 divided by the stated speed, the two p numbers divided by the square of the stated speed, and the
@@ -51,16 +51,16 @@ In short (counts from [results/report.md](results/report.md)):
 Start and end times are in [job/sacct.txt](job/sacct.txt). The report and the reasons were made on a
 login node on 2026-11-04 with `wrong_setup_test2.py report`. The note inside test-set/manifest.json
 dates the added key "2026-11-03 21:20"; the commit that holds it, `3363525`, is from 21:14:12 MST, and
-the note's time is wrong. Commits: `97c3c41` (the plan), `33553c4`
-(unit tests), `3bc6d51` (B06 dropped), `91544e6` (the request set's manifest and the baselines), `3363525` (the
-manifest key, after job 25107037 and before 25107731). The job scripts are in [jobs/](jobs/).
+the note's time is wrong. Commits: the plan at `97c3c41`, the unit tests at `33553c4`, B06 dropped
+at `3bc6d51`, the request set's manifest and the baselines at `91544e6`, and the manifest key at
+`3363525`, after job 25107037 and before 25107731. The job scripts are in [jobs/](jobs/).
 
 ## Runs
 
-All runs are pimpleFoam (OpenFOAM v2212, laminar, PISO, upwind for div(phi,U)) on the mesh of 20,540
-cells with the settings of the first test: a fixed Δt of 5×10⁻⁶ s, 8,000 steps from t = 0.1 s to
-t = 0.14 s, every 500th step written. Each run starts from a written state of the developed flow of
-October 22 (t = 0.06 to 0.1 s), copied to a directory named `0.1`. The inlet speed of the base is set
+All runs are laminar pimpleFoam runs on OpenFOAM v2212, with PISO and upwind for div(phi,U), on the
+mesh of 20,540 cells. They use the settings of the first test: a fixed Δt of 5×10⁻⁶ s, 8,000 steps from
+t = 0.1 s to t = 0.14 s, every 500th step written. Each run starts from a written state of the developed
+flow of October 22, between t = 0.06 and 0.1 s, copied to a directory named `0.1`. The inlet speed of the base is set
 on the inlet patch and the viscosity in `transportProperties`; the developed flow itself ran at
 32.2 m/s and 1.56×10⁻⁵ m²/s. The step corner is at x = 0, y = 0.0127 m. The window is x 0 to 0.12 m, y 0 to 0.04 m. The step's
 face is therefore the window's left edge below 32 % of its height, and the inlet and the upper wall lie
@@ -71,9 +71,9 @@ outside the window.
 Courant number of a whole run is above 1 in 21 normal and 24 wrong runs. In 44 of them the maximum
 comes in steps 2 to 41: the start state is the developed flow at 32.2 m/s and the base's inlet speed
 differs, so the first steps adjust. B10-W, with the lower wall slipping, reaches 1.51 at step 5371.
-From the first frame on (steps 6000 to 8000) the normal runs stay at or below 0.43 and ten wrong runs
-lie above 0.5: the seven slip-wall runs (0.81 to 2.05), viscosity ×100 (23.5) and ×300 (172), and inlet
-speed ×1.5 (0.505). The table gives each run with its answers at step 8000 in the six sets; the step of the whole-run Courant
+From the first frame on, steps 6000 to 8000, the normal runs stay at or below 0.43 and ten wrong runs
+lie above 0.5. These are the seven slip-wall runs at 0.81 to 2.05, viscosity ×100 at 23.5, ×300 at 172,
+and inlet speed ×1.5 at 0.505. The table gives each run with its answers at step 8000 in the six sets; the step of the whole-run Courant
 maximum is in parentheses. t0 is
 temperature 0; t07a and t07b are temperature 0.7 with seeds a and b. `C` is `consistent`, `I` is
 `inconsistent`, and the word after the colon is the cause the model named.
@@ -158,12 +158,12 @@ pilot, recorded in [pilot/](pilot/): neither leaves a visible trace in the windo
   viscosity are not given. Judge whether the pictures are consistent with a run of this case set up
   as described." The rest of the prompt is the same in both. It asks for `reason`, under 300 characters; `assessment`, one of `consistent`, `inconsistent` and
   `cannot_tell`; and `cause`, one of `none`, `inlet_speed`, `viscosity`, `walls`, `inlet_profile`,
-  `inlet_direction`, `start_state`, `other`). In the stated condition the note holds
+  `inlet_direction`, `start_state`, `other`. In the stated condition the note holds
   `intended_setup` with the base's inlet speed and viscosity; the blind note has no such field, and
   its task line says "the case as described" where the stated one says "the intended setup". Both
   runs of a pair get the same text.
-- **Request settings.** `max_tokens` 320, no prompt cache, `seed` 20261103 (t0), 20261107 (t07a),
-  20261108 (t07b); temperature 0 or 0.7. Server: llama.cpp b11429, context 4096, batch and ubatch 512,
+- **Request settings.** `max_tokens` 320, no prompt cache, `seed` 20261103 for t0, 20261107 for t07a
+  and 20261108 for t07b; temperature 0 or 0.7. Server: llama.cpp b11429, context 4096, batch and ubatch 512,
   256 image tokens per image, one slot ([results/server-31b.cmd](results/server-31b.cmd)).
 - **Scoring, fixed before any answer.** A normal run answered `consistent` or a wrong run
   `inconsistent` is right; `cannot_tell` is wrong on both. Right for the right reason adds that the
@@ -297,9 +297,9 @@ Read from `results/wrong-setup2-stated-t0/metrics.jsonl`, step 8000:
 - [test-set/](test-set/): the request manifest with every request's hash, the leak check and the
   answer key's hash. The requests themselves, 1,044 files of 178 to 233 KB and 225 MB in all, are in the
   [release](https://github.com/seungminyome/PythonFOAM/releases/tag/wrong-setup-2-2026-11-03).
-- [results/](results/): `run.json`, the server command, `runtime/` (llama.cpp version, GPU, the
-  model file hashes, the server log as a gzip copy), the six `metrics.jsonl` with every raw answer,
-  the report and the reasons.
+- [results/](results/): `run.json`, the server command, the six `metrics.jsonl` with every raw answer,
+  the report and the reasons. `runtime/` holds the llama.cpp version, the GPU, the model file hashes
+  and the server log as a gzip copy.
 - [jobs/](jobs/): the three job scripts and the build job's output. [job/sacct.txt](job/sacct.txt)
   and the GPU job's output as a gzip copy.
 - [make_manifest.py](make_manifest.py) writes [manifest.json](manifest.json) and compares each

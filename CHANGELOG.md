@@ -12,8 +12,8 @@ revision that produced it is given.
   index link it.
 - The How-it-works diagram in README.md numbers its arrows 1 to 6. The text above it
   names the mode it shows, the asynchronous mode `LLM_ASYNC=1`. The text below it adds
-  that in the synchronous mode, the default, the solver waits for the answer until a
-  deadline of 120 s by default.
+  that the synchronous mode is the default and that in it the solver waits for the answer,
+  with a deadline of 120 s unless set otherwise.
 - A wording and accuracy pass went over README.md, the results page, the reports of
   October 27 to November 3 and the November 3 evidence README. Statements that disagreed
   with the records were corrected; the other changes are wording and definitions.
@@ -37,8 +37,8 @@ revision that produced it is given.
   177 tests in ten modules.
 - Gemma 4 31B answered the 1,044 requests in job 25107731. With the setup stated and at
   sampling temperature 0, 31B was right for 44 of 58 runs on the last frame of each run.
-  The regression on the colour-bar numbers was right for 45 of them (p = 1). Without the
-  setup stated, at the same sampling temperature, 31B was right for 28. Report
+  The regression on the colour-bar numbers and the stated setup was right for 45 of them
+  (p = 1). Without the setup stated, at the same sampling temperature, 31B was right for 28. Report
   [November 3](docs/results-20261103.md), evidence
   [2026-11-03-wrong-setup-2](docs/evidence/2026-11-03-wrong-setup-2/README.md).
 - The message of `a15b832` names edits of index.html and CHANGELOG that landed in

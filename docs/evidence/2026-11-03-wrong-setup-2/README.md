@@ -15,14 +15,15 @@ t07a and t07b are temperature 0.7 with seeds a and b.
 
 An answer is right when it calls a normal run `consistent` or a wrong run `inconsistent`. It is right
 for the right reason when the cause it names is also the run's own change, `none` for a normal run.
-The labels baseline of report.md is a logistic regression on five inputs. The colour-bar numbers are
-the four numbers printed at the ends of the two colour bars. Four inputs come from them: the two |U|
-numbers divided by the stated speed and the two p numbers divided by the square of the stated speed.
-The fifth is the logarithm of the stated viscosity. It is fitted while leaving one pair out at a time.
+The labels baseline of report.md is a logistic regression on the colour-bar numbers and the stated
+setup, with five inputs. The colour-bar numbers are the four numbers printed at the ends of the two
+colour bars. Four inputs come from them: U max and U min of the |U| colour bar divided by the stated
+speed, and p min and p max of the p colour bar divided by the square of the stated speed. The fifth
+is the logarithm of the stated viscosity. It is fitted while leaving one pair out at a time.
 
 In short (counts from [results/report.md](results/report.md) and [Reasons](#reasons)):
 
-- Primary result, stated setup, temperature 0, last frame of each run: 31B is right for 44 of 58.
+- Primary result, stated condition, temperature 0, last frame of each run: 31B is right for 44 of 58.
   The baseline with most right answers, the labels baseline, is right for 45. They disagree on 27
   runs, 14 for the baseline and 13 for the model: exact McNemar p = 1. By the plan's criterion, p < 0.05, the
   conclusion "the model does better than the rules" is not shown.
@@ -183,10 +184,10 @@ pilot, which is recorded in [pilot/](pilot/). Neither leaves a visible trace in 
   "not shown".
 - **Baselines**, computed by `wrong_setup_test2.py baselines` before the GPU jobs
   ([baselines.json](baselines.json)). The constant baseline answers `consistent` on every run. The
-  peak rule of the first test answers `consistent` when peak |U| lies between 1 and 2 times the
-  stated speed. Three logistic regressions are fitted with leave-one-pair-out. One is on the labels,
-  five numbers: U max and U min divided by the stated speed, p min and p max divided by its square, and the
-  logarithm of the stated viscosity. Another is on the labels plus three pixel shares, and the last on
+  peak |U| rule of the first test answers `consistent` when peak |U| lies between 1 and 2 times the
+  stated speed. Three logistic regressions are fitted with leave-one-pair-out. One, the labels
+  baseline, uses five numbers: U max and U min divided by the stated speed, p min and p max divided by its square, and the
+  logarithm of the stated viscosity. Another uses those five plus three pixel shares, and the last uses
   the pixel shares alone.
   The first and third pixel shares are the parts of the |U| and the p picture drawn in the
   lowest 15 % of their colour scales. The second is how far along x such |U| pixels reach in the
@@ -247,7 +248,7 @@ Primary frames (58), right, and wrong runs caught by cause:
 
 The caught-by-cause columns are the stated condition. Blind, 31B t0 catches speed 7, viscosity 8,
 walls 6 and profile 4 of the wrong runs and answers 3 of 29 normal runs `consistent`. The baselines
-that use the stated numbers are the same in both conditions by construction; the peak rule needs the
+that use the stated numbers are the same in both conditions by construction; the peak |U| rule needs the
 stated speed.
 
 Stated, temperature 0, step 8000, 31B is compared with two baselines. Against the labels baseline,

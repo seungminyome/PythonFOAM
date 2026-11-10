@@ -36,21 +36,21 @@
 <tbody>
 <tr><td>Where is the flow fastest, and where is the pressure lowest?</td><td>In most pictures it points at the right spot, more often than a fixed guess does.</td><td>Works</td></tr>
 <tr><td>Does the picture style matter?</td><td>Yes. With one field per picture and axes in percent, four models placed both the fastest flow and the lowest pressure in 45 to 48 of 48 pictures. With the solver's original two-panel picture they placed each in 2 to 17.</td><td>A lot</td></tr>
-<tr><td>Can it do that while the solver is running?</td><td>Yes. A request every 250 steps adds under 1 % to the run time of the same run with no model requests. The solver wrote identical files in both runs.</td><td>Works</td></tr>
+<tr><td>Can it do that while the solver is running?</td><td>Yes. The test sent a request every 250 steps. These requests add under 1 % to the run time of the same run with no model requests. The solver wrote identical files in both runs.</td><td>Works</td></tr>
 <tr><td>Between snapshots, is the flow speeding up or slowing down?</td><td>It reads a change in peak speed of 2 % or more. It misreads most smaller changes.</td><td>Works for clear changes</td></tr>
 <tr><td>Is this run about to crash?</td><td>It warns at most five steps before the crash. Simple rules on the field values do as well or better.</td><td>No early warning</td></tr>
-<tr><td>Was this run set up wrong?</td><td>In a first test, the lead of Gemma 4 31B over a simple rule came from two runs. A second, stricter test with 29 pairs of runs shows no lead: 31B catches more wrong runs but also calls normal runs wrong.</td><td>No lead shown</td></tr>
-<tr><td>Does a bigger model help?</td><td>The small Gemma 4 E2B model does not read these pictures reliably. 12B is enough for positions. 31B sees small pressure spots better, but at judging a setup it is no better than a simple rule.</td><td>Partly</td></tr>
+<tr><td>Was this run set up wrong?</td><td>In a first test, the lead of Gemma 4 31B over a simple rule came from two runs. A second, stricter test with 29 pairs of runs shows no lead over a regression on the colour-bar numbers and the stated setup. 31B catches more wrong runs but also calls normal runs wrong.</td><td>No lead shown</td></tr>
+<tr><td>Does a bigger model help?</td><td>The small Gemma 4 E2B model does not read these pictures reliably. 12B is enough for positions. 31B sees small pressure spots better, but at judging a setup it shows no lead over a simple rule or a regression.</td><td>Partly</td></tr>
 </tbody>
 </table>
 </div>
-<p>The branches <code>pr/podfoam-fix</code> and <code>pr/podfoam-observer</code> are prepared for pull requests to PythonFOAM. Both build and pass the bridge validation on OpenFOAM v2012, v2106, v2212 and 8. The bridge validation runs ten time steps of PODFoam and checks the round trip of snapshots and POD modes between C++ and Python. Both branches also fix a bug in the original PODFoam, where the next snapshot overwrote the first snapshot of each SVD window.</p>
+<p>The branches <code>pr/podfoam-fix</code> and <code>pr/podfoam-observer</code>, prepared for pull requests to PythonFOAM, build and pass the bridge validation on OpenFOAM v2012, v2106, v2212 and 8. The bridge validation runs ten time steps of PODFoam and checks the round trip of snapshots and POD modes between C++ and Python. Both branches also fix a bug in the original PODFoam, where the next snapshot overwrote the first snapshot of each SVD window.</p>
 
 <h2 id="numbers">Key numbers</h2>
-<p>A position counts as right when it lies within 10 % of the plotted range of the true position. The fixed guess is the best single answer given to every picture; where a simple rule on the field values did better, it is given too. The four models are Gemma 4 12B, 26B-A4B and 31B, and Qwen3.5-35B-A3B. Each report has the details.</p>
+<p>A position counts as right when it lies within 10 % of the plotted range of the true position. The fixed guess is the best single answer given to every picture. Where a simple rule on the field values or a regression did better than a model, it is given too. The four models are Gemma 4 12B, 26B-A4B and 31B, and Qwen3.5-35B-A3B. Each report has the details.</p>
 <div class="table">
 <table>
-<thead><tr><th>Test</th><th>Model</th><th>Model right</th><th>Fixed guess or rule</th><th>Report</th></tr></thead>
+<thead><tr><th>Test</th><th>Model</th><th>Model right</th><th>Fixed guess, rule or regression</th><th>Report</th></tr></thead>
 <tbody>
 <tr><td>Fastest flow and lowest pressure, 140 pictures of a developed flow</td><td>four models</td><td>fastest flow 106 to 121; lowest pressure 130 to 139</td><td>fastest flow 16; lowest pressure 17</td><td><a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/results-20261022-live.md">Oct 22</a></td></tr>
 <tr><td>The same on 48 start-up pictures, new style against the solver's original style</td><td>four models</td><td>45 to 48 against 2 to 17</td><td>7 to 10</td><td><a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/results-20261022-live.md">Oct 22</a></td></tr>
@@ -60,7 +60,7 @@
 <tr><td>Speeding up or slowing down, 45 sequences of three pictures</td><td>12B</td><td>peak speed 32; lowest pressure 28</td><td>peak speed 15; lowest pressure 20</td><td><a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/results-20261027.md">Oct 27</a></td></tr>
 <tr><td>About to crash or not, 54 sequences</td><td>four models</td><td>30 to 33</td><td>27; rule on the growth of peak |U| 33; rule on the growth of the largest cell-to-cell jump 38</td><td><a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/results-20261028.md">Oct 28</a></td></tr>
 <tr><td>Set up wrong or not, first test, 80 pictures</td><td>four models</td><td>31B 67, the others 41 to 45</td><td>40; rule 56</td><td><a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/results-20261030.md">Oct 30</a></td></tr>
-<tr><td>Set up wrong or not, second test, 58 runs</td><td>31B</td><td>44</td><td>29; rule 45</td><td><a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/results-20261103.md">Nov 3</a></td></tr>
+<tr><td>Set up wrong or not, second test, 58 runs</td><td>31B</td><td>44</td><td>29; regression on the colour-bar numbers and the stated setup 45</td><td><a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/results-20261103.md">Nov 3</a></td></tr>
 <tr><td>Cost of a request every 250 steps</td><td>12B</td><td>vs. no model requests: run time +0.7 %; 2,016 of 2,016 written files the same</td><td>no baseline</td><td><a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/results-20261027.md">Oct 27</a></td></tr>
 </tbody>
 </table>
@@ -70,8 +70,8 @@
 <ul>
 <li>The tests used 2D laminar flows and one extruded 3D case.</li>
 <li>Only positions and words from a fixed list are scored, not the model's descriptions.</li>
-<li>Parallel runs used 2 MPI ranks, and at most two requests were in flight at once.</li>
-<li>The two wrong-setup tests used one case each, and the second used one model.</li>
+<li>Parallel runs used 2 MPI ranks. At most two requests were in flight at once.</li>
+<li>Each wrong-setup test used one case. The second test used one model.</li>
 <li>One AI agent read the models' stated reasons, with no second judge.</li>
 <li>On another GPU the answer text changed, but the number of positions within 10 % did not.</li>
 </ul>
@@ -79,7 +79,7 @@
 <h2 id="reports">Reports</h2>
 <p>Each report gives the setup, hardware, code revision and Slurm jobs of its runs. Every evidence folder has a hash manifest that CI checks; the <a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/evidence/README.md">evidence index</a> lists them.</p>
 <ul>
-<li><a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/results-20261103.md">November 3</a>: wrong-setup test 2, 29 pairs of runs, the plan fixed before any request, baselines on the same pictures; that the model does better than the rules is not shown (<a href="https://github.com/seungminyome/PythonFOAM/releases/tag/wrong-setup-2-2026-11-03">downloads</a>). Evidence: <a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/evidence/2026-11-03-wrong-setup-2/README.md">wrong-setup test 2</a></li>
+<li><a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/results-20261103.md">November 3</a>: wrong-setup test 2, 29 pairs of runs, the plan fixed before any request, baselines on the same pictures; that the model does better than the baselines is not shown (<a href="https://github.com/seungminyome/PythonFOAM/releases/tag/wrong-setup-2-2026-11-03">downloads</a>). Evidence: <a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/evidence/2026-11-03-wrong-setup-2/README.md">wrong-setup test 2</a></li>
 <li><a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/results-20261102.md">November 2</a>: the final PR branches built and validated on all four versions, the pressure solver on openfoam.com, the sibling solvers, the error paths, why OpenFOAM 8 differs from v2212, the flaky test, a request on 2 MPI ranks, 12B suites on v2012 and 8, <code>setup_12b.sh</code>, slice pictures of the 3D case and the instability test without stated times. Evidence: <a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/evidence/2026-11-02-round2/README.md">round 2</a></li>
 <li><a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/results-20261030.md">October 30</a>: OpenFOAM v2012, v2106, v2212 and 8, comparison with the original PODFoam, wrong-setup test. Evidence: <a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/evidence/2026-10-30-versions/README.md">versions and the original PODFoam</a>, <a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/evidence/2026-10-30-wrong-setup/README.md">wrong-setup test</a></li>
 <li><a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/results-20261028.md">October 28</a>: two requests in flight, 3D slices, instability test, telemetry written during the run, trend words computed in the callback (<a href="https://github.com/seungminyome/PythonFOAM/releases/tag/tests-2026-10-28">downloads</a>). Evidence: <a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/evidence/2026-10-28-inflight/README.md">two in flight</a>, <a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/evidence/2026-10-28-callback/README.md">callback</a>, <a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/evidence/2026-10-28-3d/README.md">3D slice</a>, <a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/evidence/2026-10-28-instability/README.md">instability test</a>, <a href="https://github.com/seungminyome/PythonFOAM/blob/main/docs/evidence/2026-10-29-merged-check/README.md">merged-code run</a></li>

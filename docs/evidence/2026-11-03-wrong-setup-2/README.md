@@ -233,7 +233,7 @@ frame in all six sets, 154 rows, with its reason,
 the run's change and the cause named. The raw answers are in
 `results/<set>/metrics.jsonl`.
 
-Primary frames (58), right, and wrong runs caught by cause:
+Primary frames (58), right, and wrong runs caught by kind of change:
 
 | Answers from | Stated | Blind | Normal right (stated, of 29) | Speed (of 8) | Viscosity (of 8) | Walls (of 7) | Profile (of 6) |
 |---|---:|---:|---:|---:|---:|---:|---:|
@@ -246,10 +246,10 @@ Primary frames (58), right, and wrong runs caught by cause:
 | 31B t07a | 34 | 31 | 9 | 8 | 8 | 3 | 6 |
 | 31B t07b | 38 | 28 | 13 | 8 | 7 | 4 | 6 |
 
-The caught-by-cause columns are the stated condition. Blind, 31B t0 catches speed 7, viscosity 8,
-walls 6 and profile 4 of the wrong runs and answers 3 of 29 normal runs `consistent`. The baselines
-that use the stated numbers are the same in both conditions by construction; the peak |U| rule needs the
-stated speed.
+The Speed, Viscosity, Walls and Profile columns are for the stated condition. Blind, 31B t0 catches speed 7, viscosity 8,
+walls 6 and profile 4 of the wrong runs and answers 3 of 29 normal runs `consistent`. The regressions
+that use the stated numbers are the same in both conditions by construction. The peak |U| rule needs the
+stated speed. The plan scores it in the stated condition only, so its Blind cell is empty.
 
 Stated, temperature 0, step 8000, 31B is compared with two baselines. Against the labels baseline,
 13 frames only the model has right and 14 only the baseline (p = 1). The 95 % bootstrap interval of

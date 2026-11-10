@@ -30,6 +30,10 @@ manifest marks these files as kind `gzip copy`. Each folder has a hash manifest,
 
 Release assets hold what the repository leaves out:
 
+- [wrong-setup-2-2026-11-03](https://github.com/seungminyome/PythonFOAM/releases/tag/wrong-setup-2-2026-11-03):
+  wrong-setup test 2. It holds the 1,044 requests with the answer key, every raw answer of
+  job 25107731 and the 60 run cases.
+
 - [tests-2026-10-27](https://github.com/seungminyome/PythonFOAM/releases/tag/tests-2026-10-27):
   the October 27 archives. They hold the five picture jobs, the two new test sets, the
   cylinder runs, the periodic run without time directories, the MPI and POD-file runs

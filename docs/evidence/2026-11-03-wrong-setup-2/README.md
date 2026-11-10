@@ -182,7 +182,7 @@ pilot, recorded in [pilot/](pilot/): neither leaves a visible trace in the windo
 time: 1,044 requests, no problem. After the picture data and the step, time and `intended_setup`
 fields are removed, all 174 request bodies of a set are the same text. Within a pair the two runs
 have the same stated numbers, so any rule on the request text gets exactly 29 of 58 in each
-condition. No run name is in any request; the answer key stays on the cluster and its hash is
+condition. No run name is in any request. The answer key is in the [release](https://github.com/seungminyome/PythonFOAM/releases/tag/wrong-setup-2-2026-11-03), and its hash is
 [test-set/truth.private.sha256](test-set/truth.private.sha256). Prompt tokens were 1,013 to 1,049 in
 all six sets.
 
@@ -295,8 +295,8 @@ Read from `results/wrong-setup2-stated-t0/metrics.jsonl`, step 8000:
   [baselines.json](baselines.json): the baselines' answers. [contact-8000.png](contact-8000.png).
 - [pilot/](pilot/): design, flow check, visibility measure and contact sheet of the 13 pilot runs.
 - [test-set/](test-set/): the request manifest with every request's hash, the leak check and the
-  answer key's hash. The requests themselves are 1,044 files of 178 to 233 KB, 225 MB in all, and
-  stay on the cluster.
+  answer key's hash. The requests themselves, 1,044 files of 178 to 233 KB and 225 MB in all, are in the
+  [release](https://github.com/seungminyome/PythonFOAM/releases/tag/wrong-setup-2-2026-11-03).
 - [results/](results/): `run.json`, the server command, `runtime/` (llama.cpp version, GPU, the
   model file hashes, the server log as a gzip copy), the six `metrics.jsonl` with every raw answer,
   the report and the reasons.

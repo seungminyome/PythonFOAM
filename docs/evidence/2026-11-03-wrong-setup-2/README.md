@@ -86,7 +86,7 @@ maximum is in parentheses. t0 is
 temperature 0; t07a and t07b are temperature 0.7 with seeds a and b. `C` is `consistent`, `I` is
 `inconsistent`, and the word after the colon is the cause the model named.
 
-| Run | Stated speed, ν (m²/s) | Change | Co, whole run (step) | Co from step 6000 | stated t0 | t07a | t07b | blind t0 | t07a | t07b |
+| Run | Stated speed, ν (m²/s) | Change | Co, whole run (step) | Co from step 6000 | stated t0 | stated t07a | stated t07b | blind t0 | blind t07a | blind t07b |
 |---|---|---|---:|---:|---|---|---|---|---|---|
 | B01-N | 37.3 m/s, 2.3e-05 | none | 1.59 (2) | 0.383 | C | I:other | I:walls | I:other | I:other | I:other |
 | B01-W | 37.3 m/s, 2.3e-05 | lowerWall and upperWall slip for noSlip | 1.6 (2) | 0.806 | C | C | C | C | C | I:other |

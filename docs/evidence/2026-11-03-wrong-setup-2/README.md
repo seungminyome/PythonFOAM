@@ -1,7 +1,7 @@
 # November 3 evidence: wrong-setup test 2
 
 The first wrong-setup test, of October 30, had five wrong runs, one per kind of change, and eight frames of
-each that look alike. Its only competitor was a rule on one number, the peak |U|. This test has 29
+each that look alike. Besides the constant baseline, its only competitor was a rule on one number, the peak |U|. This test has 29
 pairs of pimpleFoam runs of the 2D backward-facing step case. Each pair is one base setup drawn at
 random. Run as written it is the normal run; run with one change it is the wrong run. One run is one
 sample. The [plan](PLAN.md), the scoring, the baselines and the request set's manifest were committed
@@ -173,7 +173,7 @@ pilot, which is recorded in [pilot/](pilot/). Neither leaves a visible trace in 
   runs of a pair get the same text.
 - **Request settings.** `max_tokens` 320, no prompt cache, `seed` 20261103 for t0, 20261107 for t07a
   and 20261108 for t07b; temperature 0 or 0.7. Server: llama.cpp b11429, context 4096, batch and ubatch 512,
-  256 image tokens per image, one slot, which takes one request at a time
+  an image-token limit of 256 per image, one slot, which takes one request at a time
   ([results/server-31b.cmd](results/server-31b.cmd)).
 - **Scoring, fixed before any answer.** A normal run answered `consistent` or a wrong run
   `inconsistent` is right; `cannot_tell` is wrong on both. Right for the right reason adds that the
@@ -200,8 +200,8 @@ time: 1,044 requests, no problem. All 174 request bodies of a set are the same t
 the step, time and `intended_setup` fields are removed. Within a pair the two runs
 have the same stated numbers, so any rule on the request text gets exactly 29 of 58 in each
 condition. No run name is in any request. The answer key is in the [release](https://github.com/seungminyome/PythonFOAM/releases/tag/wrong-setup-2-2026-11-03), and its hash is
-[test-set/truth.private.sha256](test-set/truth.private.sha256). Prompt tokens were 1,013 to 1,049 in
-all six sets.
+[test-set/truth.private.sha256](test-set/truth.private.sha256). Prompt tokens per request were 1,045 to
+1,049 in the three stated sets and 1,013 to 1,014 in the three blind sets.
 
 ## What the pictures show
 
@@ -299,7 +299,7 @@ Read from `results/wrong-setup2-stated-t0/metrics.jsonl`, step 8000:
 
 ## Checks outside the design
 
-- A threshold on the largest Courant number after the first frame flags 10 of the 29 wrong runs with
+- A threshold on the largest Courant number from the first frame on flags 10 of the 29 wrong runs with
   no false alarm. The threshold lies between 0.43, the normal runs' largest, and 0.5. It flags all 7
   slip-wall runs, viscosity ×100 and ×300 and inlet speed ×1.5. It needs the solver log, not a
   picture, and it was chosen after the counts were seen.

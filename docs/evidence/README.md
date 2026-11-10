@@ -1,7 +1,7 @@
 # Evidence
 
-Recorded runs, one folder per test, named by date. The table lists each folder with
-its jobs, code and report. Each folder has a hash manifest, and `check_manifest.py`
+Recorded runs, in folders named by date. The table lists each folder with its runs,
+code and report. Each folder has a hash manifest, and `check_manifest.py`
 checks it. Requests, responses and arrays keep their recorded bytes. Logs and other
 large text records are gzip copies in 14 of the 19 folders, and the folder's manifest
 marks these files as kind `gzip copy`.

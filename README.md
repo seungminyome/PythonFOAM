@@ -34,8 +34,8 @@ of them.
 The fixed guess is the best single answer given to every picture. The four models are
 Gemma 4 12B, 26B-A4B and 31B, and Qwen3.5-35B-A3B.
 
-The exact counts, with a baseline for each test, are on the
-[results page](https://seungminyome.github.io/PythonFOAM/) and in the reports below.
+The exact counts and the baselines are on the
+[results page](https://seungminyome.github.io/PythonFOAM/) and in the reports it lists.
 The models' answers are in the [evidence folders](docs/evidence/README.md) and in the
 releases they link, and each folder has a hash manifest.
 
@@ -124,15 +124,18 @@ Each report records the setup, hardware, code revision and Slurm jobs of its run
   original PODFoam, the first wrong-setup test.
 - [October 28](docs/results-20261028.md): two requests in flight, 3D slices, the
   instability test.
+- Earlier reports, October 13 to 27: on the
+  [results page](https://seungminyome.github.io/PythonFOAM/#reports).
 - [Evidence index](docs/evidence/README.md) · [Changelog](CHANGELOG.md).
 
 ## Where the code is
 
 The observer lives in `Solver_Examples/PODFoam/`: the `Python*.H` hooks and
-`llm_demo/`. The other examples are as in argonne-lcf/PythonFOAM. Branch
-`pr/podfoam-fix` holds the fixes alone, and `pr/podfoam-observer` adds the hooks and
-the observer. Both fix a bug in the original PODFoam, where the next snapshot
-overwrote the first snapshot of each SVD window. The
+`llm_demo/`. Branch `pr/podfoam-fix` holds the fixes alone, and `pr/podfoam-observer`
+adds the hooks and the observer. Both fix a bug in the original PODFoam, where the next
+snapshot overwrote the first snapshot of each SVD window. The fix for this bug is also
+in `PODFoam_Debug`, `APMOSFoam` and `AEFoam`, and the other examples are as in
+argonne-lcf/PythonFOAM. The
 [November 2 report](docs/results-20261102.md) says what the fix changes.
 [HOOKS.md](Solver_Examples/PODFoam/HOOKS.md) describes the two optional hooks,
 `analysis_func` and `mesh_func`. The

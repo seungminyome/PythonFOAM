@@ -1,42 +1,49 @@
 # November 3 evidence: wrong-setup test 2
 
 The first wrong-setup test, of October 30, had five wrong runs, one per kind of change, eight frames of
-each that look alike, and a one-number rule as the only competitor. This test has 29 pairs of pimpleFoam
-runs of the 2D step case. Each pair is one base setup drawn at random. Run as written it is the normal
-run; run with one change it is the wrong run. One run is one sample. The [plan](PLAN.md), the scoring,
-the baselines and the request set's manifest were committed at `97c3c41` and `91544e6` before any model
-request was sent.
-Gemma 4 31B, QAT Q4_0, answered 1,044 requests. In one condition the note states the intended inlet
-speed and viscosity, in the other it does not. Each condition ran at the model's sampling temperature 0
-and at 0.7 with two seeds, on three frames of each run. t0 is temperature 0; t07a and t07b are temperature 0.7 with seeds
-a and b. The labels baseline of report.md is a logistic regression on five inputs made from the
-colour-bar numbers, the four numbers printed at the ends of the two colour bars: the two |U| numbers
-divided by the stated speed, the two p numbers divided by the square of the stated speed, and the
-logarithm of the stated viscosity. It is fitted while leaving one pair out at a time.
+each that look alike, and a rule on one number, the peak |U|, as the only competitor. This test has 29
+pairs of pimpleFoam runs of the 2D backward-facing step case. Each pair is one base setup drawn at
+random. Run as written it is the normal run; run with one change it is the wrong run. One run is one
+sample. The [plan](PLAN.md), the scoring, the baselines and the request set's manifest were committed
+at `97c3c41` and `91544e6` before any model request was sent.
 
-In short (counts from [results/report.md](results/report.md)):
+Gemma 4 31B, as the 4-bit QAT Q4_0 file, answered 1,044 requests. Each request carries the pictures
+of one frame, |U| and p, and a short text note. In the stated condition the note gives the intended
+inlet speed and viscosity; in the blind condition it does not. Each condition ran at the model's
+sampling temperature 0 and at 0.7 with two seeds, on three frames of each run. t0 is temperature 0;
+t07a and t07b are temperature 0.7 with seeds a and b.
+
+An answer is right when it calls a normal run `consistent` or a wrong run `inconsistent`. It is right
+for the right reason when the cause it names is also the run's own change, `none` for a normal run.
+The labels baseline of report.md is a logistic regression on five inputs made from the colour-bar
+numbers, the four numbers printed at the ends of the two colour bars: the two |U| numbers divided by
+the stated speed, the two p numbers divided by the square of the stated speed, and the logarithm of
+the stated viscosity. It is fitted while leaving one pair out at a time.
+
+In short (counts from [results/report.md](results/report.md) and [Reasons](#reasons)):
 
 - Primary result, stated setup, temperature 0, last frame of each run: 31B is right for 44 of 58.
-  The baseline with most right answers, the labels baseline, is right for 45. They disagree on 27 runs, 14 for the
-  baseline and 13 for the model: exact McNemar p = 1. By the plan's criterion the conclusion
-  "the model does better than the rules" is not shown.
+  The baseline with most right answers, the labels baseline, is right for 45. They disagree on 27
+  runs, 14 for the baseline and 13 for the model: exact McNemar p = 1. By the plan's criterion, p < 0.05, the
+  conclusion "the model does better than the rules" is not shown.
 - 31B catches wrong runs: 26 of 29. By kind, inlet speed 8 of 8, viscosity 8 of 8, inlet profile 6
   of 6, walls 4 of 7. The labels baseline catches 17: walls 7 of 7, speed 4, viscosity 2, profile 4.
 - 31B raises false alarms: 11 of 29 normal runs are answered `inconsistent`. Nine of the eleven
   reasons say the picture shows no backward-facing step: "no step geometry (white area)", "no
-  sudden expansion or separation zone". The window begins at the step's corner, so no picture of
-  this test has a white area. These two phrases appear in 4 reasons on wrong runs, and 7 wrong-run
-  reasons say there is no step. The labels baseline has one false alarm.
+  sudden expansion or separation zone". The plotted window begins at the step's corner, so no picture of
+  this test has a white area. The same two phrases appear in 4 of the 26 reasons on caught wrong
+  runs, and 7 of those 26 say there is no step. The labels baseline has one false alarm.
 - Right for the right reason: 27 of 58, the 18 normal runs answered `consistent` and 9 wrong runs,
   speed 7 and walls 2. No viscosity run got the cause `viscosity`; the causes named were walls 3,
   other 3, inlet speed 1, inlet profile 1. All 6 profile runs got `inlet_speed`, with the colour bar's maximum
   below the stated speed as the reason.
 - Blind, without the stated numbers, 31B answers `inconsistent` on 51 of 58 frames and is right for
-  28, below the constant baseline's 29. The pixel baseline, which also sees no number, gets 44.
+  28, below the constant baseline's 29. The pixels-only baseline, which reads neither the stated nor the colour-bar
+  numbers, gets 44.
 - Sampling temperature 0.7 changes 10 of the 58 stated answers with each of the two seeds, and both
   seeds score lower: 34 and 38 of 58.
-- The earlier frames, steps 6000 and 7000, stated, temperature 0: 37 and 42 of 58. All 174 stated
-  frames: 123.
+- The earlier frames, steps 6000 and 7000, stated, temperature 0: 37 and 42 of 58 right. All 174
+  stated frames at temperature 0: 123 right.
 
 ## Jobs
 
@@ -78,7 +85,7 @@ maximum is in parentheses. t0 is
 temperature 0; t07a and t07b are temperature 0.7 with seeds a and b. `C` is `consistent`, `I` is
 `inconsistent`, and the word after the colon is the cause the model named.
 
-| Run | Stated speed, ν | Change | Co, whole run (step) | Co from step 6000 | stated t0 | t07a | t07b | blind t0 | t07a | t07b |
+| Run | Stated speed, ν (m²/s) | Change | Co, whole run (step) | Co from step 6000 | stated t0 | t07a | t07b | blind t0 | t07a | t07b |
 |---|---|---|---:|---:|---|---|---|---|---|---|
 | B01-N | 37.3 m/s, 2.3e-05 | none | 1.59 (2) | 0.383 | C | I:other | I:walls | I:other | I:other | I:other |
 | B01-W | 37.3 m/s, 2.3e-05 | lowerWall and upperWall slip for noSlip | 1.6 (2) | 0.806 | C | C | C | C | C | I:other |
@@ -148,8 +155,9 @@ Deviations records; `lowerWall` `slip` in 4 pairs and both walls `slip` in 3; th
 0.75 of the inlet faces at velocity 0, each twice. Inlet direction and start state were in the draft and were dropped after the
 pilot, recorded in [pilot/](pilot/): neither leaves a visible trace in the window.
 
-- **Pictures.** The two v2 pictures of one written state, |U| and p each on its own colour scale, in the
-  solver's window (`picture_test.render_v2`). Steps 6000, 7000 and 8000 of each run: 174 frames.
+- **Pictures.** Two single-field pictures of one written state, |U| and p, each on its own colour scale,
+  in the solver's window. These are the v2 pictures of `picture_test.render_v2`. Steps 6000, 7000 and
+  8000 of each run: 174 frames.
 - **Prompt.** The system prompt says: "The case is a 2D incompressible laminar flow over a
   backward-facing step: a uniform inlet in +x upstream of the plotted part, no-slip stationary walls,
   a zero-gradient outlet, started from a developed state of this flow." In the stated condition it
@@ -164,17 +172,23 @@ pilot, recorded in [pilot/](pilot/): neither leaves a visible trace in the windo
   runs of a pair get the same text.
 - **Request settings.** `max_tokens` 320, no prompt cache, `seed` 20261103 for t0, 20261107 for t07a
   and 20261108 for t07b; temperature 0 or 0.7. Server: llama.cpp b11429, context 4096, batch and ubatch 512,
-  256 image tokens per image, one slot ([results/server-31b.cmd](results/server-31b.cmd)).
+  256 image tokens per image, one slot, which takes one request at a time
+  ([results/server-31b.cmd](results/server-31b.cmd)).
 - **Scoring, fixed before any answer.** A normal run answered `consistent` or a wrong run
   `inconsistent` is right; `cannot_tell` is wrong on both. Right for the right reason adds that the
-  cause is the run's own. The primary score is on the step 8000 frames. Exact McNemar test against the baseline with most
-  right answers, bootstrap over pairs for the interval.
+  cause is the run's own, `none` for a normal run. The primary score is on the step 8000 frames. Exact
+  McNemar test against the baseline with most right answers, and a bootstrap over pairs for the 95 %
+  interval of the share right. By the plan, the conclusion "the model does better than the rules"
+  needs p < 0.05 on the primary frames in the stated condition at t0. Anything else is reported as
+  "not shown".
 - **Baselines**, computed by `wrong_setup_test2.py baselines` before the GPU job
-  ([baselines.json](baselines.json)): constant; the peak rule of the first test, peak |U| between 1 and
-  2 times the stated speed; logistic regression with leave-one-pair-out on the labels, five numbers:
-  U max and U min divided by the stated speed, p min and p max divided by its square, and the
-  logarithm of the stated viscosity; on the labels plus three pixel shares; and on the pixel shares
-  alone.
+  ([baselines.json](baselines.json)): constant, `consistent` on every run; the peak rule of the first
+  test, `consistent` when peak |U| lies between 1 and 2 times the stated speed; logistic regression
+  with leave-one-pair-out on the labels, five numbers: U max and U min divided by the stated speed, p min and p max divided by its square, and the
+  logarithm of the stated viscosity; on the labels plus three pixel shares; and on the pixel shares alone.
+  The first and third pixel shares are the parts of the |U| and the p picture drawn in the
+  lowest 15 % of their colour scales. The second is how far along x such |U| pixels reach in the
+  lowest quarter of the picture, as a share of its width.
 
 ## Leak check
 
@@ -234,10 +248,10 @@ walls 6 and profile 4 of the wrong runs and answers 3 of 29 normal runs `consist
 that use the stated numbers are the same in both conditions by construction; the peak rule needs the
 stated speed.
 
-Stated, temperature 0, step 8000, 31B against each baseline: against the labels baseline 13 frames
-only the model has right and 14 only the baseline (p = 1); the 95 % bootstrap interval of the model's
-share is 0.67 to 0.84, the baseline's 0.67 to 0.88. Against the constant baseline the model is right on
-26 frames the constant is not, the wrong runs it catches, and the constant on 11, the false alarms:
+Stated, temperature 0, step 8000, 31B is compared with two baselines. Against the labels baseline,
+13 frames only the model has right and 14 only the baseline (p = 1). The 95 % bootstrap interval of
+the model's share right is 0.67 to 0.84, the baseline's 0.67 to 0.88. Against the constant baseline
+the model is right on 26 frames the constant is not, the wrong runs it catches, and the constant on 11, the false alarms:
 p = 0.020, computed from the answers. The report's constant row compares the constant with the
 labels baseline, 17 against 1, p = 0.000145.
 
@@ -253,7 +267,7 @@ Right per step (of 58), stated and blind:
 | blind t07b | 28 | 28 | 28 |
 
 At step 8000 all three stated sets give the same assessment on 41 of 58 frames, t0 and t07a on
-48, t0 and t07b on 48; blind 46, 53 and 48.
+48, t0 and t07b on 48; blind, in the same order, 46, 53 and 48.
 
 ## Reasons
 
@@ -282,11 +296,12 @@ Read from `results/wrong-setup2-stated-t0/metrics.jsonl`, step 8000:
 
 ## Checks outside the design
 
-- A threshold on the largest Courant number after the first frame, between 0.43, the normal runs' largest, and 0.5, flags 10 of the 29 wrong runs with no false alarm: all 7 slip-wall runs, viscosity
-  ×100 and ×300 and inlet speed ×1.5. It needs the solver log, not a picture, and it was chosen after
-  the counts were seen.
-- The whole-run Courant number of the first test flagged its wrong runs; here it is above 1 in 21 of
-  29 normal runs, because each base's inlet speed differs from the start state's.
+- A threshold on the largest Courant number after the first frame flags 10 of the 29 wrong runs with
+  no false alarm. The threshold lies between 0.43, the normal runs' largest, and 0.5. It flags all 7
+  slip-wall runs, viscosity ×100 and ×300 and inlet speed ×1.5. It needs the solver log, not a
+  picture, and it was chosen after the counts were seen.
+- The whole-run Courant number of the first test flagged three of its five wrong runs with no false
+  alarm. Here it is above 1 in 21 of 29 normal runs, because each base's inlet speed differs from the start state's.
 
 ## Files
 

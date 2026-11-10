@@ -14,12 +14,12 @@ revision that produced it is given.
 ## 2026-11-03, wrong-setup test 2
 
 - `wrong_setup_test2.py` and its unit tests: 29 pairs of pimpleFoam runs of the step
-  case, one base setup run as written and with one change. Three states per run, a note
+  case, one base setup run as written and with one change. Three frames per run, a note
   with the setup stated or without it, temperature 0 and 0.7. Baselines on the same
   pictures, three of them regressions fitted while leaving one pair out at a time; exact
   McNemar test and a bootstrap over pairs. The plan, the request set's manifest and the
   baselines were committed before the GPU job. CI runs 177 tests in ten modules.
-- Gemma 4 31B on 1,044 requests (job 25107731): on the last state of each run with the
+- Gemma 4 31B on 1,044 requests (job 25107731): on the last frame of each run with the
   setup stated, 44 of 58 against 45 for the regression on the colour-bar numbers (p = 1);
   without the setup stated, 28. Report
   [November 3](docs/results-20261103.md), evidence

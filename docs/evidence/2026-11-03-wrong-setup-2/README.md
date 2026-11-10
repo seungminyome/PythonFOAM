@@ -8,7 +8,7 @@ the baselines and the request set's manifest were committed at `97c3c41` and `91
 request was sent.
 Gemma 4 31B, QAT Q4_0, answered 1,044 requests. In one condition the note states the intended inlet
 speed and viscosity, in the other it does not. Each condition ran at the model's sampling temperature 0
-and at 0.7 with two seeds, on three states of each run. t0 is temperature 0; t07a and t07b are temperature 0.7 with seeds
+and at 0.7 with two seeds, on three frames of each run. t0 is temperature 0; t07a and t07b are temperature 0.7 with seeds
 a and b. The labels baseline of report.md is a logistic regression on five inputs made from the
 colour-bar numbers, the four numbers printed at the ends of the two colour bars: the two |U| numbers
 divided by the stated speed, the two p numbers divided by the square of the stated speed, and the
@@ -16,7 +16,7 @@ logarithm of the stated viscosity. It is fitted while leaving one pair out at a 
 
 In short (counts from [results/report.md](results/report.md)):
 
-- Primary result, stated setup, temperature 0, last state of each run: 31B is right for 44 of 58.
+- Primary result, stated setup, temperature 0, last frame of each run: 31B is right for 44 of 58.
   The baseline with most right answers, the labels baseline, is right for 45. They disagree on 27 runs, 14 for the
   baseline and 13 for the model: exact McNemar p = 1. By the plan's criterion the conclusion
   "the model does better than the rules" is not shown.
@@ -33,9 +33,9 @@ In short (counts from [results/report.md](results/report.md)):
   below the stated speed as the reason.
 - Blind, without the stated numbers, 31B answers `inconsistent` on 51 of 58 frames and is right for
   28, below the constant baseline's 29. The pixel baseline, which also sees no number, gets 44.
-- Temperature 0.7 changes 10 of the 58 stated answers in each variant, and both variants are worse:
-  34 and 38 of 58.
-- The earlier states, steps 6000 and 7000, stated, temperature 0: 37 and 42 of 58. All 174 stated
+- Sampling temperature 0.7 changes 10 of the 58 stated answers with each of the two seeds, and both
+  seeds score lower: 34 and 38 of 58.
+- The earlier frames, steps 6000 and 7000, stated, temperature 0: 37 and 42 of 58. All 174 stated
   frames: 123.
 
 ## Jobs
@@ -252,7 +252,7 @@ Right per step (of 58), stated and blind:
 | blind t07a | 30 | 27 | 31 |
 | blind t07b | 28 | 28 | 28 |
 
-At step 8000 all three stated variants give the same assessment on 41 of 58 frames, t0 and t07a on
+At step 8000 all three stated sets give the same assessment on 41 of 58 frames, t0 and t07a on
 48, t0 and t07b on 48; blind 46, 53 and 48.
 
 ## Reasons

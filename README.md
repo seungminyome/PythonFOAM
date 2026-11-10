@@ -45,29 +45,35 @@ scored; the free-text descriptions are not.
 
 ## How it works
 
-The solver calls a Python hook once per time step. At a request step the hook forks
-a worker, which draws the pictures and posts them to llama-server, the HTTP server
-of llama.cpp. The solver keeps stepping, and the answer is read and recorded at a
-later step together with the arrays it came from.
+The solver calls a Python hook, `analysis_func` in `python_module.py`, once per time
+step. The diagram shows one request in the asynchronous mode, `LLM_ASYNC=1`. Time runs
+from top to bottom. Solid arrows send something, and dashed arrows bring something back.
+At step 3 the solver goes on with the next time step and does not wait for the model.
 
 ```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
 sequenceDiagram
-    participant S as PODFoam (C++)
-    participant P as python_module.py
-    participant W as worker
-    participant L as llama-server
-    S->>P: analysis_func(state) at a request step
-    P->>W: fork
-    P-->>S: return, the solver keeps stepping
+    autonumber
+    participant S as Solver (PODFoam, C++)
+    participant P as Python hook
+    participant W as Worker (forked copy)
+    participant L as Model server (llama-server)
+    S->>P: state at a request step
+    P->>W: fork a worker
+    P-->>S: return at once, the solver keeps stepping
     W->>L: pictures and request
     L-->>W: answer
     W-->>P: answer, read at a later step
 ```
 
-The requests can be synchronous or asynchronous, once or every N steps, with up to
-eight unanswered at a time. MPI runs gather the fields to the master rank, and 3D meshes are
-drawn through a plane slice. The three request modes, the two picture styles and
-every setting are in [llm_demo/README.md](Solver_Examples/PODFoam/llm_demo/README.md).
+The worker draws |U| and p and posts them to llama-server, the HTTP server of llama.cpp.
+The answer is recorded together with the arrays the pictures came from. In the
+synchronous mode, the default, the solver waits for the answer instead, until a deadline of 120 s by default.
+
+Requests go out once or every N steps, with up to eight unanswered at a time. MPI runs
+gather the fields to the master rank, and 3D meshes are drawn through a plane slice. The
+three request modes, the two picture styles and every setting are in
+[llm_demo/README.md](Solver_Examples/PODFoam/llm_demo/README.md).
 
 ## Quick start
 

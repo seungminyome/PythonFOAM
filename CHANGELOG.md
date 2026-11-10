@@ -3,6 +3,14 @@
 Dates are when a run or change happened. Where a run is recorded, the code
 revision that produced it is given.
 
+## 2026-11-04, the pages lead with the results
+
+- README.md and the results page open with a table of the questions put to the model,
+  what happened and a verdict. The results page then gives one row of key numbers per
+  test and six limitations; its long paragraphs moved out, and their numbers are in the
+  reports.
+- The reports of October 27 to November 3 open with a short summary.
+
 ## 2026-11-03, wrong-setup test 2
 
 - `wrong_setup_test2.py` and its unit tests: 29 pairs of pimpleFoam runs of the step

@@ -20,7 +20,7 @@ The labels baseline of report.md is a logistic regression on the colour-bar numb
 setup, with five inputs. The colour-bar numbers are the four numbers printed at the ends of the two
 colour bars. Four inputs come from them: U max and U min of the |U| colour bar divided by the stated
 speed, and p min and p max of the p colour bar divided by the square of the stated speed. The fifth
-is the logarithm of the stated viscosity. It is fitted while leaving one pair out at a time.
+is the logarithm of the stated viscosity. The regression is fitted while leaving one pair out at a time.
 
 In short (counts from [results/report.md](results/report.md) and [Reasons](#reasons)):
 

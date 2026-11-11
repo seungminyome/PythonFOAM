@@ -25,7 +25,7 @@ of them.
 |---|---|---|
 | Where is the flow fastest, and where is the pressure lowest? | In most pictures it points at the right spot, more often than a fixed guess does. | Works |
 | Does the picture style matter? | Yes. With one field per picture and axes in percent, four models placed both the fastest flow and the lowest pressure in 45 to 48 of 48 pictures. With the solver's original two-panel picture they placed each in 2 to 17. | A lot |
-| Can it do that while the solver is running? | Yes. The test sent a request every 250 steps. These requests add under 1 % to the run time of the same run with no model requests. The solver wrote identical files in both runs. | Works |
+| Can it do that while the solver is running? | Yes. A request every 250 steps adds under 1 % to the run time of the same run with no model requests. The solver wrote identical files in both runs. | Works |
 | Between snapshots, is the flow speeding up or slowing down? | It reads a change in peak speed of 2 % or more. It misreads most smaller changes. | Works for clear changes |
 | Is this run about to crash? | It warns at most five steps before the crash. Simple rules on the field values do as well or better. | No early warning |
 | Was this run set up wrong? | In a first test, the lead of Gemma 4 31B over a simple rule came from two runs. A second, stricter test with 29 pairs of runs shows no lead over a regression on the colour-bar numbers and the stated setup. 31B catches more wrong runs but also calls normal runs wrong. | No lead shown |

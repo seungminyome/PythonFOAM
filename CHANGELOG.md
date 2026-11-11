@@ -23,6 +23,10 @@ revision that produced it is given.
   - October 27: the doubling of right trend answers came with a prompt that asks the
     model to compare the colour-bar numbers, not with the new pictures alone.
   - README: `PODFoam_Debug`, `APMOSFoam` and `AEFoam` carry the same snapshot fix.
+  - README: one request waits for an answer at a time by default; a setting allows up
+    to eight.
+  - `llm_demo/README.md` had the same slice sentence as the November 2 report. Commit
+    `b37714a` on `pr/podfoam-observer` corrects it, and `main` merges it.
 
   Empty table cells were filled from the records. The other changes are wording, terms
   and definitions.

@@ -131,8 +131,8 @@ Each report records the setup, hardware, code revision and Slurm jobs of its run
 ## Where the code is
 
 The observer lives in `Solver_Examples/PODFoam/`: the `Python*.H` hooks and
-`llm_demo/`. Branch `pr/podfoam-fix` holds the fixes alone, and `pr/podfoam-observer`
-adds the hooks and the observer. Both fix a bug in the original PODFoam, where the next
+`llm_demo/`. Branch `pr/podfoam-fix` holds the solver changes and the bridge validation without
+the observer, and `pr/podfoam-observer` adds the hooks and the observer. Both fix a bug in the original PODFoam, where the next
 snapshot overwrote the first snapshot of each SVD window. The fix for this bug is also
 in `PODFoam_Debug`, `APMOSFoam` and `AEFoam`, and the other examples are as in
 argonne-lcf/PythonFOAM. The

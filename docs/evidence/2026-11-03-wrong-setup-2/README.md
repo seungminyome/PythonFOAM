@@ -316,7 +316,8 @@ Read from `results/wrong-setup2-stated-t0/metrics.jsonl`, step 8000:
 - [pilot/](pilot/): design, flow check, visibility measure and contact sheet of the 13 pilot runs.
 - [test-set/](test-set/): the request manifest with every request's hash, the leak check and the
   answer key's SHA-256 (`truth_sha256` in the manifest). The requests themselves, 1,044 files of 178 to 233 KB and 225 MB in all, are in the
-  [release](https://github.com/seungminyome/PythonFOAM/releases/tag/wrong-setup-2-2026-11-03).
+  [release](https://github.com/seungminyome/PythonFOAM/releases/tag/wrong-setup-2-2026-11-03). The release also holds the 60 run cases and the
+  server's response files of job 25107731.
 - [results/](results/): `run.json`, the server command, the six `metrics.jsonl` with every raw answer,
   the report and the reasons. `runtime/` holds the llama.cpp version, the GPU, the model file hashes
   and the server log as a gzip copy.

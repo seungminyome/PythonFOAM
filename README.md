@@ -75,8 +75,8 @@ The worker draws |U| and p and posts them to llama-server, the HTTP server of ll
 The answer is recorded together with the arrays the pictures came from. The
 synchronous mode is the default. In it the solver waits for the answer instead, with a deadline of 120 s unless set otherwise.
 
-Requests go out once or every N steps. Up to eight requests can wait for an answer at
-a time. MPI runs gather the fields to the master rank, and 3D meshes are drawn through a
+Requests go out once or every N steps. One request at a time waits for an answer by
+default, and a setting allows up to eight. MPI runs gather the fields to the master rank, and 3D meshes are drawn through a
 plane slice. [llm_demo/README.md](Solver_Examples/PODFoam/llm_demo/README.md) describes
 the request modes `observe`, `describe` and `sequence`, the two picture styles and every
 setting.

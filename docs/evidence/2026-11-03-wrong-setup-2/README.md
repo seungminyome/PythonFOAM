@@ -200,8 +200,8 @@ pilot, which is recorded in [pilot/](pilot/). Neither leaves a visible trace in 
 time: 1,044 requests, no problem. All 174 request bodies of a set are the same text once the picture data and
 the step, time and `intended_setup` fields are removed. Within a pair the two runs
 have the same stated numbers, so any rule on the request text gets exactly 29 of 58 in each
-condition. No run name is in any request. The answer key is in the [release](https://github.com/seungminyome/PythonFOAM/releases/tag/wrong-setup-2-2026-11-03), and its hash is
-[test-set/truth.private.sha256](test-set/truth.private.sha256). Prompt tokens per request were 1,045 to
+condition. No run name is in any request. The answer key is in the [release](https://github.com/seungminyome/PythonFOAM/releases/tag/wrong-setup-2-2026-11-03), and its SHA-256 is
+`truth_sha256` in [test-set/manifest.json](test-set/manifest.json); [test-set/truth.private.sha256](test-set/truth.private.sha256) holds its first 16 hex digits. Prompt tokens per request were 1,045 to
 1,049 in the three stated sets and 1,013 to 1,014 in the three blind sets.
 
 ## What the pictures show
@@ -315,7 +315,7 @@ Read from `results/wrong-setup2-stated-t0/metrics.jsonl`, step 8000:
   [baselines.json](baselines.json): the baselines' answers. [contact-8000.png](contact-8000.png).
 - [pilot/](pilot/): design, flow check, visibility measure and contact sheet of the 13 pilot runs.
 - [test-set/](test-set/): the request manifest with every request's hash, the leak check and the
-  answer key's hash. The requests themselves, 1,044 files of 178 to 233 KB and 225 MB in all, are in the
+  answer key's SHA-256 (`truth_sha256` in the manifest). The requests themselves, 1,044 files of 178 to 233 KB and 225 MB in all, are in the
   [release](https://github.com/seungminyome/PythonFOAM/releases/tag/wrong-setup-2-2026-11-03).
 - [results/](results/): `run.json`, the server command, the six `metrics.jsonl` with every raw answer,
   the report and the reasons. `runtime/` holds the llama.cpp version, the GPU, the model file hashes

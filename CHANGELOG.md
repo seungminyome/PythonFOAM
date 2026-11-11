@@ -19,6 +19,10 @@ revision that produced it is given.
 - `test_callback.py` skips a test when the record writer missed its 0.2 s budget and
   wrote no record. One CI run in 41 had failed there. Commit `9e278aa` on
   `pr/podfoam-observer`; `main` merges it.
+- Jobs 25191260 to 25191271 repeated the comparison for `PODFoam_Debug`, `APMOSFoam` and
+  `AEFoam` on the four versions, with the same result. Every `AEFoam` run crashes after its
+  first snapshot matrix, with the original code as with the branch. Job 25191272 built the
+  branch's four solvers as root in `romitmaulik1/pythonfoam_docker`.
 - Job 25191239 ran the Docker lines of the pull-request texts as root in
   `romitmaulik1/pythonfoam_docker`, pulled from Docker Hub with rootless Podman. The
   validation passes on `pr/podfoam-fix` and `pr/podfoam-observer`. A Docker daemon does not

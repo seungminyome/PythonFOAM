@@ -3,6 +3,17 @@
 Dates are when a run or change happened. Where a run is recorded, the code
 revision that produced it is given.
 
+## 2026-11-11, a small branch with the snapshot copy alone
+
+- Branch `pr/podfoam-snapshot-copy` (`8d29128`, two commits on argonne-lcf/PythonFOAM
+  `6fde869`) holds only the owned copy of each snapshot in `PythonComm.H` of PODFoam,
+  `PODFoam_Debug`, `APMOSFoam` and `AEFoam`: four files, 12 added lines each.
+- Jobs 25191171 to 25191174 built PODFoam from `6fde869` and from the branch on OpenFOAM 8,
+  v2012, v2106 and v2212. With the original, the first two columns of every snapshot matrix
+  are equal. With the branch they differ, and the written U and p are byte-identical to the
+  original's. Evidence
+  [2026-11-11-snapshot-copy](docs/evidence/2026-11-11-snapshot-copy/README.md).
+
 ## 2026-11-10, downloads of wrong-setup test 2, the README diagram, a wording and accuracy pass
 
 - Release [wrong-setup-2-2026-11-03](https://github.com/seungminyome/PythonFOAM/releases/tag/wrong-setup-2-2026-11-03)

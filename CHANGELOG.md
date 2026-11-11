@@ -13,6 +13,15 @@ revision that produced it is given.
   are equal. With the branch they differ, and the written U and p are byte-identical to the
   original's. Evidence
   [2026-11-11-snapshot-copy](docs/evidence/2026-11-11-snapshot-copy/README.md).
+- `pr/podfoam-fix-after-copy` (`c313cc7`) and `pr/podfoam-observer-after-copy` (`5947689`)
+  are the two larger branches rebuilt on the small one. Their trees equal those of
+  `pr/podfoam-fix` (`473c802`) and `pr/podfoam-observer` (`9e278aa`).
+- `test_callback.py` skips a test when the record writer missed its 0.2 s budget and
+  wrote no record. One CI run in 41 had failed there. Commit `9e278aa` on
+  `pr/podfoam-observer`; `main` merges it.
+- The other examples of argonne-lcf/PythonFOAM that hand Python a view of a C++ buffer
+  (PINNFoam, linalgFoam, PoissonFOAM, PoissonFOAM_Dynamic, Dealii_PINN) were read, not
+  run. No shipped Python function keeps such a view, so none shows the PODFoam bug.
 
 ## 2026-11-10, downloads of wrong-setup test 2, the README diagram, a wording and accuracy pass
 

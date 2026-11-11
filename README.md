@@ -101,7 +101,7 @@ export PYTHON=${PYTHON:-$(command -v python3)}   # or the path of another Python
 export PATH=$(dirname "$PYTHON"):$PATH
 export LD_LIBRARY_PATH=$(dirname "$PYTHON")/../lib:$LD_LIBRARY_PATH   # if not the system Python
 cd Solver_Examples/PODFoam
-./validation/run.sh              # checks the C++ to Python bridge; its run is the suite's reference
+./validation/run.sh              # checks the C++ to Python bridge; run_demo.sh needs its passed run
 ./llm_demo/setup_runtime.sh      # Gemma 4 E2B Q4_0, image projector, llama.cpp b11429
 python3 llm_demo/runtime.py start
 ./llm_demo/run_demo.sh           # builds PODFoam, runs the five cases, verifies

@@ -5,7 +5,8 @@ each that look alike. Besides the constant baseline, its only competitor was a r
 pairs of pimpleFoam runs of the 2D backward-facing step case. Each pair is one base setup drawn at
 random. Run as written it is the normal run; run with one change it is the wrong run. One run is one
 sample. The [plan](PLAN.md), the scoring, the baselines and the request set's manifest were committed
-at `97c3c41` and `91544e6` before any model request was sent.
+at `97c3c41` and `91544e6` before any model request was sent. The report is
+[results-20261103.md](../../results-20261103.md).
 
 Gemma 4 31B, as the 4-bit QAT Q4_0 file, answered 1,044 requests. Each request carries the pictures
 of one frame, |U| and p, and a short text note. In the stated condition the note gives the intended

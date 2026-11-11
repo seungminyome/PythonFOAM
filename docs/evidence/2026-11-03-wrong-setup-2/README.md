@@ -218,7 +218,8 @@ frame.
 - **Viscosity ×0.1.** Like a normal run, with more and smaller spots and low-pressure cores.
 - **Viscosity ×3 to ×30.** Smooth layers, no spots, a smooth p. ×100 and ×300 are not developed
   flows. The ×300 run's colour bar ends at 359 m/s against a stated 28.4 m/s. The ×300 pictures
-  show a jet along the bottom. It ended normally with a Courant number of 379 at step 25.
+  show a jet along the bottom. The ×300 run ended normally after 8,000 steps. Its largest
+  Courant number, 379, came at step 25.
 - **Inlet speed and inlet profile.** The pattern of a normal run; the colour-bar numbers differ from
   the stated speed. The profile change does not reach the window as a shape; it shows as a lower
   flow rate.

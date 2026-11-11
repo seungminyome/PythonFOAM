@@ -18,7 +18,7 @@ revision that produced it is given.
   October 27 to November 3, the November 3 evidence README, the evidence index and this
   changelog. Statements that disagreed with the records were corrected, among them:
   - November 2: the answer-key positions of the four slices are identical at five of
-    six steps; at step 250 one slice lies up to 1.8 % of the plotted range from the
+    six steps. At step 250 one slice lies up to 1.8 % of the plotted range from the
     others, not within 0.1 %.
   - October 27: the doubling of right trend answers came with a prompt that asks the
     model to compare the colour-bar numbers, not with the new pictures alone.

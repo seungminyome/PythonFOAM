@@ -263,8 +263,9 @@ baseline takes the best single answer for each set: the solver frames, the rando
 windows and all 72 pictures, so the rows of the two parts do not add up to the totals.
 
 This test shows that the slice path works. It does not show that the model reads flow
-that varies in z, because the answer-key positions of the fastest flow and lowest
-pressure agree to 0.1 % between the four slices.
+that varies in z, because the four slices barely differ. On the solver frames their
+answer-key positions of the fastest flow and the lowest pressure are the same at five
+of the six steps and at most 1.8 % of the plotted range apart at step 250.
 
 ### Versions and runs
 

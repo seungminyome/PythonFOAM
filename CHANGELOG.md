@@ -19,6 +19,10 @@ revision that produced it is given.
 - `test_callback.py` skips a test when the record writer missed its 0.2 s budget and
   wrote no record. One CI run in 41 had failed there. Commit `9e278aa` on
   `pr/podfoam-observer`; `main` merges it.
+- Job 25191239 ran the Docker lines of the pull-request texts as root in
+  `romitmaulik1/pythonfoam_docker`, pulled from Docker Hub with rootless Podman. The
+  validation passes on `pr/podfoam-fix` and `pr/podfoam-observer`. A Docker daemon does not
+  start on this cluster.
 - The other examples of argonne-lcf/PythonFOAM that hand Python a view of a C++ buffer
   (PINNFoam, linalgFoam, PoissonFOAM, PoissonFOAM_Dynamic, Dealii_PINN) were read, not
   run. No shipped Python function keeps such a view, so none shows the PODFoam bug.

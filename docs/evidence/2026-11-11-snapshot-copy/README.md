@@ -36,6 +36,16 @@ of the bridge validation, a fixed time step of 1e-7 and 60 time steps, three SVD
 A matrix is one velocity component of one SVD window. "Equal" means equal in every byte.
 All twelve builds and all twelve runs ended with exit status 0 and no Python traceback.
 
+## The PR's Docker lines as root, with Podman
+
+Slurm job 25191239 pulled `romitmaulik1/pythonfoam_docker` from Docker Hub (digest
+`sha256:32a99155…d84c`) with rootless Podman 5.2.5 and ran the Docker lines of the pull-request
+texts in it as root, uid 0. `validation/run.sh` ended with `PASS` on `pr/podfoam-fix` (`473c802`)
+and on `pr/podfoam-observer` (`9e278aa`). Records: [container/](container/).
+
+A Docker daemon does not start on this cluster: job 25191209 stopped at "No subuid ranges found".
+Podman takes the same `run` command. Earlier runs of the same lines used Apptainer as a normal user.
+
 ## Limits
 
 - The check covers PODFoam. The same change in `PODFoam_Debug`, `APMOSFoam` and `AEFoam` was

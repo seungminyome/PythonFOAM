@@ -15,8 +15,17 @@ revision that produced it is given.
   that the synchronous mode is the default and that in it the solver waits for the answer,
   with a deadline of 120 s unless set otherwise.
 - A wording and accuracy pass went over README.md, the results page, the reports of
-  October 27 to November 3 and the November 3 evidence README. Statements that disagreed
-  with the records were corrected; the other changes are wording and definitions.
+  October 27 to November 3, the November 3 evidence README, the evidence index and this
+  changelog. Statements that disagreed with the records were corrected, among them:
+  - November 2: the answer-key positions of the four slices are identical at five of
+    six steps; at step 250 one slice lies up to 1.8 % of the plotted range from the
+    others, not within 0.1 %.
+  - October 27: the doubling of right trend answers came with a prompt that asks the
+    model to compare the colour-bar numbers, not with the new pictures alone.
+  - README: `PODFoam_Debug`, `APMOSFoam` and `AEFoam` carry the same snapshot fix.
+
+  Empty table cells were filled from the records. The other changes are wording, terms
+  and definitions.
 
 ## 2026-11-04, the pages lead with the results
 

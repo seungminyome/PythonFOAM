@@ -15,6 +15,18 @@ runs under [llama.cpp](https://github.com/ggml-org/llama.cpp) on the same machin
 nothing it says goes back into the solver. The tests below show what such a model can
 and cannot read from solver pictures.
 
+## What this fork adds
+
+1. A fix for a bug in the original PODFoam: the next time step overwrote the first snapshot
+   of each SVD window.
+2. The observer: while the solver runs, it draws the flow, asks a model and records the
+   answer. With a request every 250 steps, the run time grows by under 1 % over the same
+   run with no requests.
+3. Tests on the seven questions in the table below: what the model reads and what it does
+   not, measured against simple rules.
+4. Checks: 177 unit tests, builds on OpenFOAM 8, v2012, v2106 and v2212, and a hash
+   manifest in every evidence folder.
+
 ## What we found
 
 The model was Google's Gemma 4 12B unless a row says otherwise. It got a question

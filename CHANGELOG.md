@@ -3,6 +3,14 @@
 Dates are when a run or change happened. Where a run is recorded, the code
 revision that produced it is given.
 
+## 2026-11-12, records of repeated rebuilds removed
+
+- The folders `final-branches/pr-docs-r7/` to `pr-docs-r14/` in
+  [2026-11-02-round2](docs/evidence/2026-11-02-round2/README.md) were removed: 144 files, the
+  checks of eight rebuilds of the PR branches that changed documents and commit messages only.
+  They remain in the Git history. The folder's manifest now lists 1,726 files.
+- The GitHub branch `exp/wrong-setup-2` was deleted. Its commits are in `main`.
+
 ## 2026-11-11, a small branch with the snapshot copy alone
 
 - Branch `pr/podfoam-snapshot-copy` (`8d29128`, two commits on argonne-lcf/PythonFOAM

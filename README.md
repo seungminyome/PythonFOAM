@@ -26,10 +26,10 @@ of them.
 | Where is the flow fastest, and where is the pressure lowest? | In most pictures it points at the right spot, more often than a fixed guess does. | Works |
 | Does the picture style matter? | Yes. With one field per picture and axes in percent, four models placed both the fastest flow and the lowest pressure in 45 to 48 of 48 pictures. With the solver's original two-panel picture they placed each in 2 to 17. | A lot |
 | Can it do that while the solver is running? | Yes. A request every 250 steps adds under 1 % to the run time of the same run with no model requests. The solver wrote identical files in both runs. | Works |
-| Between snapshots, is the flow speeding up or slowing down? | It reads a change in peak speed of 2 % or more. It misreads most smaller changes. | Works for clear changes |
+| Between snapshots, is the flow speeding up or slowing down? | It reads a change in peak speed of 2 % or more of the first snapshot's value. It misreads most smaller changes. | Works for clear changes |
 | Is this run about to crash? | It warns at most five steps before the crash. Simple rules on the field values do as well or better. | No early warning |
 | Was this run set up wrong? | In a first test, the lead of Gemma 4 31B over a simple rule came from two runs. A second, stricter test with 29 pairs of runs shows no lead over a regression on the colour-bar numbers and the stated setup. 31B catches more wrong runs but also calls normal runs wrong. | No lead shown |
-| Does a bigger model help? | The small Gemma 4 E2B model does not read these pictures reliably. 12B is enough for positions. 31B sees small pressure spots better, but at judging a setup it shows no lead over a simple rule or a regression. | Partly |
+| Does a bigger model help? | The small Gemma 4 E2B model does not read these pictures reliably. In these tests 12B is enough for positions. 31B sees small pressure spots better, but at judging a setup it shows no lead over a simple rule or a regression. | Partly |
 
 The fixed guess is the best single answer given to every picture. The four models are
 Gemma 4 12B, 26B-A4B and 31B, and Qwen3.5-35B-A3B.
@@ -44,8 +44,8 @@ releases they link, and each folder has a hash manifest.
 *What the model sees: |U| and p of step 250 of a developed backward-facing-step
 flow, drawn by the running solver and sent to Gemma 4 12B.*
 
-All tests used 2D laminar flows and one extruded 3D case, so other flows may read
-differently. Only positions and words from a fixed list
+All tests used 2D laminar flows and one 3D case made by extruding a 2D mesh, so other
+flows may read differently. Only positions and words from a fixed list
 are scored; the free-text descriptions are not.
 
 ## How it works
@@ -131,17 +131,25 @@ Each report records the setup, hardware, code revision and Slurm jobs of its run
 ## Where the code is
 
 The observer lives in `Solver_Examples/PODFoam/`: the `Python*.H` hooks and
-`llm_demo/`. Branch `pr/podfoam-fix` holds the solver changes and the bridge validation without
-the observer, and `pr/podfoam-observer` adds the hooks and the observer. Both fix a bug in the original PODFoam, where the next
-snapshot overwrote the first snapshot of each SVD window. Branch
-`pr/podfoam-snapshot-copy` holds that fix alone, in four files. The fix for this bug is also
-in `PODFoam_Debug`, `APMOSFoam` and `AEFoam`, and the other examples are as in
-argonne-lcf/PythonFOAM. The
-[November 2 report](docs/results-20261102.md) says what the fix changes.
-[HOOKS.md](Solver_Examples/PODFoam/HOOKS.md) describes the two optional hooks,
-`analysis_func` and `mesh_func`. The
-[validation README](Solver_Examples/PODFoam/validation/README.md) describes the bridge
-check.
+`llm_demo/`.
+
+Three branches are meant for the original project:
+
+- `pr/podfoam-snapshot-copy` holds only the fix for the bug described below, in four files.
+- `pr/podfoam-fix` holds that fix, the other solver changes and the bridge validation,
+  without the observer.
+- `pr/podfoam-observer` adds the hooks and the observer.
+
+The bug is in the original PODFoam, where the next time step overwrote the first snapshot
+of each SVD window. An SVD window is the set of snapshots that go into one SVD. The same
+fix is in `PODFoam_Debug`, `APMOSFoam` and `AEFoam`, and the other examples are as in
+argonne-lcf/PythonFOAM. The [November 2 report](docs/results-20261102.md) says what the
+fix changes.
+
+- [HOOKS.md](Solver_Examples/PODFoam/HOOKS.md) describes the two optional hooks,
+  `analysis_func` and `mesh_func`.
+- The [validation README](Solver_Examples/PODFoam/validation/README.md) describes the
+  bridge check.
 
 ## Citation
 
